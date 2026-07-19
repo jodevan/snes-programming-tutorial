@@ -5,7 +5,7 @@ estado real — uma paleta, um tile, um tilemap — o que torna este o momento c
 para aprender direito as ferramentas de depuração do Mesen, antes que os projetos
 fiquem complexos demais para adivinhar continuar funcionando. Este também é, por
 sinal, o motivo pelo qual este tutorial escolheu [ca65 em vez de asar lá no
-sumário](../html/pt/index.html#lessons): o depurador do Mesen tem suporte de
+sumário](../docs/pt/index.html#lessons): o depurador do Mesen tem suporte de
 primeira classe aos símbolos de depuração do ca65, então breakpoints e a view de
 disassembly mostram os rótulos reais do seu código-fonte, não só endereços crus.
 

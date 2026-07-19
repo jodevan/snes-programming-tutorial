@@ -81,5 +81,5 @@ tutorial gets corrected and expanded based on those questions.
 
 ## Status
 
-All 16 lessons are written. See the [homepage](html/index.html) for the full course
+All 16 lessons are written. See the [homepage](docs/index.html) for the full course
 index.

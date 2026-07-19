@@ -4,7 +4,7 @@
 a palette, a tile, a tilemap — which makes this the right moment to learn
 Mesen's debugging tools properly, before projects get complex enough that
 guessing stops working. This is also, incidentally, *why* this tutorial picked
-[ca65 over asar back in the outline](html/index.html#lessons): Mesen's debugger has
+[ca65 over asar back in the outline](docs/index.html#lessons): Mesen's debugger has
 first-class support for ca65's debug symbols, so breakpoints and the
 disassembly view show your actual source labels, not just raw addresses.
 

@@ -84,5 +84,5 @@ tutorial é corrigido e expandido com base nessas perguntas.
 
 ## Status
 
-As 16 lições estão escritas. Veja a [página inicial](../html/pt/index.html) para o
+As 16 lições estão escritas. Veja a [página inicial](../docs/pt/index.html) para o
 índice completo do curso.

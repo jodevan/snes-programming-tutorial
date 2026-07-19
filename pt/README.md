@@ -4,7 +4,7 @@
 65816, feito para rodar em um emulador real em cada etapa.**
 Uma versão em inglês deste tutorial também está disponível
 [aqui](https://jodevan.github.io/snes-programming-tutorial/), e a versão HTML
-em português está [aqui](../html/pt/index.html).
+em português está [aqui](../docs/pt/index.html).
 
 ## Objetivo & motivação
 
