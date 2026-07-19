@@ -128,6 +128,6 @@ rest of this tutorial, and for any SNES project after it.
 
 ---
 
-Root: [README.md](README.md)
+[Home](docs/index.html) |
 Previous: [Lesson 6 — Backgrounds & tilemaps](06-backgrounds-and-tilemaps.md)
 Next: [Lesson 8 — DMA & HDMA deep dive](08-dma-and-hdma.md)

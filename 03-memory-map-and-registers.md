@@ -155,6 +155,6 @@ dependency exists even though it won't bite you yet.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 2 — The 65816 CPU crash course](02-cpu-crash-course.md)
 Next: [Lesson 4 — Palettes & CGRAM](04-palettes-and-cgram.md)

@@ -105,6 +105,6 @@ passo, não parte do currículo principal aqui.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 13 — O SPC700 & fundamentos de áudio](13-spc700-and-audio-basics.md)
 Next: [Lição 15 — Organização de código & otimização](15-code-organization-and-optimization.md)

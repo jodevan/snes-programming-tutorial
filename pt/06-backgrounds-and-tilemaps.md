@@ -152,6 +152,6 @@ visivelmente se junta.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 5 — Tiles & VRAM](05-tiles-and-vram.md)
 Next: [Lição 7 — Depurando com o Mesen](07-debugging-with-mesen.md)

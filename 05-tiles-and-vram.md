@@ -159,6 +159,6 @@ you're debugging something more complicated than a two-color stripe.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 4 — Palettes & CGRAM](04-palettes-and-cgram.md)
 Next: [Lesson 6 — Backgrounds & tilemaps](06-backgrounds-and-tilemaps.md)

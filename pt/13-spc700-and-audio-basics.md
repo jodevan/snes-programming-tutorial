@@ -188,6 +188,6 @@ a `write_dsp` executa.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 12 — Detecção de colisão](12-collision-detection.md)
 Next: [Lição 14 — Música & efeitos sonoros](14-music-and-sound-effects.md)

@@ -154,6 +154,6 @@ funcionar assim — você instala os canos antes da água passar por eles.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 3 — Mapa de memória do SNES & registradores de hardware](03-memory-map-and-registers.md)
 Next: [Lição 5 — Tiles & VRAM](05-tiles-and-vram.md)

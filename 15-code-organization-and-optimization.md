@@ -153,6 +153,6 @@ grows past 32 KB, and every cross-bank call needs the long form.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 14 — Music & sound effects](14-music-and-sound-effects.md)
 Next: [Lesson 16 — Capstone project](16-capstone.md)

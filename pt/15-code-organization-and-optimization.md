@@ -166,6 +166,6 @@ long.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 14 — Música & efeitos sonoros](14-music-and-sound-effects.md)
 Next: [Lição 16 — Projeto final](16-capstone.md)

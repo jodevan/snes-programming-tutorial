@@ -179,6 +179,6 @@ gives you control of it.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 9 — Background scrolling](09-background-scrolling.md)
 Next: [Lesson 11 — Controller input & sprite animation](11-controller-input-and-animation.md)

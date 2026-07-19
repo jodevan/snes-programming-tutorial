@@ -147,6 +147,6 @@ piece of the tutorial visibly comes together.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 5 — Tiles & VRAM](05-tiles-and-vram.md)
 Next: [Lesson 7 — Debugging with Mesen](07-debugging-with-mesen.md)

@@ -359,5 +359,5 @@ mesmos conceitos se traduzem para a outra toolchain, caso tenha curiosidade.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Next: [Lição 2 — Curso intensivo sobre a CPU 65816](02-cpu-crash-course.md)

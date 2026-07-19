@@ -181,6 +181,6 @@ executes.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 12 — Collision detection](12-collision-detection.md)
 Next: [Lesson 14 — Music & sound effects](14-music-and-sound-effects.md)

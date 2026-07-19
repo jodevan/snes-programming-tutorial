@@ -258,6 +258,6 @@ vez de um loop de polling separado.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 10 — Fundamentos de sprites (OAM)](10-sprites-oam-basics.md)
 Next: [Lição 12 — Detecção de colisão](12-collision-detection.md)

@@ -101,6 +101,6 @@ not part of the core curriculum here.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 13 — The SPC700 & audio basics](13-spc700-and-audio-basics.md)
 Next: [Lesson 15 — Code organization & optimization](15-code-organization-and-optimization.md)

@@ -338,6 +338,6 @@ possível.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 1 — Configurando as ferramentas & sua primeira ROM](01-toolchain-setup-and-first-rom.md)
 Next: [Lição 3 — Mapa de memória do SNES & registradores de hardware](03-memory-map-and-registers.md)

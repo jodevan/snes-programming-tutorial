@@ -121,6 +121,6 @@ You didn't write any wrapping logic; the hardware did it for you.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 8 — DMA & HDMA deep dive](08-dma-and-hdma.md)
 Next: [Lesson 10 — Sprites (OAM) basics](10-sprites-oam-basics.md)

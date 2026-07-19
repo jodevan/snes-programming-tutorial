@@ -139,6 +139,6 @@ SNES depois dele.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 6 — Backgrounds & tilemaps](06-backgrounds-and-tilemaps.md)
 Next: [Lição 8 — Mergulho profundo em DMA & HDMA](08-dma-and-hdma.md)

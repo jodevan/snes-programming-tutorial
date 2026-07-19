@@ -149,6 +149,6 @@ lay pipes before water flows through them.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 3 — SNES memory map & hardware registers](03-memory-map-and-registers.md)
 Next: [Lesson 5 — Tiles & VRAM](05-tiles-and-vram.md)

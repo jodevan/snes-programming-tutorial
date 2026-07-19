@@ -248,6 +248,6 @@ right tool for watching exactly when each HDMA write actually lands.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 7 — Debugging with Mesen](07-debugging-with-mesen.md)
 Next: [Lesson 9 — Background scrolling](09-background-scrolling.md)

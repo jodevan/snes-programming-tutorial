@@ -255,6 +255,6 @@ acontece.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 7 — Depurando com o Mesen](07-debugging-with-mesen.md)
 Next: [Lição 9 — Rolagem de background](09-background-scrolling.md)

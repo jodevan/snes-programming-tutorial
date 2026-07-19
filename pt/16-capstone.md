@@ -126,5 +126,5 @@ expandida com base nela.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 15 — Organização de código & otimização](15-code-organization-and-optimization.md)

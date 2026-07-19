@@ -186,6 +186,6 @@ visibly reacts to it yet — that's what [Lesson 16](16-capstone.md) adds).
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 11 — Controller input & sprite animation](11-controller-input-and-animation.md)
 Next: [Lesson 13 — The SPC700 & audio basics](13-spc700-and-audio-basics.md)

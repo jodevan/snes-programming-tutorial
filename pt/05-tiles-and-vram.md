@@ -164,6 +164,6 @@ duas cores.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 4 — Paletas & CGRAM](04-palettes-and-cgram.md)
 Next: [Lição 6 — Backgrounds & tilemaps](06-backgrounds-and-tilemaps.md)

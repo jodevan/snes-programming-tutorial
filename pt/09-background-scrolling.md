@@ -127,6 +127,6 @@ fez isso por você.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 8 — Mergulho profundo em DMA & HDMA](08-dma-and-hdma.md)
 Next: [Lição 10 — Fundamentos de sprites (OAM)](10-sprites-oam-basics.md)

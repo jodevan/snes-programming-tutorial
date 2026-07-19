@@ -351,5 +351,5 @@ same concepts map onto the other toolchain if you're curious.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Next: [Lesson 2 — The 65816 CPU crash course](02-cpu-crash-course.md)

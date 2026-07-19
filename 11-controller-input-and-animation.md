@@ -250,6 +250,6 @@ now driven by the same interrupt instead of a separate polling loop.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 10 — Sprites (OAM) basics](10-sprites-oam-basics.md)
 Next: [Lesson 12 — Collision detection](12-collision-detection.md)

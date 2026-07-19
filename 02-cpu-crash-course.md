@@ -321,6 +321,6 @@ together, not to write the fastest possible fill routine.
 
 ---
 
-[Home](README.md) |
+[Home](docs/index.html) |
 Previous: [Lesson 1 — Toolchain setup & your first ROM](01-toolchain-setup-and-first-rom.md)
 Next: [Lesson 3 — SNES memory map & hardware registers](03-memory-map-and-registers.md)

@@ -191,6 +191,6 @@ adiciona).
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 11 — Entrada do controle & animação de sprite](11-controller-input-and-animation.md)
 Next: [Lição 13 — O SPC700 & fundamentos de áudio](13-spc700-and-audio-basics.md)

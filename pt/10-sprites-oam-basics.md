@@ -183,6 +183,6 @@ controle sobre ele.
 
 ---
 
-Root: [README.md](README.md)
+[Home](../docs/pt/index.html) |
 Previous: [Lição 9 — Rolagem de background](09-background-scrolling.md)
 Next: [Lição 11 — Entrada do controle & animação de sprite](11-controller-input-and-animation.md)
