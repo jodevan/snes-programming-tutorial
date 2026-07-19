@@ -42,34 +42,34 @@
 <h2 id="table-of-contents">Table of contents</h2>
 <h3 id="part-0-foundations">Part 0 — Foundations</h3>
 <ul>
-<li><a href="01-toolchain-setup-and-first-rom.md">Lesson 1: Toolchain setup &amp; your first ROM</a> — install/verify ca65 and Mesen, understand the ROM header and reset vector, display a solid color.</li>
-<li><a href="02-cpu-crash-course.md">Lesson 2: The 65816 CPU crash course</a> — registers, 8/16-bit mode switching, addressing modes, the <code>.smart</code> directive, and 6502-vs-65816 gotchas.</li>
-<li><a href="03-memory-map-and-registers.md">Lesson 3: SNES memory map &amp; hardware registers</a> — WRAM, VRAM, CGRAM, OAM, the PPU/CPU register windows, and how to read the reference wiki.</li>
+<li><a href="01-toolchain-setup-and-first-rom.html">Lesson 1: Toolchain setup &amp; your first ROM</a> — install/verify ca65 and Mesen, understand the ROM header and reset vector, display a solid color.</li>
+<li><a href="02-cpu-crash-course.html">Lesson 2: The 65816 CPU crash course</a> — registers, 8/16-bit mode switching, addressing modes, the <code>.smart</code> directive, and 6502-vs-65816 gotchas.</li>
+<li><a href="03-memory-map-and-registers.html">Lesson 3: SNES memory map &amp; hardware registers</a> — WRAM, VRAM, CGRAM, OAM, the PPU/CPU register windows, and how to read the reference wiki.</li>
 </ul>
 <h3 id="part-1-graphics-fundamentals">Part 1 — Graphics fundamentals</h3>
 <ul>
-<li><a href="04-palettes-and-cgram.md">Lesson 4: Palettes &amp; CGRAM</a> — SNES color format (15-bit BGR), writing a palette from ROM in a loop.</li>
-<li><a href="05-tiles-and-vram.md">Lesson 5: Tiles &amp; VRAM</a> — tile bitplane formats (2bpp/4bpp/8bpp), loading graphics data into VRAM.</li>
-<li><a href="06-backgrounds-and-tilemaps.md">Lesson 6: Backgrounds &amp; tilemaps</a> — BG modes, tilemap format, turning on a background layer.</li>
-<li><a href="07-debugging-with-mesen.md">Lesson 7: Debugging with Mesen</a> — breakpoints, PPU viewers, memory tools, the event viewer, and trace logger.</li>
-<li><a href="08-dma-and-hdma.md">Lesson 8: DMA &amp; HDMA deep dive</a> — general-purpose DMA channels, the DMA fill trick, HDMA for scanline effects.</li>
-<li><a href="09-background-scrolling.md">Lesson 9: Background scrolling</a> — <code>BGxHOFS</code>/<code>BGxVOFS</code>, a real per-frame game loop, seamless tilemap wrapping.</li>
+<li><a href="04-palettes-and-cgram.html">Lesson 4: Palettes &amp; CGRAM</a> — SNES color format (15-bit BGR), writing a palette from ROM in a loop.</li>
+<li><a href="05-tiles-and-vram.html">Lesson 5: Tiles &amp; VRAM</a> — tile bitplane formats (2bpp/4bpp/8bpp), loading graphics data into VRAM.</li>
+<li><a href="06-backgrounds-and-tilemaps.html">Lesson 6: Backgrounds &amp; tilemaps</a> — BG modes, tilemap format, turning on a background layer.</li>
+<li><a href="07-debugging-with-mesen.html">Lesson 7: Debugging with Mesen</a> — breakpoints, PPU viewers, memory tools, the event viewer, and trace logger.</li>
+<li><a href="08-dma-and-hdma.html">Lesson 8: DMA &amp; HDMA deep dive</a> — general-purpose DMA channels, the DMA fill trick, HDMA for scanline effects.</li>
+<li><a href="09-background-scrolling.html">Lesson 9: Background scrolling</a> — <code>BGxHOFS</code>/<code>BGxVOFS</code>, a real per-frame game loop, seamless tilemap wrapping.</li>
 </ul>
 <h3 id="part-2-sprites-interaction">Part 2 — Sprites &amp; interaction</h3>
 <ul>
-<li><a href="10-sprites-oam-basics.md">Lesson 10: Sprites (OAM) basics</a> — sprite graphics, the OAM table, size/priority attributes.</li>
-<li><a href="11-controller-input-and-animation.md">Lesson 11: Controller input &amp; sprite animation</a> — NMI setup, joypad reading, moving and animating a sprite.</li>
-<li><a href="12-collision-detection.md">Lesson 12: Collision detection</a> — sprite-vs-sprite (AABB boxes) and sprite-vs-world (a lookup table).</li>
+<li><a href="10-sprites-oam-basics.html">Lesson 10: Sprites (OAM) basics</a> — sprite graphics, the OAM table, size/priority attributes.</li>
+<li><a href="11-controller-input-and-animation.html">Lesson 11: Controller input &amp; sprite animation</a> — NMI setup, joypad reading, moving and animating a sprite.</li>
+<li><a href="12-collision-detection.html">Lesson 12: Collision detection</a> — sprite-vs-sprite (AABB boxes) and sprite-vs-world (a lookup table).</li>
 </ul>
 <h3 id="part-3-audio">Part 3 — Audio</h3>
 <ul>
-<li><a href="13-spc700-and-audio-basics.md">Lesson 13: The SPC700 &amp; audio basics</a> — the second CPU, the boot handshake, making a sound with no SPC700 code.</li>
-<li><a href="14-music-and-sound-effects.md">Lesson 14: Music &amp; sound effects</a> — triggering sound effects from gameplay, and a realistic path to real music.</li>
+<li><a href="13-spc700-and-audio-basics.html">Lesson 13: The SPC700 &amp; audio basics</a> — the second CPU, the boot handshake, making a sound with no SPC700 code.</li>
+<li><a href="14-music-and-sound-effects.html">Lesson 14: Music &amp; sound effects</a> — triggering sound effects from gameplay, and a realistic path to real music.</li>
 </ul>
 <h3 id="part-4-wrapping-up">Part 4 — Wrapping up</h3>
 <ul>
-<li><a href="15-code-organization-and-optimization.md">Lesson 15: Code organization &amp; optimization</a> — multi-file projects, macros, the V-Blank time budget, ROM banking.</li>
-<li><a href="16-capstone.md">Lesson 16: Capstone project</a> — a small playable game combining everything: scrolling background, animated/collidable player sprite, a collectible, and sound.</li>
+<li><a href="15-code-organization-and-optimization.html">Lesson 15: Code organization &amp; optimization</a> — multi-file projects, macros, the V-Blank time budget, ROM banking.</li>
+<li><a href="16-capstone.html">Lesson 16: Capstone project</a> — a small playable game combining everything: scrolling background, animated/collidable player sprite, a collectible, and sound.</li>
 </ul>
 <h2 id="reference-resources">Reference resources</h2>
 <ul>
