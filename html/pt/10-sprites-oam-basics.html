@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lição 10: Fundamentos de Sprites (OAM)</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lição 10: Fundamentos de Sprites (OAM)</h1>
+</header>
+<h1 id="lição-10-fundamentos-de-sprites-oam">Lição 10: Fundamentos de Sprites (OAM)</h1>
+<p><strong>Objetivo:</strong> colocar um objeto que se move independentemente na tela, por cima do background com rolagem da <a href="09-background-scrolling.html">Lição 9</a>. Sprites (o SNES os chama de “objetos”, daí <code>OBJ</code>/<code>OAM</code>) são um sistema genuinamente diferente dos backgrounds — memória separada, faixa de paleta separada, regras de formato de tile separadas — então esta lição os trata do zero, em vez de como uma variação das Lições 5-6.</p>
+<h2 id="oam-128-sprites-duas-tabelas">OAM: 128 sprites, duas tabelas</h2>
+<p>A Object Attribute Memory guarda os dados de todos os 128 sprites, dividida em uma <strong>tabela baixa</strong> (512 bytes, 4 bytes por sprite) e uma <strong>tabela alta</strong> (32 bytes, 2 bits por sprite). Pela <a href="https://wiki.superfamicom.org/sprites#oam">referência de sprites</a>:</p>
+<pre><code>Low table, 4 bytes per sprite:
+  byte 0: xxxxxxxx   X position (low 8 bits)
+  byte 1: yyyyyyyy   Y position
+  byte 2: cccccccc   Starting tile number
+  byte 3: vhoopppN   flip/priority/palette/name-table bits
+
+High table, 2 bits per sprite:
+  bit 0: X position, bit 8 (sprites can be positioned up to X=511)
+  bit 1: size flag (0 = small, 1 = large, per OBSEL&#39;s two configured sizes)</code></pre>
+<p>As duas tabelas compartilham o mesmo padrão de acesso “registrador de endereço, registrador de dados” que você já conhece: <code>OAMADDL</code>/<code>OAMADDH</code> (<code>$2102</code>/<code>$2103</code>) configuram o endereço, <code>OAMDATA</code> (<code>$2104</code>) escreve nele e avança automaticamente — e o endereço interno de 10 bits naturalmente rola da tabela baixa direto para a tabela alta assim que você passa do byte 511, então <strong>um único loop de escrita contínuo consegue preencher as duas tabelas</strong> sem reiniciar o endereço no meio do caminho.</p>
+<p>Uma peculiaridade que vale a pena conhecer antes que ela te confunda: escritas na tabela baixa da OAM são bufferizadas exatamente como o <code>CGDATA</code> era na <a href="04-palettes-and-cgram.html#cgadd-and-cgdata-precisely">Lição 4</a> — o par de bytes de um sprite não chega de fato até você ter escrito as duas metades da word relevante em sequência. Na prática, escrever os 4 bytes de um registro de sprite em ordem, um depois do outro, é exatamente o certo, e isso nunca vira um problema.</p>
+<h2 id="obsel-tamanhos-e-onde-os-tiles-de-sprite-vivem-na-vram">OBSEL: tamanhos e onde os tiles de sprite vivem na VRAM</h2>
+<pre><code>$2101  wb++?-
+        sssnnbbb
+        sss = size selection (000 = 8x8 and 16x16; this lesson uses 8x8)
+        nn  = Name Select (offset to the second tile table, for N=1 sprites)
+        bbb = Name Base Select, as (VRAM byte address) &gt;&gt; 14</code></pre>
+<p>Repare que o deslocamento aqui é <code>&gt;&gt;14</code>, não o <code>&gt;&gt;12</code> que você usou para o <code>BG34NBA</code> na Lição 6 — a memória de tile de sprite é endereçada em páginas de 16 KB, não de 4 KB. Confundir isso (usar a convenção <code>&gt;&gt;12</code> do BG para uma base de sprite, ou vice-versa) é um erro muito fácil de cometer, com um sintoma confuso: seu sprite renderiza, mas mostra os dados de tile errados, deslocado para o que quer que esteja de fato no endereço mal calculado.</p>
+<p>Os tiles de sprite precisam do próprio espaço, separado dos dados de tile do <code>BG3</code> (Lição 5, byte <code>$0000</code> da VRAM) e do tilemap (Lição 6, byte <code>$1000</code> da VRAM). Esta lição usa o endereço de byte <code>$4000</code> — livre dos dois — então <code>bbb = $4000 &gt;&gt; 14 = 1</code>.</p>
+<h2 id="sprites-são-sempre-4bpp">Sprites são sempre 4bpp</h2>
+<p>Diferente dos backgrounds, cuja profundidade de cor depende do modo de BG (a Lição 6 usou o 2bpp do <code>BG3</code>), <strong>tiles de sprite são sempre 4bpp</strong> (16 cores) — essa é uma regra fixa de hardware, não uma configuração. Um tile 4bpp tem 32 bytes: o mesmo formato intercalado de bitplane-0/1 da Lição 5, por 16 bytes, seguido imediatamente pelos bitplanes 2/3 no mesmo formato, por mais 16 bytes. Um único tile de sprite 8x8 de cor sólida usando o índice de cor 1 (bitplane0 ligado, bitplanes 1-3 desligados) fica assim:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">sprite_tile:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00     </span><span class="co">; row 0: bitplane0, bitplane1</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00     </span><span class="co">; 16 bytes so far (bitplanes 0/1)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00     </span><span class="co">; row 0: bitplane2, bitplane3</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00     </span><span class="co">; 16 more bytes (bitplanes 2/3) = 32 total</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true"></a><span class="fu">sprite_tile_end:</span></span></code></pre></div>
+<h2 id="paletas-de-sprite">Paletas de sprite</h2>
+<p>Sprites usam os índices 128-255 da CGRAM, divididos em 8 paletas de 16 cores cada (<code>ppp</code> no byte de atributos da OAM seleciona qual). A entrada 0 de paleta de cada bloco de 16 cores é transparente, mesma regra dos backgrounds. Para a paleta 0 (<code>ppp=000</code>), o índice de cor 1 mora no índice 129 da CGRAM. Carregue-a da mesma forma que você carregou as cores de BG na Lição 4:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    lda #<span class="dv">129</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    sta<span class="bn"> $2121         </span><span class="co">; CGADD: sprite palette 0, index 1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    lda #<span class="dv">$</span>FF</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    sta<span class="bn"> $2122          </span><span class="co">; low byte</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    lda #<span class="bn">$03</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    sta<span class="bn"> $2122           </span><span class="co">; high byte -&gt; color $03FF (yellow)</span></span></code></pre></div>
+<h2 id="estendendo-sua-rom">Estendendo sua ROM</h2>
+<p>Carregue os dados de tile e a paleta acima (via um loop de CPU ou as técnicas de DMA da <a href="08-dma-and-hdma.html">Lição 8</a> — sua escolha), configure <code>OBSEL</code>, depois preencha a OAM: um sprite visível, todo o resto empurrado para fora da tela para não renderizar como um tile perdido no canto superior esquerdo (a posição padrão se deixado todo em zero):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    lda #<span class="bn">$01</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    sta<span class="bn"> $2101          </span><span class="co">; OBSEL: 8x8/16x16 sizes, name base = VRAM byte $4000</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    stz<span class="bn"> $2102</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    stz<span class="bn"> $2103           </span><span class="co">; OAMADDL/H: start at OAM address 0</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    <span class="co">; --- Sprite 0: our one visible sprite ---</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    lda #<span class="dv">120</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    sta<span class="bn"> $2104           </span><span class="co">; X = 120</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    lda #<span class="dv">100</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    sta<span class="bn"> $2104            </span><span class="co">; Y = 100</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    stz<span class="bn"> $2104             </span><span class="co">; tile number = 0</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>    stz<span class="bn"> $2104              </span><span class="co">; attributes = 0 (no flip, priority 0, palette 0)</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>    <span class="co">; --- Sprites 1-127: push off-screen (Y = -16, i.e. $F0) ---</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>    ldx #<span class="dv">127</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a><span class="fu">@hide_loop:</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>    stz<span class="bn"> $2104</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a>    lda #<span class="dv">$</span>F0</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a>    sta<span class="bn"> $2104</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true"></a>    stz<span class="bn"> $2104</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true"></a>    stz<span class="bn"> $2104</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true"></a>    dex</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true"></a>    bne @hide_loop</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true"></a>    <span class="co">; --- High table: 32 bytes, all zero (small size, X &lt; 256 for everyone) ---</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true"></a>    ldx #<span class="dv">32</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true"></a><span class="fu">@hightable_loop:</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true"></a>    stz<span class="bn"> $2104</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true"></a>    dex</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true"></a>    bne @hightable_loop</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true"></a>    <span class="co">; --- Enable OBJ on the main screen, alongside BG3 from Lesson 6 ---</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true"></a>    lda #<span class="bn">$14             </span><span class="co">; TM: bit 2 (BG3) | bit 4 (OBJ)</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true"></a>    sta<span class="bn"> $212C</span></span></code></pre></div>
+<h2 id="compile-e-execute">Compile e execute</h2>
+<p>Agora você deve ver um quadrado 8×8 amarelo sólido, parado em uma posição fixa, por cima do background listrado com rolagem da Lição 9. Ele ainda não se move — a <a href="11-controller-input-and-animation.html">Lição 11</a> lê o controle e te dá controle sobre ele.</p>
+<h2 id="exercícios">Exercícios</h2>
+<ol type="1">
+<li>Mude os bits <code>sss</code> do <code>OBSEL</code> para <code>011</code> (16x16 e 32x32) e configure o bit de tamanho de atributo/tabela-alta da OAM do sprite 0 para selecionar o maior dos dois. Você vai precisar de um tile maior (ou quatro tiles 8x8 arranjados como um bloco 16x16 — veja as <a href="https://wiki.superfamicom.org/sprites#character-table-in-vram">regras de wrapping da tabela de caracteres</a>) para preenchê-lo corretamente.</li>
+<li>Adicione um segundo sprite visível usando uma paleta diferente (<code>ppp=1</code>, cores 144-159) em outro lugar da tela, sem atrapalhar o loop de fora-da-tela dos 126 sprites restantes.</li>
+<li>Usando os PPU Viewers da <a href="07-debugging-with-mesen.html">Lição 7</a>, abra o visualizador de sprites e confirme que os sprites 1-127 de fato mostram <code>Y = -16</code> e são excluídos da lista visível — uma boa forma de construir confiança em código como o loop de esconder acima, antes de você precisar depurar um sprite que misteriosamente não desaparece.</li>
+</ol>
+<hr />
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="09-background-scrolling.html">Lição 9 — Rolagem de background</a> Next: <a href="11-controller-input-and-animation.html">Lição 11 — Entrada do controle &amp; animação de sprite</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lição 4: Paletas &amp; CGRAM</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lição 4: Paletas &amp; CGRAM</h1>
+</header>
+<h1 id="lição-4-paletas-cgram">Lição 4: Paletas &amp; CGRAM</h1>
+<p><strong>Objetivo:</strong> ir de “escrever uma cor na CGRAM” (Lição 1) até “carregar uma paleta inteira a partir da ROM em um loop” — a técnica da qual todo gráfico das próximas lições depende.</p>
+<h2 id="um-recapitulação-rápida-do-formato-de-cor">Um recapitulação rápida do formato de cor</h2>
+<p>Toda cor do SNES tem 15 bits, empacotados em uma word de 16 bits, organizados como <code>-bbbbbgg gggrrrrr</code>: 5 bits para azul, verde e vermelho cada, bit mais alto não usado.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Cor</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Preto</td>
+<td><code>$0000</code></td>
+</tr>
+<tr class="even">
+<td>Vermelho</td>
+<td><code>$001F</code></td>
+</tr>
+<tr class="odd">
+<td>Verde</td>
+<td><code>$03E0</code></td>
+</tr>
+<tr class="even">
+<td>Azul</td>
+<td><code>$7C00</code></td>
+</tr>
+<tr class="odd">
+<td>Branco</td>
+<td><code>$7FFF</code></td>
+</tr>
+</tbody>
+</table>
+<p>A CGRAM contém 256 dessas — 512 bytes ao todo. Ela é endereçada como um array plano de <em>índices</em> de cor de 0 a 255, não como “paletas” separadas; a ideia de dividi-la em dezesseis paletas de 16 cores (ou de forma mais fina, para tiles de menor profundidade de bits) é uma convenção que os tiles de background e de sprite impõem sobre esse array plano — as lições <a href="06-backgrounds-and-tilemaps.html">6</a> e <a href="10-sprites-oam-basics.html">10</a> cobrem como o número de paleta de um tile escolhe de qual fatia da CGRAM ele desenha.</p>
+<p>A entrada 0 da paleta (índice de cor 0) é especial: sem nenhuma camada de background ou sprite habilitados, ela é a única coisa visível — a cor de fundo simples que você vem observando desde a Lição 1.</p>
+<h2 id="cgadd-and-cgdata-precisely">CGADD e CGDATA, precisamente</h2>
+<p>Pela <a href="https://wiki.superfamicom.org/registers#cgadd-cgram-address-487">referência de registradores</a>:</p>
+<pre><code>$2121  wb+++-
+        cccccccc        &lt;- CGADD: sets the color INDEX (0-255)
+
+$2122  ww+++-
+        -bbbbbgg gggrrrrr   &lt;- CGDATA: writes the color at that index</code></pre>
+<p><code>CGDATA</code> é um registrador de “escrita dupla”: a primeira escrita depois de configurar <code>CGADD</code> fornece o byte baixo, a segunda fornece o byte alto, e <em>só depois que o byte alto chega</em> é que a cor de fato é atualizada e o índice auto-incrementa. Isso importa por causa de uma sutileza que a documentação do registrador aponta explicitamente: escritas em CGRAM são bufferizadas exatamente como as escritas na tabela baixa da OAM (a Lição 10 retoma essa comparação) — se você escrever byte-baixo, byte-baixo, byte-alto em sequência sem a alternância esperada, você não vai obter a cor que espera. Na prática, a correção é simples e este tutorial a segue em todo lugar: sempre escreva CGDATA em pares estritos de byte-baixo-depois-byte-alto, uma cor completa de cada vez, nunca intercalada com outra coisa.</p>
+<h2 id="carregando-uma-paleta-a-partir-da-rom">Carregando uma paleta a partir da ROM</h2>
+<p>Aqui está o padrão geral para escrever N cores começando em algum índice de CGRAM, a partir de uma tabela guardada na ROM:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">; Writes (count) colors from (table) into CGRAM starting at (start_index).</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">; Assumes: 8-bit A, 16-bit X/Y (the Lesson 1 convention).</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>.a8</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>.i16</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="fu">load_palette:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    lda #start_index</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    sta<span class="bn"> $2121           </span><span class="co">; CGADD: point CGRAM at the first entry we&#39;ll touch</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    ldx #<span class="dv">0</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="fu">@loop:</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    lda table,x          <span class="co">; low byte of this color</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    sta<span class="bn"> $2122</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    inx</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    lda table,x           <span class="co">; high byte of this color</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    sta<span class="bn"> $2122</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    inx</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>    cpx #(count*<span class="dv">2</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    bne @loop</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    rts</span></code></pre></div>
+<p>Esse é um loop guiado pela CPU — o 65816 toca em cada byte, um por um. Funciona bem para um punhado de cores, mas é o jeito lento: a <a href="08-dma-and-hdma.html">Lição 8</a> substitui exatamente esse loop por uma transferência de DMA que copia a tabela inteira em uma única operação de hardware, sem loop nenhum. Vale a pena aprender a versão manual primeiro, porém, porque é ela que faz a versão com DMA fazer sentido — DMA é basicamente “o mesmo loop de escrita na porta da PPU, só que o hardware faz o looping.”</p>
+<h2 id="estendendo-a-rom-da-lição-1">Estendendo a ROM da Lição 1</h2>
+<p>Adicione uma pequena tabela de paleta e uma chamada para <code>load_palette</code> logo depois da configuração de CPU/PPU, substituindo a escrita de cor única de duas instruções da Lição 1:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">; --- add near the top of the CODE segment, alongside reset: ---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="fu">palette_table:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000     </span><span class="co">; index 0: black (backdrop)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $001F     </span><span class="co">; index 1: red</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $03E0     </span><span class="co">; index 2: green</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $7C00     </span><span class="co">; index 3: blue</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a><span class="fu">palette_table_end:</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>.define PALETTE_COUNT ((palette_table_end - palette_table) / <span class="dv">2</span>)</span></code></pre></div>
+<p>E dentro de <code>reset:</code>, substitua as linhas antigas de escrita em CGRAM por:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    <span class="co">; --- Load our 4-color palette into CGRAM, starting at index 0. ---</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    stz<span class="bn"> $2121</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    ldx #<span class="dv">0</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="fu">@pal_loop:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    lda palette_table,x</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    sta<span class="bn"> $2122</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    inx</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    lda palette_table,x</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>    sta<span class="bn"> $2122</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>    inx</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>    cpx #(PALETTE_COUNT*<span class="dv">2</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    bne @pal_loop</span></code></pre></div>
+<p>Compile e execute exatamente como na Lição 1. <strong>A tela ainda vai parecer idêntica</strong> — preto sólido agora, já que o índice 0 da paleta é preto nesta tabela, e nada ainda exibe os índices 1-3. Isso é esperado e vale a pena parar um segundo para digerir: você construiu infraestrutura de verdade (um carregador de paleta reutilizável, guiado por tabela) que não produz <em>nenhuma mudança visível</em>, porque nada ainda está pedindo para usar as cores 1-3. A <a href="05-tiles-and-vram.html">Lição 5</a> cria um tile, e a <a href="06-backgrounds-and-tilemaps.html">Lição 6</a> é onde essas outras três cores finalmente aparecem na tela. Programar hardware gráfico costuma funcionar assim — você instala os canos antes da água passar por eles.</p>
+<h2 id="exercícios">Exercícios</h2>
+<ol type="1">
+<li>Mude <code>palette_table</code> para usar índice 0 = azul em vez de preto, recompile, e confirme que a cor de fundo muda — essa é a única parte do trabalho desta lição que você <em>consegue</em> ver imediatamente.</li>
+<li><code>load_palette</code> acima escreve de forma fixa a partir do índice 0 da CGRAM. Modifique-a (ou escreva uma segunda chamada) para carregar uma <em>segunda</em> paleta de 4 cores começando no índice 4 da CGRAM, sem duplicar o loop inteiro — pense no que precisaria virar um parâmetro.</li>
+<li>As <a href="https://wiki.superfamicom.org/registers#cgwsel-color-addition-select-588">entradas CGWSEL/CGADSUB/COLDATA da página de Registradores</a> descrevem “color math” — misturar duas cores por hardware. Dê uma olhada rápida, só o suficiente para responder: color math muda o que está armazenado na CGRAM, ou muda o que é calculado no momento da renderização? Este tutorial não implementa color math, mas saber a resposta vai poupar confusão se você vir isso no código de outras pessoas.</li>
+</ol>
+<hr />
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="03-memory-map-and-registers.html">Lição 3 — Mapa de memória do SNES &amp; registradores de hardware</a> Next: <a href="05-tiles-and-vram.html">Lição 5 — Tiles &amp; VRAM</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 5: Tiles &amp; VRAM</title>
+  <title>Lição 5: Tiles &amp; VRAM</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,29 +78,32 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 5: Tiles &amp; VRAM</h1>
+<h1 class="title">Lição 5: Tiles &amp; VRAM</h1>
 </header>
-<h1 id="lesson-5-tiles-vram">Lesson 5: Tiles &amp; VRAM</h1>
-<p><strong>Goal:</strong> understand how pixel graphics are actually encoded in VRAM, and load your first tile. Nothing will look different on screen yet — like Lesson 4, this lesson builds a piece that only pays off once <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a> puts it on screen.</p>
-<h2 id="tiles-are-bitplanes-not-pixels">Tiles are bitplanes, not pixels</h2>
-<p>A SNES “tile” is always an 8×8 grid of pixels, but the data isn’t stored as one byte per pixel the way you might picture a bitmap. It’s stored as <strong>bitplanes</strong>: separate 8×8 1-bit images that get combined to produce each pixel’s color <em>index</em> (not its color — the index then looks up a real color in the CGRAM palette you built in <a href="04-palettes-and-cgram.html">Lesson 4</a>).</p>
-<p>The number of bitplanes determines how many colors a tile can use:</p>
+<h1 id="lição-5-tiles-vram">Lição 5: Tiles &amp; VRAM</h1>
+<p><strong>Objetivo:</strong> entender como gráficos de pixel são de fato codificados na VRAM, e carregar seu primeiro tile. Nada vai parecer diferente na tela ainda — assim como a Lição 4, esta lição constrói uma peça que só compensa quando a <a href="06-backgrounds-and-tilemaps.html">Lição 6</a> a coloca na tela.</p>
+<h2 id="tiles-são-bitplanes-não-pixels">Tiles são bitplanes, não pixels</h2>
+<p>Um “tile” do SNES é sempre uma grade 8×8 de pixels, mas os dados não são armazenados como um byte por pixel, do jeito que você talvez imagine um bitmap. Eles são armazenados como <strong>bitplanes</strong>: imagens 8×8 de 1 bit separadas, que são combinadas para produzir o <em>índice</em> de cor de cada pixel (não sua cor — o índice então busca uma cor real na paleta da CGRAM que você construiu na <a href="04-palettes-and-cgram.html">Lição 4</a>).</p>
+<p>O número de bitplanes determina quantas cores um tile pode usar:</p>
 <table>
 <thead>
 <tr class="header">
-<th>Format</th>
+<th>Formato</th>
 <th>Bitplanes</th>
-<th>Colors per tile</th>
-<th>Bytes per tile</th>
+<th>Cores por tile</th>
+<th>Bytes por tile</th>
 </tr>
 </thead>
 <tbody>
@@ -124,18 +127,18 @@
 </tr>
 </tbody>
 </table>
-<p>This tutorial starts with <strong>2bpp</strong>, the simplest format and the one used by <code>BG3</code> in graphics mode 1 (the mode <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a> uses) — the smallest amount of new information to absorb before something shows up on screen.</p>
-<h3 id="how-the-bytes-are-laid-out">How the bytes are laid out</h3>
-<p>Per the <a href="https://wiki.superfamicom.org/backgrounds#tile-maps--character-maps">register reference’s tile character data section</a>: each row of a tile is one byte per bitplane, and for 2bpp, bitplane 0 and bitplane 1 of a row are stored as the low and high byte of one 16-bit word. Eight rows means eight words means 16 bytes, in this exact order:</p>
+<p>Este tutorial começa com <strong>2bpp</strong>, o formato mais simples e o usado pelo <code>BG3</code> no modo gráfico 1 (o modo que a <a href="06-backgrounds-and-tilemaps.html">Lição 6</a> usa) — a menor quantidade de informação nova para absorver antes de algo aparecer na tela.</p>
+<h3 id="como-os-bytes-são-organizados">Como os bytes são organizados</h3>
+<p>Segundo a <a href="https://wiki.superfamicom.org/backgrounds#tile-maps--character-maps">seção de dados de caractere de tile da referência de registradores</a>: cada linha de um tile é um byte por bitplane, e para 2bpp, o bitplane 0 e o bitplane 1 de uma linha são armazenados como o byte baixo e o byte alto de uma word de 16 bits. Oito linhas significam oito words, que significam 16 bytes, exatamente nesta ordem:</p>
 <pre><code>row 0: bitplane0, bitplane1
 row 1: bitplane0, bitplane1
 row 2: bitplane0, bitplane1
 ...
 row 7: bitplane0, bitplane1</code></pre>
-<p>Within a byte, bit 7 is the <em>leftmost</em> pixel of that row. A pixel’s final color index is built by stacking the corresponding bit from each bitplane: for 2bpp, <code>index = (bitplane1_bit &lt;&lt; 1) | bitplane0_bit</code>. So index 1 needs bitplane0=1, bitplane1=0; index 2 needs bitplane0=0, bitplane1=1; index 3 needs both bits set.</p>
-<h3 id="a-worked-example-a-two-color-striped-tile">A worked example: a two-color striped tile</h3>
-<p>Let’s build a tile that’s solid palette-index-1 (red, from Lesson 4’s table) on its top half and solid palette-index-2 (green) on its bottom half — simple enough to hand-encode, and it visibly proves bitplane combination is working once you see it rendered.</p>
-<p>Index 1 needs bitplane0 = all 1s, bitplane1 = all 0s, for those rows. Index 2 needs the opposite. So:</p>
+<p>Dentro de um byte, o bit 7 é o pixel <em>mais à esquerda</em> daquela linha. O índice de cor final de um pixel é construído empilhando o bit correspondente de cada bitplane: para 2bpp, <code>índice = (bit_do_bitplane1 &lt;&lt; 1) | bit_do_bitplane0</code>. Então o índice 1 precisa de bitplane0=1, bitplane1=0; o índice 2 precisa de bitplane0=0, bitplane1=1; o índice 3 precisa dos dois bits ligados.</p>
+<h3 id="um-exemplo-resolvido-um-tile-listrado-de-duas-cores">Um exemplo resolvido: um tile listrado de duas cores</h3>
+<p>Vamos construir um tile que é sólido no índice-de-paleta-1 (vermelho, da tabela da Lição 4) na metade de cima e sólido no índice-de-paleta-2 (verde) na metade de baixo — simples o suficiente para codificar manualmente, e prova visualmente que a combinação de bitplanes está funcionando assim que você vê renderizado.</p>
+<p>O índice 1 precisa de bitplane0 = tudo 1, bitplane1 = tudo 0, para essas linhas. O índice 2 precisa do oposto. Então:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">tile_stripe:</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="co">; Rows 0-3: color index 1 (red) -&gt; bitplane0=$FF, bitplane1=$00</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
@@ -148,18 +151,18 @@ row 7: bitplane0, bitplane1</code></pre>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="fu">tile_stripe_end:</span></span></code></pre></div>
-<h2 id="vmain-vmadd-and-vmdata">VMAIN, VMADD, and VMDATA</h2>
-<p>VRAM is addressed as 32K <em>words</em> (64 KB total), and the write path is the same “address register, then data register” pattern from <a href="03-memory-map-and-registers.html#vram-cgram-and-oam-three-porthole-devices">Lesson 3</a>:</p>
+<h2 id="vmain-vmadd-e-vmdata">VMAIN, VMADD e VMDATA</h2>
+<p>A VRAM é endereçada como 32K <em>words</em> (64 KB ao todo), e o caminho de escrita é o mesmo padrão “registrador de endereço, depois registrador de dados” da <a href="03-memory-map-and-registers.html#vram-cgram-and-oam-three-porthole-devices">Lição 3</a>:</p>
 <pre><code>$2115  VMAIN   i---mmii   i = increment after high ($2119) or low ($2118) byte write
 $2116  VMADDL  low byte of the word address
 $2117  VMADDH  high byte of the word address
 $2118  VMDATAL low byte of the word to write
 $2119  VMDATAH high byte of the word to write</code></pre>
-<p>Since we’re writing 16-bit words (and our tile data is already laid out as byte-pairs matching VRAM’s word layout), set <code>VMAIN</code> so the address advances <em>after the high byte</em> — that way a <code>VMDATAL</code>/<code>VMDATAH</code> pair advances the address exactly once, keeping the two writes atomic from the address register’s point of view:</p>
+<p>Já que estamos escrevendo words de 16 bits (e nossos dados de tile já estão organizados como pares de bytes que batem com o layout de word da VRAM), configure <code>VMAIN</code> para que o endereço avance <em>depois do byte alto</em> — assim um par <code>VMDATAL</code>/<code>VMDATAH</code> avança o endereço exatamente uma vez, mantendo as duas escritas atômicas do ponto de vista do registrador de endereço:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    lda #<span class="bn">$80        </span><span class="co">; i=1 (increment after $2119), ii=00 (+1), mm=00 (no remap)</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    sta<span class="bn"> $2115</span></span></code></pre></div>
-<h2 id="extending-your-rom">Extending your ROM</h2>
-<p>Add the tile data (shown above) somewhere in your <code>CODE</code> segment, then add a loading loop to <code>reset:</code>, after the palette loop from Lesson 4:</p>
+<h2 id="estendendo-sua-rom">Estendendo sua ROM</h2>
+<p>Adicione os dados de tile (mostrados acima) em algum lugar do seu segmento <code>CODE</code>, depois adicione um loop de carregamento em <code>reset:</code>, depois do loop de paleta da Lição 4:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    <span class="co">; --- Load tile_stripe into VRAM at word address 0. ---</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    lda #<span class="bn">$80</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    sta<span class="bn"> $2115           </span><span class="co">; VMAIN: increment after high byte</span></span>
@@ -177,18 +180,18 @@ $2119  VMDATAH high byte of the word to write</code></pre>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>    inx</span>
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>    cpx #(tile_stripe_end - tile_stripe)</span>
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>    bne @tile_loop</span></code></pre></div>
-<p>Notice the shape: set an address register once, then loop two bytes at a time into two data registers, watching a computed byte count. This is the <em>third</em> time you’ve written almost this exact loop — CGRAM in Lesson 4, and now VRAM. That repetition is the point: once you can spot “porthole register loading loop” as a pattern, you can read almost any beginner SNES tutorial’s graphics code at a glance, including code that isn’t part of this tutorial.</p>
-<h2 id="build-and-run">Build and run</h2>
-<p>Assemble and run exactly as before. The screen will look unchanged (still whatever backdrop color Lesson 4 left palette index 0 as) — you’ve written a tile into VRAM, but nothing has told the PPU to <em>display</em> it yet. That’s the entire subject of <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a>: a tilemap that references this tile, and the registers that turn a background layer on.</p>
-<p>If you want to confirm the tile data actually landed in VRAM rather than taking it on faith, <a href="07-debugging-with-mesen.html">Lesson 7</a> shows you how to open Mesen’s VRAM/tile viewer and look at it directly — a good habit to build before you’re debugging something more complicated than a two-color stripe.</p>
-<h2 id="exercises">Exercises</h2>
+<p>Repare no formato: configure um registrador de endereço uma vez, depois faça um loop de dois bytes por vez em dois registradores de dados, observando uma contagem de bytes calculada. Essa é a <em>terceira</em> vez que você escreve quase exatamente esse mesmo loop — CGRAM na Lição 4, e agora VRAM. Essa repetição é o ponto: uma vez que você consiga identificar o “loop de carregamento de registrador vigia” como um padrão, você consegue ler o código gráfico de quase qualquer tutorial de SNES para iniciantes de relance, incluindo código que não faz parte deste tutorial.</p>
+<h2 id="compile-e-execute">Compile e execute</h2>
+<p>Monte e execute exatamente como antes. A tela vai parecer inalterada (ainda a cor de fundo que a Lição 4 deixou no índice 0 da paleta) — você escreveu um tile na VRAM, mas nada ainda disse à PPU para <em>exibi-lo</em>. Esse é o assunto inteiro da <a href="06-backgrounds-and-tilemaps.html">Lição 6</a>: um tilemap que referencia esse tile, e os registradores que ligam uma camada de background.</p>
+<p>Se você quiser confirmar que os dados do tile de fato chegaram na VRAM em vez de simplesmente confiar, a <a href="07-debugging-with-mesen.html">Lição 7</a> mostra como abrir o visualizador de VRAM/tiles do Mesen e olhar diretamente — um bom hábito para construir antes de você estar depurando algo mais complicado que uma listra de duas cores.</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Hand-encode a checkerboard 2bpp tile (alternating index 1 and index 2 in a 2×2-pixel-block pattern, not a stripe) by working out the bitplane bytes row by row. This is tedious by hand on purpose — it’s exactly the tedium real SNES projects solve with graphics conversion tools that turn a PNG into this byte format automatically, which is worth knowing exists even though this tutorial encodes tiles by hand for teaching purposes.</li>
-<li>What would change in <code>tile_stripe</code> if you wanted a solid single-color tile using index 3 instead of a two-color stripe?</li>
-<li>Calculate how many 2bpp tiles fit in the SNES’s 64 KB of VRAM. Then do the same for 4bpp. Why do you think Lesson 6 defaults to the smaller format for the first background layer we turn on?</li>
+<li>Codifique manualmente um tile 2bpp em xadrez (alternando índice 1 e índice 2 em um padrão de blocos de 2×2 pixels, não uma listra), trabalhando os bytes de bitplane linha por linha. Isso é tedioso à mão de propósito — é exatamente o tédio que projetos reais de SNES resolvem com ferramentas de conversão gráfica que transformam um PNG nesse formato de byte automaticamente, o que vale a pena saber que existe mesmo que este tutorial codifique tiles à mão para fins didáticos.</li>
+<li>O que mudaria em <code>tile_stripe</code> se você quisesse um tile sólido de uma única cor usando o índice 3, em vez de uma listra de duas cores?</li>
+<li>Calcule quantos tiles 2bpp cabem nos 64 KB de VRAM do SNES. Depois faça o mesmo para 4bpp. Por que você acha que a Lição 6 usa por padrão o formato menor para a primeira camada de background que ligamos?</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="04-palettes-and-cgram.html">Lesson 4 — Palettes &amp; CGRAM</a> Next: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="04-palettes-and-cgram.html">Lição 4 — Paletas &amp; CGRAM</a> Next: <a href="06-backgrounds-and-tilemaps.html">Lição 6 — Backgrounds &amp; tilemaps</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

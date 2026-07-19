@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 11: Controller Input &amp; Sprite Animation</title>
+  <title>Lição 11: Entrada do Controle &amp; Animação de Sprite</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,32 +78,35 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 11: Controller Input &amp; Sprite Animation</h1>
+<h1 class="title">Lição 11: Entrada do Controle &amp; Animação de Sprite</h1>
 </header>
-<h1 id="lesson-11-controller-input-sprite-animation">Lesson 11: Controller Input &amp; Sprite Animation</h1>
-<p><strong>Goal:</strong> replace <a href="09-background-scrolling.html">Lesson 9</a>’s V-Blank polling loop with a proper NMI handler, read the controller, and use it to move and animate the sprite from <a href="10-sprites-oam-basics.html">Lesson 10</a>.</p>
-<h2 id="from-polling-to-interrupts">From polling to interrupts</h2>
-<p>Lesson 9’s frame loop worked by busy-waiting on <code>HVBJOY</code>. That’s fine for a single scrolling background, but it wastes CPU time doing nothing but checking a flag, and it doesn’t scale well once a frame’s logic gets more involved. The proper mechanism is the <strong>NMI</strong> (Non-Maskable Interrupt), which the PPU fires automatically at the start of every V-Blank — no polling required.</p>
-<h3 id="enabling-nmi">Enabling NMI</h3>
+<h1 id="lição-11-entrada-do-controle-animação-de-sprite">Lição 11: Entrada do Controle &amp; Animação de Sprite</h1>
+<p><strong>Objetivo:</strong> substituir o loop de polling de V-Blank da <a href="09-background-scrolling.html">Lição 9</a> por um handler de NMI apropriado, ler o controle, e usá-lo para mover e animar o sprite da <a href="10-sprites-oam-basics.html">Lição 10</a>.</p>
+<h2 id="de-polling-para-interrupções">De polling para interrupções</h2>
+<p>O loop de frame da Lição 9 funcionava fazendo busy-wait em <code>HVBJOY</code>. Isso é aceitável para um único background com rolagem, mas desperdiça tempo de CPU só checando uma flag, e não escala bem quando a lógica de um frame fica mais complexa. O mecanismo apropriado é o <strong>NMI</strong> (Non-Maskable Interrupt), que a PPU dispara automaticamente no início de todo V-Blank — sem necessidade de polling.</p>
+<h3 id="habilitando-o-nmi">Habilitando o NMI</h3>
 <pre><code>$4200  NMITIMEN  n-yx---a
         n = Enable NMI
         a = Auto-Joypad Read Enable</code></pre>
 <div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    lda #%<span class="dv">10000001</span>    <span class="co">; n=1 (enable NMI), a=1 (enable auto-joypad read)</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    sta<span class="bn"> $4200</span></span></code></pre></div>
-<p>Setting bit 0 here is what makes <code>$4218</code>-<code>$421F</code> (the latched joypad registers below) update automatically every frame, with no manual polling of the old <code>$4016</code>/<code>$4017</code> port needed.</p>
-<h3 id="wiring-up-the-handler">Wiring up the handler</h3>
-<p>Go back to your ROM’s <code>VECTORS</code> segment from Lesson 1 and change the one word that was <code>.word trap ; NMI</code> to point at a real handler instead:</p>
+<p>Configurar o bit 0 aqui é o que faz <code>$4218</code>-<code>$421F</code> (os registradores de joypad capturados abaixo) atualizarem automaticamente todo frame, sem necessidade de polling manual da porta antiga <code>$4016</code>/<code>$4017</code>.</p>
+<h3 id="conectando-o-handler">Conectando o handler</h3>
+<p>Volte ao segmento <code>VECTORS</code> da sua ROM, da Lição 1, e mude a única word que era <code>.word trap ; NMI</code> para apontar para um handler de verdade:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    .<span class="dt">word</span> nmi_handler   <span class="co">; NMI (was: trap)</span></span></code></pre></div>
-<p>Then acknowledge the NMI at the top of the handler by reading <code>$4210</code> (<code>RDNMI</code>) — per the <a href="https://wiki.superfamicom.org/registers#nmi-flag-and-5a22-version-942">register reference</a>, this is required, not optional bookkeeping:</p>
+<p>Depois reconheça o NMI no topo do handler lendo <code>$4210</code> (<code>RDNMI</code>) — segundo a <a href="https://wiki.superfamicom.org/registers#nmi-flag-and-5a22-version-942">referência de registradores</a>, isso é obrigatório, não uma formalidade opcional:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">nmi_handler:</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    pha</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    phx</span>
@@ -117,16 +120,16 @@
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>    plx</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    pla</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    rti</span></code></pre></div>
-<p>Since this tutorial’s code never changes register widths anywhere after <a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a>’s initial <code>REP</code>/<code>SEP</code> (every lesson has stayed in 8-bit-A/16-bit-X the whole time), the handler only needs to save and restore the registers it actually touches — <code>A</code>, <code>X</code>, <code>Y</code> — with plain <code>PHA</code>/<code>PHX</code>/<code>PHY</code>. A handler that changes register widths mid-interrupt would need to save and restore the <code>P</code> register too, which this tutorial deliberately avoids needing.</p>
-<h2 id="reading-the-controller">Reading the controller</h2>
-<p>Auto-joypad read populates <code>JOY1L</code>/<code>JOY1H</code> (<code>$4218</code>/<code>$4219</code>) once per frame:</p>
+<p>Como o código deste tutorial nunca muda a largura dos registradores em nenhum lugar depois do <code>REP</code>/<code>SEP</code> inicial da <a href="01-toolchain-setup-and-first-rom.html">Lição 1</a> (toda lição permaneceu em A-de-8-bits/X-de-16-bits o tempo todo), o handler só precisa salvar e restaurar os registradores que de fato toca — <code>A</code>, <code>X</code>, <code>Y</code> — com simples <code>PHA</code>/<code>PHX</code>/<code>PHY</code>. Um handler que muda a largura dos registradores no meio de uma interrupção precisaria salvar e restaurar o registrador <code>P</code> também, o que este tutorial deliberadamente evita precisar fazer.</p>
+<h2 id="reading-the-controller">Lendo o controle</h2>
+<p>A auto-leitura do joypad preenche <code>JOY1L</code>/<code>JOY1H</code> (<code>$4218</code>/<code>$4219</code>) uma vez por frame:</p>
 <pre><code>$4219 (high byte): byetUDLR   B / Y / Select / Start / Up / Down / Left / Right
 $4218 (low byte):  axlr0000   A / X / L / R / (unused)</code></pre>
 <div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>    lda<span class="bn"> $4219          </span><span class="co">; JOY1H: bit0=Right, bit1=Left, bit2=Down, bit3=Up</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>    sta buttons</span></code></pre></div>
-<p>One honest caveat: the hardware finishes this auto-read a few scanlines <em>after</em> NMI fires, so the value your handler reads is technically left over from the <em>previous</em> frame’s completed read, not a value freshly captured this exact frame — a lag of at most one frame, generally imperceptible. Waiting for <code>HVBJOY</code> bit 0 to clear before trusting <code>JOY1L</code>/<code>H</code> would close that gap entirely; this tutorial accepts the tiny lag for simplicity, which is what most small SNES projects do in practice.</p>
-<h2 id="extending-your-rom">Extending your ROM</h2>
-<p>Reserve a few more direct-page bytes, move Lesson 9’s scroll update into the new handler, and add movement plus a simple two-frame animation on top:</p>
+<p>Uma ressalva honesta: o hardware termina essa auto-leitura algumas scanlines <em>depois</em> do NMI disparar, então o valor que seu handler lê é tecnicamente remanescente da leitura completada do frame <em>anterior</em>, não um valor capturado recém neste frame exato — um atraso de no máximo um frame, geralmente imperceptível. Esperar o bit 0 do <code>HVBJOY</code> zerar antes de confiar em <code>JOY1L</code>/<code>H</code> fecharia essa lacuna completamente; este tutorial aceita o pequeno atraso pela simplicidade, o que é o que a maioria dos pequenos projetos de SNES faz na prática.</p>
+<h2 id="estendendo-sua-rom">Estendendo sua ROM</h2>
+<p>Reserve mais alguns bytes de página direta, mova a atualização de rolagem da Lição 9 para o novo handler, e adicione movimento mais uma animação simples de dois frames por cima:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="co">; --- new direct-page variables ---</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>sprite_x :=<span class="bn"> $02</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>sprite_y :=<span class="bn"> $03</span></span>
@@ -215,7 +218,7 @@ $4218 (low byte):  axlr0000   A / X / L / R / (unused)</code></pre>
 <span id="cb7-86"><a href="#cb7-86" aria-hidden="true"></a>    plx</span>
 <span id="cb7-87"><a href="#cb7-87" aria-hidden="true"></a>    pla</span>
 <span id="cb7-88"><a href="#cb7-88" aria-hidden="true"></a>    rti</span></code></pre></div>
-<p>Also add the second sprite tile — a hollow outline, reusing the same palette entry from Lesson 10 so no new colors are needed — immediately after <code>sprite_tile</code> in VRAM (tile numbers are just steps of 32 bytes, so placing it right after makes it tile number 1 automatically):</p>
+<p>Adicione também o segundo tile de sprite — um contorno vazado, reaproveitando a mesma entrada de paleta da Lição 10, então nenhuma cor nova é necessária — logo depois de <code>sprite_tile</code> na VRAM (números de tile são apenas passos de 32 bytes, então colocá-lo logo em seguida o torna o número de tile 1 automaticamente):</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="fu">sprite_tile2:</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
@@ -234,21 +237,21 @@ $4218 (low byte):  axlr0000   A / X / L / R / (unused)</code></pre>
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a><span class="fu">sprite_tile2_end:</span></span></code></pre></div>
-<p>Load both tiles as one contiguous 64-byte block when you load sprite graphics into VRAM, instead of just <code>sprite_tile</code> alone.</p>
-<p>Finally, replace the main loop with <code>WAI</code> — the instruction <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a> mentioned but never had a use for yet. With all per-frame work now happening in the NMI handler, the main thread has nothing left to do but sleep until the next interrupt:</p>
+<p>Carregue os dois tiles como um único bloco contíguo de 64 bytes quando você carregar os gráficos de sprite na VRAM, em vez de só <code>sprite_tile</code> sozinho.</p>
+<p>Por fim, substitua o loop principal por <code>WAI</code> — a instrução que a <a href="02-cpu-crash-course.html#whats-actually-new">Lição 2</a> mencionou mas ainda não tinha uso. Com todo o trabalho por frame agora acontecendo no handler de NMI, a thread principal não tem mais nada a fazer além de dormir até a próxima interrupção:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="fu">main_loop:</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>    wai</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>    bra main_loop</span></code></pre></div>
-<h2 id="build-and-run">Build and run</h2>
-<p>Hold the D-pad. The sprite moves, and toggles between a solid square and a hollow outline every 16 frames while moving — a stand-in for a real walk animation, demonstrating the mechanism (swap the OAM tile number over time) without needing real character art. The background keeps scrolling underneath, now driven by the same interrupt instead of a separate polling loop.</p>
-<h2 id="exercises">Exercises</h2>
+<h2 id="compile-e-execute">Compile e execute</h2>
+<p>Segure o D-pad. O sprite se move, e alterna entre um quadrado sólido e um contorno vazado a cada 16 frames enquanto se move — um substituto para uma animação de caminhada de verdade, demonstrando o mecanismo (trocar o número de tile da OAM ao longo do tempo) sem precisar de arte de personagem de verdade. O background continua rolando por baixo, agora acionado pela mesma interrupção em vez de um loop de polling separado.</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (from <code>JOY1L</code>) to trigger something distinct from movement — for example, instantly reset <code>sprite_x</code>/<code>sprite_y</code> to the starting position.</li>
-<li>The animation counter increments every frame a direction is held, and toggles frames based on bit 4 (every 16 frames). Change it to toggle every 8 frames instead, then every 4 — notice how fast is “too fast” for a convincing animation using only two frames.</li>
-<li>Diagonal movement currently lets Up+Right (for instance) move the sprite faster than a single direction, since both <code>inc</code>/<code>dec</code> pairs apply independently. Is this a bug worth fixing for this tutorial’s purposes? Think about what a real game would do differently, even if you don’t implement it.</li>
+<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (de <code>JOY1L</code>) para disparar algo distinto de movimento — por exemplo, resetar instantaneamente <code>sprite_x</code>/<code>sprite_y</code> para a posição inicial.</li>
+<li>O contador de animação incrementa a cada frame em que uma direção é segurada, e alterna frames baseado no bit 4 (a cada 16 frames). Mude para alternar a cada 8 frames, depois a cada 4 — note quão rápido é “rápido demais” para uma animação convincente usando só dois frames.</li>
+<li>Movimento diagonal atualmente deixa Cima+Direita (por exemplo) mover o sprite mais rápido do que uma única direção, já que os dois pares <code>inc</code>/<code>dec</code> se aplicam independentemente. Isso é um bug que vale a pena corrigir para os propósitos deste tutorial? Pense no que um jogo de verdade faria diferente, mesmo que você não implemente isso.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="10-sprites-oam-basics.html">Lesson 10 — Sprites (OAM) basics</a> Next: <a href="12-collision-detection.html">Lesson 12 — Collision detection</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="10-sprites-oam-basics.html">Lição 10 — Fundamentos de sprites (OAM)</a> Next: <a href="12-collision-detection.html">Lição 12 — Detecção de colisão</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

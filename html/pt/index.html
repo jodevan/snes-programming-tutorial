@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Construindo um Jogo para o SNES — Um Tutorial Passo a Passo</title>
+<link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <a class="brand" href="index.html">SNES<span>Tutorial</span></a>
+  <div class="links">
+    <a href="#lessons">Lições</a>
+    <a href="#resources">Recursos</a>
+    <a href="../index.html" class="lang-pill">English</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Um curso prático de programação 65816 / SNES</div>
+    <h1>Construindo um Jogo para o SNES</h1>
+    <p class="lede">
+      De uma pasta vazia a um pequeno jogo jogável de Super Nintendo — um conceito
+      de cada vez. Cada lição é montada em uma ROM <code style="background:rgba(255,255,255,0.18); color:#fff;">.sfc</code>
+      real que você executa em um emulador — você nunca está apenas lendo. Você está construindo.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">ca65 / cc65</span>
+      <span class="badge">Emulador Mesen</span>
+      <span class="badge">macOS</span>
+      <span class="badge">Sem experiência prévia com 65816</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="intro-grid">
+    <div>
+      <h3>Para quem é este tutorial</h3>
+      <p>
+        Você já programa com desenvoltura e tem o <code>asar</code>, o <code>ca65</code>
+        (parte do conjunto <code>cc65</code>) e o emulador <strong>Mesen</strong>
+        instalados. Não é necessário ter experiência prévia com 6502/65816 ou SNES —
+        a Lição 2 cobre a CPU do zero.
+      </p>
+    </div>
+    <div>
+      <h3>Como funciona cada lição</h3>
+      <p>
+        Uma breve explicação do conceito, um arquivo assembly totalmente comentado,
+        os comandos exatos de compilação e o que você deve ver no Mesen. As lições
+        se apoiam umas nas outras — no final, você terá uma base de código funcional,
+        não demos desconectadas.
+      </p>
+    </div>
+  </div>
+
+  <h2 id="lessons" style="border:none; padding:0; margin-top:0; font-size:1.5rem;">Índice do curso</h2>
+  <p style="color: var(--muted); margin-top: -0.5rem;">
+    Este tutorial padroniza o uso do <strong>ca65</strong> em vez do asar — principalmente
+    porque o depurador do Mesen tem suporte de primeira classe ao ca65, e o material de
+    referência em que este curso se apoia (a série do nesdoug, a Super Famicom Development
+    Wiki) também é escrito para ele.
+  </p>
+
+  <div class="part-heading">
+    <span class="part-label">Parte 0</span>
+    <h2>Fundamentos</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="01-toolchain-setup-and-first-rom.html">
+      <div class="lesson-num">1</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Configurando as ferramentas &amp; sua primeira ROM</div>
+        <div class="lesson-desc">Instale/verifique o ca65 e o Mesen, entenda o cabeçalho da ROM e o vetor de reset, exiba uma cor sólida.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="02-cpu-crash-course.html">
+      <div class="lesson-num">2</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Curso intensivo sobre a CPU 65816</div>
+        <div class="lesson-desc">Registradores, alternância entre modo 8/16 bits, modos de endereçamento, a diretiva <code>.smart</code>, e pegadinhas 6502-vs-65816.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="03-memory-map-and-registers.html">
+      <div class="lesson-num">3</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Mapa de memória do SNES &amp; registradores de hardware</div>
+        <div class="lesson-desc">WRAM, VRAM, CGRAM, OAM, as janelas de registradores da PPU/CPU, e como ler a wiki de referência.</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Parte 1</span>
+    <h2>Fundamentos de gráficos</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="04-palettes-and-cgram.html">
+      <div class="lesson-num">4</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Paletas &amp; CGRAM</div>
+        <div class="lesson-desc">Formato de cor do SNES (15-bit BGR), escrevendo uma paleta a partir da ROM em um loop.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="05-tiles-and-vram.html">
+      <div class="lesson-num">5</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Tiles &amp; VRAM</div>
+        <div class="lesson-desc">Formatos de bitplane de tiles (2bpp/4bpp/8bpp), carregando dados gráficos na VRAM.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="06-backgrounds-and-tilemaps.html">
+      <div class="lesson-num">6</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Backgrounds &amp; tilemaps</div>
+        <div class="lesson-desc">Modos de BG, o formato das entradas do tilemap, ativando uma camada de background.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="07-debugging-with-mesen.html">
+      <div class="lesson-num">7</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Depurando com o Mesen</div>
+        <div class="lesson-desc">Breakpoints, visualizadores de PPU, ferramentas de memória, o event viewer, e o trace logger.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="08-dma-and-hdma.html">
+      <div class="lesson-num">8</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Mergulho profundo em DMA &amp; HDMA</div>
+        <div class="lesson-desc">Canais de DMA de propósito geral, o truque do preenchimento por DMA, HDMA para efeitos por scanline.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="09-background-scrolling.html">
+      <div class="lesson-num">9</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Rolagem de background</div>
+        <div class="lesson-desc"><code>BGxHOFS</code>/<code>BGxVOFS</code>, um loop de jogo real por frame, wrap-around sem emendas.</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Parte 2</span>
+    <h2>Sprites &amp; interação</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="10-sprites-oam-basics.html">
+      <div class="lesson-num">10</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Fundamentos de sprites (OAM)</div>
+        <div class="lesson-desc">Gráficos de sprite, a tabela OAM, atributos de tamanho/prioridade.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="11-controller-input-and-animation.html">
+      <div class="lesson-num">11</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Entrada do controle &amp; animação de sprite</div>
+        <div class="lesson-desc">Configuração de NMI, leitura do joypad, movendo e animando um sprite.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="12-collision-detection.html">
+      <div class="lesson-num">12</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Detecção de colisão</div>
+        <div class="lesson-desc">Sprite-contra-sprite (caixas AABB) e sprite-contra-cenário (uma tabela de consulta).</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Parte 3</span>
+    <h2>Áudio</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="13-spc700-and-audio-basics.html">
+      <div class="lesson-num">13</div>
+      <div class="lesson-body">
+        <div class="lesson-title">O SPC700 &amp; fundamentos de áudio</div>
+        <div class="lesson-desc">A segunda CPU, o handshake de boot, produzindo um som sem nenhum código SPC700.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="14-music-and-sound-effects.html">
+      <div class="lesson-num">14</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Música &amp; efeitos sonoros</div>
+        <div class="lesson-desc">Disparando efeitos sonoros a partir do gameplay, e um caminho realista até música de verdade.</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Parte 4</span>
+    <h2>Encerrando</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="15-code-organization-and-optimization.html">
+      <div class="lesson-num">15</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Organização de código &amp; otimização</div>
+        <div class="lesson-desc">Projetos com múltiplos arquivos, macros, o orçamento de tempo do V-Blank, bancos de ROM.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="16-capstone.html">
+      <div class="lesson-num">16</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Projeto final</div>
+        <div class="lesson-desc">Um pequeno jogo jogável combinando um background com rolagem, um sprite de jogador animado/colidível, um colecionável, e som.</div>
+      </div>
+    </a>
+  </div>
+
+  <h2 id="resources">Recursos de referência</h2>
+  <div class="resources-list">
+    <div><a href="https://wiki.superfamicom.org/65816-reference" target="_blank" rel="noopener">Referência do 65816</a><br><span>Conjunto completo de instruções.</span></div>
+    <div><a href="https://wiki.superfamicom.org/spc700-reference" target="_blank" rel="noopener">Referência do SPC700</a><br><span>Conjunto de instruções da CPU de som.</span></div>
+    <div><a href="https://wiki.superfamicom.org/registers" target="_blank" rel="noopener">Registradores</a><br><span>Todo registrador de hardware da PPU/CPU, bit a bit.</span></div>
+    <div><a href="https://wiki.superfamicom.org/memory-mapping" target="_blank" rel="noopener">Mapeamento de memória</a><br><span>Detalhes do layout LoROM/HiROM.</span></div>
+    <div><a href="https://nesdoug.com/2020/03/19/snes-projects/" target="_blank" rel="noopener">Série de tutoriais de SNES do nesdoug</a><br><span>Um segundo estilo de explicação, também baseado em ca65.</span></div>
+    <div><a href="https://github.com/nesdoug" target="_blank" rel="noopener">Código de exemplo de SNES do nesdoug</a><br><span>Repositórios complementares por lição.</span></div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  Construído lição por lição
+</footer>
+
+</body>
+</html>

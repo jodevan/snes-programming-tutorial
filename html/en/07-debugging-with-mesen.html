@@ -13,19 +13,22 @@
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="../index.html">&larr; Home</a>
+    <a class="lang-link" href="../pt/index.html">Português</a>
+  </div>
 </div>
 <header id="title-block-header">
 <h1 class="title">Lesson 7: Debugging with Mesen</h1>
 </header>
 <h1 id="lesson-7-debugging-with-mesen">Lesson 7: Debugging with Mesen</h1>
-<p><strong>Goal:</strong> stop guessing and start looking. You now have a ROM with real state — a palette, a tile, a tilemap — which makes this the right moment to learn Mesen’s debugging tools properly, before projects get complex enough that guessing stops working. This is also, incidentally, <em>why</em> this tutorial picked <a href="index.html#lessons">ca65 over asar back in the outline</a>: Mesen’s debugger has first-class support for ca65’s debug symbols, so breakpoints and the disassembly view show your actual source labels, not just raw addresses.</p>
+<p><strong>Goal:</strong> stop guessing and start looking. You now have a ROM with real state — a palette, a tile, a tilemap — which makes this the right moment to learn Mesen’s debugging tools properly, before projects get complex enough that guessing stops working. This is also, incidentally, <em>why</em> this tutorial picked <a href="../index.html#lessons">ca65 over asar back in the outline</a>: Mesen’s debugger has first-class support for ca65’s debug symbols, so breakpoints and the disassembly view show your actual source labels, not just raw addresses.</p>
 <h2 id="the-toolkit">The toolkit</h2>
 <p>Everything below lives under Mesen’s <strong>Debug</strong> menu. The <a href="https://www.mesen.ca/snes/docs/debugging.md">official documentation</a> covers each tool in full detail; this lesson is a guided tour of the ones you’ll reach for constantly, using bugs deliberately planted in your own Lesson 6 code as practice targets.</p>
 <table>
@@ -93,7 +96,7 @@
 <li>Undo the practice bug above, then introduce a different one on purpose (for example, load Lesson 4’s palette into CGRAM index 4 instead of index 0) and use the Palette Viewer to confirm your prediction of what would go wrong before fixing it.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a> Next: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a></p>
+<p>Root: <a href="../../README.md">README.md</a> Previous: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a> Next: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

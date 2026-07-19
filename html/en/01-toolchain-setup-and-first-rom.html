@@ -78,13 +78,16 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="../index.html">&larr; Home</a>
+    <a class="lang-link" href="../pt/index.html">Português</a>
+  </div>
 </div>
 <header id="title-block-header">
 <h1 class="title">Lesson 1: Toolchain Setup &amp; Your First ROM</h1>
@@ -351,7 +354,7 @@ SEGMENTS {
 <span id="cb6-40"><a href="#cb6-40" aria-hidden="true"></a>    <span class="bu">jmp</span> trap</span></code></pre></div>
 <p>Build with a single command: <code>asar lesson1_asar.asm lesson1_asar.sfc</code>. We won’t maintain this asar version past Lesson 1 — it’s here purely so you can see how the same concepts map onto the other toolchain if you’re curious.</p>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Next: <a href="02-cpu-crash-course.html">Lesson 2 — The 65816 CPU crash course</a></p>
+<p>Root: <a href="../../README.md">README.md</a> Next: <a href="02-cpu-crash-course.html">Lesson 2 — The 65816 CPU crash course</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

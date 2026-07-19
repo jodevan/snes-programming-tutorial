@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 9: Background Scrolling</title>
+  <title>Lição 9: Rolagem de Background</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,29 +78,32 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 9: Background Scrolling</h1>
+<h1 class="title">Lição 9: Rolagem de Background</h1>
 </header>
-<h1 id="lesson-9-background-scrolling">Lesson 9: Background Scrolling</h1>
-<p><strong>Goal:</strong> turn the static striped background from Lessons 4-8 into a moving one, and along the way replace the <code>forever: jmp forever</code> spin-loop every earlier lesson ended with, with a real per-frame game loop.</p>
+<h1 id="lição-9-rolagem-de-background">Lição 9: Rolagem de Background</h1>
+<p><strong>Objetivo:</strong> transformar o background listrado e estático das Lições 4-8 em um que se move, e de quebra substituir o loop de espera <code>forever: jmp forever</code> com que toda lição anterior terminava por um loop de jogo real, por frame.</p>
 <h2 id="bgxhofs-bgxvofs">BGxHOFS / BGxVOFS</h2>
-<p>Each background layer has a horizontal and vertical scroll register: <code>BG3HOFS</code> (<code>$2111</code>) and <code>BG3VOFS</code> (<code>$2112</code>) for the layer you’ve been building. Both are “write-twice” registers, same idea as <code>CGDATA</code> in Lesson 4 — write the low byte, then the high byte, to the <em>same</em> address:</p>
+<p>Cada camada de background tem um registrador de rolagem horizontal e um vertical: <code>BG3HOFS</code> (<code>$2111</code>) e <code>BG3VOFS</code> (<code>$2112</code>) para a camada que você vem construindo. Ambos são registradores de “escrita dupla”, a mesma ideia do <code>CGDATA</code> na Lição 4 — escreva o byte baixo, depois o byte alto, no <em>mesmo</em> endereço:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>    lda scroll_lo</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    sta<span class="bn"> $2111        </span><span class="co">; BG3HOFS: first write = low byte</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    lda scroll_hi</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    sta<span class="bn"> $2111         </span><span class="co">; BG3HOFS: second write = high byte</span></span></code></pre></div>
-<h3 id="a-shared-latch-gotcha-worth-knowing-before-you-hit-it">A shared-latch gotcha worth knowing before you hit it</h3>
-<p>Per the <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">background scrolling reference</a>, all eight <code>BGnHOFS</code>/<code>BGnVOFS</code> registers share a <em>single</em> internal “previous byte written” latch, not one latch per register. If you write BG3’s low byte, then write BG1’s low byte before coming back to finish BG3’s high byte, the hardware combines your BG3 high-byte write with the <em>wrong</em> leftover latch data, corrupting the result. The rule that keeps you safe: <strong>always write a scroll register’s low byte immediately followed by its high byte, with no other scroll-register write in between.</strong> This tutorial only scrolls one layer, so it can’t bite you yet — but the moment you scroll two layers independently (a parallax effect, for instance), this is the bug waiting for you.</p>
-<h2 id="building-a-per-frame-loop">Building a per-frame loop</h2>
-<p>Every ROM so far has ended in an infinite spin — nothing happened after setup. Real games update state once per frame, synchronized to the screen refresh. Without proper interrupts (which <a href="11-controller-input-and-animation.html">Lesson 11</a> introduces), the simplest correct way to do this is to <strong>poll <code>HVBJOY</code></strong> (<code>$4212</code>) — bit 7 is set for the entire duration of V-Blank, and clear otherwise:</p>
+<h3 id="uma-pegadinha-de-latch-compartilhado-que-vale-a-pena-conhecer-antes-de-cair-nela">Uma pegadinha de latch compartilhado que vale a pena conhecer antes de cair nela</h3>
+<p>Segundo a <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">referência de rolagem de background</a>, todos os oito registradores <code>BGnHOFS</code>/<code>BGnVOFS</code> compartilham um <em>único</em> latch interno de “último byte escrito”, não um latch por registrador. Se você escrever o byte baixo do BG3, depois escrever o byte baixo do BG1 antes de voltar para terminar o byte alto do BG3, o hardware combina sua escrita do byte alto do BG3 com os dados de latch remanescentes <em>errados</em>, corrompendo o resultado. A regra que te mantém seguro: <strong>sempre escreva o byte baixo de um registrador de rolagem imediatamente seguido pelo byte alto, sem nenhuma outra escrita em registrador de rolagem no meio.</strong> Este tutorial só rola uma camada, então isso ainda não pode te morder — mas no momento em que você rolar duas camadas independentemente (um efeito de paralaxe, por exemplo), esse é o bug esperando por você.</p>
+<h2 id="construindo-um-loop-por-frame">Construindo um loop por frame</h2>
+<p>Toda ROM até agora terminou em uma espera infinita — nada acontecia depois da configuração. Jogos de verdade atualizam o estado uma vez por frame, sincronizados com a atualização da tela. Sem interrupções apropriadas (que a <a href="11-controller-input-and-animation.html">Lição 11</a> apresenta), a forma correta mais simples de fazer isso é <strong>fazer polling do <code>HVBJOY</code></strong> (<code>$4212</code>) — o bit 7 fica ligado durante toda a duração do V-Blank, e desligado no resto do tempo:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">frame_loop:</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="fu">@wait_vblank_start:</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    lda<span class="bn"> $4212</span></span>
@@ -113,9 +116,9 @@
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    bmi @wait_vblank_end      <span class="co">; loop while bit 7 is still set = still in vblank</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    <span class="bu">jmp</span> frame_loop</span></code></pre></div>
-<p>The second wait matters as much as the first: without it, your “once per frame” code would actually run dozens of times during a single ~40-scanline V-Blank period, since the poll loop would keep passing the first check the whole time V-Blank stays active. Waiting for V-Blank to <em>end</em> before looping back guarantees exactly one update per frame. <a href="11-controller-input-and-animation.html">Lesson 11</a> replaces this whole polling pattern with an NMI handler, which is both more precise and frees the CPU to do other work while waiting — but polling is worth understanding first, since it makes the underlying timing explicit instead of hiding it inside an interrupt.</p>
-<h2 id="extending-your-rom">Extending your ROM</h2>
-<p>Reserve two direct-page bytes for a 16-bit scroll counter, replace your ROM’s final <code>forever:</code> loop with the frame loop above, and increment the scroll value once per frame using the classic 8-bit “increment low byte, propagate carry to high byte” idiom:</p>
+<p>A segunda espera importa tanto quanto a primeira: sem ela, seu código de “uma vez por frame” na verdade rodaria dezenas de vezes durante um único período de V-Blank de ~40 scanlines, já que o loop de polling continuaria passando na primeira checagem durante todo o tempo em que o V-Blank permanece ativo. Esperar o V-Blank <em>terminar</em> antes de voltar ao loop garante exatamente uma atualização por frame. A <a href="11-controller-input-and-animation.html">Lição 11</a> substitui todo esse padrão de polling por um handler de NMI, que é ao mesmo tempo mais preciso e libera a CPU para fazer outro trabalho enquanto espera — mas vale a pena entender o polling primeiro, já que ele deixa o timing subjacente explícito em vez de escondê-lo dentro de uma interrupção.</p>
+<h2 id="estendendo-sua-rom">Estendendo sua ROM</h2>
+<p>Reserve dois bytes de página direta para um contador de rolagem de 16 bits, substitua o loop final <code>forever:</code> da sua ROM pelo loop de frame acima, e incremente o valor de rolagem uma vez por frame usando o idioma clássico de 8 bits “incremente o byte baixo, propague o carry para o byte alto”:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">; --- direct-page variables, reserved once near the top of your code ---</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>scroll_lo :=<span class="bn"> $00</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>scroll_hi :=<span class="bn"> $01</span></span>
@@ -129,17 +132,17 @@
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>    sta<span class="bn"> $2111        </span><span class="co">; BG3HOFS low byte</span></span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a>    lda scroll_hi</span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>    sta<span class="bn"> $2111         </span><span class="co">; BG3HOFS high byte</span></span></code></pre></div>
-<p>A tempting shortcut to avoid: don’t reach for a single 16-bit <code>sta $2111</code> here even though <code>scroll_lo</code>/<code>scroll_hi</code> sit in consecutive memory as a natural 16-bit value. A 16-bit store writes its low byte to <code>$2111</code> and its high byte to <code>$2113</code> — sorry, to <code>$2112</code>, the <em>next</em> address, which is <code>BG3VOFS</code>, not the second half of <code>BG3HOFS</code>. Two deliberate 8-bit writes to the same address is the correct pattern here, not one 16-bit write to two addresses — a mistake easy enough to make that it’s worth naming explicitly.</p>
-<h2 id="build-and-run">Build and run</h2>
-<p>Assemble and run it. The striped background should now scroll smoothly and continuously to one side, wrapping seamlessly — because your tilemap is a single 32×32-tile (256×256-pixel) block and, per the <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">background reference</a>, “the display can never fall outside the BG: it simply wraps around automatically.” You didn’t write any wrapping logic; the hardware did it for you.</p>
-<h2 id="exercises">Exercises</h2>
+<p>Um atalho tentador a evitar: não recorra a um único <code>sta $2111</code> de 16 bits aqui, mesmo que <code>scroll_lo</code>/<code>scroll_hi</code> estejam em memória consecutiva como um valor natural de 16 bits. Uma escrita de 16 bits grava seu byte baixo em <code>$2111</code> e seu byte alto em <code>$2113</code> — desculpe, em <code>$2112</code>, o <em>próximo</em> endereço, que é o <code>BG3VOFS</code>, não a segunda metade do <code>BG3HOFS</code>. Duas escritas deliberadas de 8 bits no mesmo endereço é o padrão correto aqui, não uma escrita de 16 bits em dois endereços — um erro fácil o suficiente de cometer que vale a pena nomear explicitamente.</p>
+<h2 id="compile-e-execute">Compile e execute</h2>
+<p>Monte e execute. O background listrado agora deve rolar suave e continuamente para um dos lados, dando a volta sem emendas — porque seu tilemap é um único bloco de 32×32 tiles (256×256 pixels) e, segundo a <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">referência de backgrounds</a>, “a exibição nunca pode cair para fora do BG: ela simplesmente dá a volta automaticamente.” Você não escreveu nenhuma lógica de wrap-around; o hardware fez isso por você.</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Add a second counter for <code>BG3VOFS</code> and scroll diagonally.</li>
-<li>The <code>BG3SC</code> register’s low two bits (from <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs-byte-addresses">Lesson 6</a>) select 32×32, 64×32, 32×64, or 64×64 tile arrangements. Try <code>01</code> (64×32) and fill the second 32×32 block with a different tilemap pattern — confirm the scroll now reveals two distinct halves before wrapping, instead of one repeating block.</li>
-<li>Slow the scroll rate down to one pixel every 4 frames instead of every frame, without changing the frame loop’s structure — think about what condition should gate the <code>inc scroll_lo</code> line.</li>
+<li>Adicione um segundo contador para <code>BG3VOFS</code> e role na diagonal.</li>
+<li>Os dois bits mais baixos do registrador <code>BG3SC</code> (da <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs.-byte-addresses">Lição 6</a>) selecionam arranjos de tiles 32×32, 64×32, 32×64, ou 64×64. Tente <code>01</code> (64×32) e preencha o segundo bloco 32×32 com um padrão de tilemap diferente — confirme que a rolagem agora revela duas metades distintas antes de dar a volta, em vez de um bloco que se repete.</li>
+<li>Diminua a velocidade da rolagem para um pixel a cada 4 frames em vez de a cada frame, sem mudar a estrutura do loop de frame — pense em qual condição deveria controlar a linha <code>inc scroll_lo</code>.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a> Next: <a href="10-sprites-oam-basics.html">Lesson 10 — Sprites (OAM) basics</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="08-dma-and-hdma.html">Lição 8 — Mergulho profundo em DMA &amp; HDMA</a> Next: <a href="10-sprites-oam-basics.html">Lição 10 — Fundamentos de sprites (OAM)</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

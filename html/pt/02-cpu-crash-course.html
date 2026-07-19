@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lição 2: Curso Intensivo sobre a CPU 65816</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lição 2: Curso Intensivo sobre a CPU 65816</h1>
+</header>
+<h1 id="lição-2-curso-intensivo-sobre-a-cpu-65816">Lição 2: Curso Intensivo sobre a CPU 65816</h1>
+<p><strong>Objetivo:</strong> entender a CPU o suficiente para que o resto do código deste tutorial pare de parecer uma sequência mágica de símbolos. Você não precisa decorar cada opcode — precisa de um modelo mental dos registradores, dos dois modos de operação, e dos modos de endereçamento que você vai realmente usar.</p>
+<p>Se você nunca escreveu assembly de 6502/65816 antes, leia esta lição com calma e faça os exercícios. Se você <em>já</em> escreveu código para 6502 antes, dê uma olhada rápida na tabela de registradores e vá direto para <a href="#whats-actually-new">6502 → 65816: o que realmente é novo</a> — essa é a seção que vai te livrar dos bugs que programadores de 6502 experientes costumam ter.</p>
+<h2 id="os-registradores">Os registradores</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Registrador</th>
+<th>Nome</th>
+<th>Para que serve</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>A</code></td>
+<td>Acumulador</td>
+<td>O registrador de matemática — um operando e o resultado da maioria das operações aritméticas/lógicas.</td>
+</tr>
+<tr class="even">
+<td><code>X</code>, <code>Y</code></td>
+<td>Registradores de índice</td>
+<td>Contadores de loop, e offsets para endereçamento indexado (<code>LDA table,X</code>).</td>
+</tr>
+<tr class="odd">
+<td><code>S</code></td>
+<td>Ponteiro de pilha</td>
+<td>Aponta para o próximo byte livre da pilha. Sempre 16 bits.</td>
+</tr>
+<tr class="even">
+<td><code>D</code> (ou <code>DP</code>)</td>
+<td>Registrador de página direta</td>
+<td>Veja <a href="#direct-page-addressing">Página direta</a> abaixo.</td>
+</tr>
+<tr class="odd">
+<td><code>DBR</code> (ou <code>DB</code>)</td>
+<td>Registrador de banco de dados</td>
+<td>O banco padrão para acesso absoluto (não-long) à memória.</td>
+</tr>
+<tr class="even">
+<td><code>PBR</code> (ou <code>PB</code>)</td>
+<td>Registrador de banco de programa</td>
+<td>O banco de onde as instruções são buscadas.</td>
+</tr>
+<tr class="odd">
+<td><code>P</code></td>
+<td>Status do processador</td>
+<td>Bits de flag — veja a próxima tabela.</td>
+</tr>
+<tr class="even">
+<td><code>PC</code></td>
+<td>Contador de programa</td>
+<td>Endereço da instrução atual, dentro do <code>PBR</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>A</code>, <code>X</code> e <code>Y</code> são os que você vai mexer o tempo todo. <code>D</code>, <code>DBR</code> e <code>PBR</code> você configura uma vez durante a inicialização (a rotina <code>reset</code> da Lição 1 já mexe em <code>D</code> implicitamente, deixando-o em seu valor de power-on, <code>$0000</code>, e é por isso que os endereços de página direta naquele código mapeiam diretamente para a RAM baixa).</p>
+<h3 id="flags-no-registrador-p">Flags no registrador <code>P</code></h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Flag</th>
+<th>Bit</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>N</td>
+<td><code>$80</code></td>
+<td>Negativo</td>
+</tr>
+<tr class="even">
+<td>V</td>
+<td><code>$40</code></td>
+<td>Overflow</td>
+</tr>
+<tr class="odd">
+<td><strong>M</strong></td>
+<td><code>$20</code></td>
+<td><strong>Largura do acumulador</strong> (só em modo nativo): 0 = 16 bits, 1 = 8 bits</td>
+</tr>
+<tr class="even">
+<td><strong>X</strong></td>
+<td><code>$10</code></td>
+<td><strong>Largura dos registradores de índice</strong> (só em modo nativo): 0 = 16 bits, 1 = 8 bits</td>
+</tr>
+<tr class="odd">
+<td>D</td>
+<td><code>$08</code></td>
+<td>Modo decimal (aritmética BCD — código de SNES essencialmente nunca usa isso)</td>
+</tr>
+<tr class="even">
+<td>I</td>
+<td><code>$04</code></td>
+<td>Desabilita IRQ</td>
+</tr>
+<tr class="odd">
+<td>Z</td>
+<td><code>$02</code></td>
+<td>Zero</td>
+</tr>
+<tr class="even">
+<td>C</td>
+<td><code>$01</code></td>
+<td>Carry</td>
+</tr>
+<tr class="odd">
+<td>E</td>
+<td>—</td>
+<td>Modo de emulação (não faz parte do byte de flags visível, mas está conceitualmente aqui)</td>
+</tr>
+</tbody>
+</table>
+<p>As duas flags que mais importam no dia a dia de programação para SNES são <strong>M</strong> e <strong>X</strong> — elas não são só status, elas <em>mudam o que a CPU fisicamente faz</em> com <code>A</code>, <code>X</code> e <code>Y</code>. Essa é a próxima seção.</p>
+<h2 id="two-cpus-in-one-emulation-vs.-native-mode">Duas CPUs em uma: modo de emulação vs. modo nativo</h2>
+<p>O 65816 é um 65C02 (um 6502 melhorado) que pode mudar para um modo genuinamente diferente, com capacidade de 16 bits. Ao ligar, ele sempre está em <strong>modo de emulação</strong> — se comporta como um 6502, <code>A</code>/<code>X</code>/<code>Y</code> são de 8 bits, a pilha é fixa na página <code>$01xx</code>. O código de reset da Lição 1 muda para o <strong>modo nativo</strong> já nas primeiras instruções:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>    <span class="bu">clc</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    xce             <span class="co">; the standard idiom: swap carry with the emulation flag.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>                     <span class="co">; carry was cleared above, so this clears E — native mode.</span></span></code></pre></div>
+<p>Uma vez em modo nativo, <code>A</code>, <code>X</code> e <code>Y</code> <em>ainda começam em 8 bits</em> — modo nativo não significa automaticamente 16 bits, significa que a CPU agora deixa você <em>escolher</em>, através das flags M e X. É para isso que servem <code>REP</code>/<code>SEP</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    rep #<span class="bn">$10        </span><span class="co">; REP = clear these bits in P. #$10 = the X flag → X/Y become 16-bit.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    sep #<span class="bn">$20        </span><span class="co">; SEP = set these bits in P.   #$20 = the M flag → A becomes 8-bit.</span></span></code></pre></div>
+<p>Você pode misturar larguras — <code>A</code> de 8 bits com <code>X</code>/<code>Y</code> de 16 bits (como na Lição 1) é a configuração mais comum em código de SNES, porque dados de paleta/tile são naturalmente do tamanho de um byte, enquanto índices em tabelas grandes se beneficiam do alcance de 16 bits. Mas você também pode simplesmente rodar <code>rep #$30</code> para deixar <em>tanto</em> <code>A</code> quanto <code>X</code>/<code>Y</code> em 16 bits — você vai fazer isso sempre que estiver trabalhando diretamente com valores de 16 bits, como escrever um endereço de VRAM de 16 bits ou uma variável de jogo do tamanho de uma word.</p>
+<h3 id="por-que-isso-é-a-causa-nº-1-de-bugs-no-65816">Por que isso é a causa nº 1 de bugs no 65816</h3>
+<p>O assembler não sabe a largura real dos registradores da CPU — ele só sabe o que <em>você</em> disse a ele através das diretivas <code>.a8</code>/<code>.a16</code> e <code>.i8</code>/<code>.i16</code>. Se essas diretivas dizem uma coisa e a CPU está de fato em um modo diferente, o <code>ca65</code> vai tranquilamente montar um load imediato de 1 byte quando você queria 2 bytes (ou vice-versa), e toda instrução depois dela lê operandos desalinhados. Isso produz bugs que parecem completamente sem relação com o erro real — um valor três linhas depois vira lixo, ou o programa pula para o meio de uma instrução.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    sep #<span class="bn">$20        </span><span class="co">; A is now 8-bit at runtime</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    .a16            <span class="co">; ...but we forgot to tell the assembler! BUG.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    lda #<span class="bn">$1234      </span><span class="co">; ca65 assembles this as a 16-bit immediate load (3 bytes:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>                     <span class="co">; A9 34 12). At runtime the CPU is in 8-bit A mode, so it</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>                     <span class="co">; reads only A9 34 as &quot;LDA #$34&quot;, and the next instruction</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>                     <span class="co">; starts at the byte 12 — which is probably not a valid</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>                     <span class="co">; opcode, or worse, a valid-but-wrong one.</span></span></code></pre></div>
+<p>O jeito de evitar isso é disciplina: todo <code>REP</code>/<code>SEP</code> que muda M ou X ganha uma diretiva <code>.a8</code>/<code>.a16</code>/<code>.i8</code>/<code>.i16</code> correspondente logo em seguida, sempre, sem exceções. O código da Lição 1 faz isso. Continue fazendo.</p>
+<h3 id="a-diretiva-.smart">A diretiva <code>.smart</code></h3>
+<p>O ca65 tem uma diretiva, <code>.smart</code>, que rastreia <code>REP</code>/<code>SEP</code> automaticamente e ajusta suas próprias suposições sobre a largura dos registradores — você vai vê-la no topo da maioria dos arquivos de exemplo do nesdoug. Ela remove a necessidade de controlar manualmente <code>.a8</code>/<code>.i16</code> em código linear.</p>
+<p>Este tutorial <strong>não</strong> usa <code>.smart</code>, de propósito: enquanto você ainda está construindo intuição para as larguras, ter que escrever a diretiva você mesmo te obriga a rastrear conscientemente em qual largura cada registrador está em cada ponto do código — que é exatamente a habilidade que você está construindo aqui. <code>.smart</code> é genuinamente útil quando essa intuição já é automática (ela elimina uma categoria inteira de erros de copiar-e-colar em bases de código maiores), e provavelmente você vai querer ativá-la em seus próprios projetos mais adiante. Só saiba que, quando você ler código de outras pessoas em ca65 e ver <code>.smart</code> no topo sem diretivas <code>.a8</code>/<code>.i16</code> espalhadas por ele, é por isso — o assembler está inferindo o que você está fazendo aqui manualmente.</p>
+<h2 id="modos-de-endereçamento">Modos de endereçamento</h2>
+<p>Um modo de endereçamento é <em>como</em> o operando de uma instrução diz à CPU onde encontrar os dados. O 65816 tem muitos deles — mais que o 6502 puro — porque os modos extras são o que torna viável programar com 16 bits e múltiplos bancos. Você não vai usar todos eles o tempo todo, mas vai reconhecê-los no código de outras pessoas, então vale a pena ver cada um pelo menos uma vez.</p>
+<h3 id="imediato-o-valor-é-o-próprio-operando">Imediato — o valor é o próprio operando</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    lda #<span class="bn">$0F        </span><span class="co">; A = $0F. The value is baked into the instruction itself.</span></span></code></pre></div>
+<h3 id="direct-page-addressing">Página direta</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    lda<span class="bn"> $10         </span><span class="co">; A = the byte at address (D + $10)</span></span></code></pre></div>
+<p>“Página direta” é a evolução, no 65816, da página zero do 6502. Em vez de sempre significar o endereço literal <code>$0000</code>–<code>$00FF</code>, significa “o valor do registrador <code>D</code>, mais este offset de um byte.” Como a Lição 1 nunca mexe em <code>D</code>, ele permanece em seu valor de power-on, <code>$0000</code>, então o endereçamento de página direta ali se comporta exatamente como a página zero clássica do 6502. Mais adiante, ao trabalhar com variáveis ligadas a uma região específica de memória, você às vezes vai configurar <code>D</code> de propósito (via <code>TCD</code>, Transfer Accumulator to Direct Page) para tornar um bloco inteiro de variáveis endereçável com offsets baratos de um byte, em vez de endereços absolutos de dois bytes. Essa é uma otimização de tamanho e velocidade que você vai encontrar de novo quando o tamanho do código começar a importar.</p>
+<h3 id="absolute-a-full-16-bit-address-in-the-current-data-bank">Absoluto — um endereço completo de 16 bits no banco de dados atual</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>    lda<span class="bn"> $2122       </span><span class="co">; A = the byte at (DBR : $2122)</span></span></code></pre></div>
+<p>Foi isso que a Lição 1 usou para acessar registradores da PPU — <code>$2100</code>–<code>$21FF</code> vivem no banco 0, e <code>DBR</code> é deixado em <code>$00</code> pelo nosso código de inicialização, então <code>$2122</code> significa, sem ambiguidade, <code>$002122</code>.</p>
+<h3 id="absoluto-long-endereço-mais-banco-explícito">Absoluto long — endereço mais banco explícito</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>    lda<span class="bn"> $7F0000     </span><span class="co">; A = the byte at literal address $7F0000, regardless of DBR</span></span></code></pre></div>
+<p>Use isso quando precisar ler/escrever em um banco específico independentemente do que <code>DBR</code> contenha no momento — mais frequentemente ao mexer em bancos de RAM de trabalho do SNES além do banco 0 (<code>$7E</code>/<code>$7F</code>) a partir de código cujo <code>DBR</code> aponta para outro lugar.</p>
+<h3 id="endereçamento-indexado-página-direta-absoluto-ou-long-mais-x-ou-y">Endereçamento indexado — página direta, absoluto, ou long, mais X ou Y</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>    lda<span class="bn"> $2100,</span>x     <span class="co">; absolute indexed: A = byte at (DBR:$2100 + X)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>    lda table,y     <span class="co">; same idea against a label</span></span></code></pre></div>
+<p>Foi assim que funcionou o loop de limpeza de registradores da Lição 1: <code>stz $2100,x</code> com <code>X</code> contando para baixo atinge cada registrador do bloco, um por iteração do loop.</p>
+<h3 id="modos-indiretos-o-operando-aponta-para-um-ponteiro">Modos indiretos — o operando aponta para um ponteiro</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>    lda (<span class="dv">$10</span>)       <span class="co">; direct page indirect: read a 2-byte pointer from</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>                     <span class="co">;   (D+$10, D+$11), then A = byte at that address (in DBR)</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    lda [<span class="dv">$10</span>]       <span class="co">; direct page indirect LONG: read a 3-byte pointer from</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>                     <span class="co">;   (D+$10..D+$12) — includes the bank byte, so this can</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>                     <span class="co">;   reach any bank, not just DBR&#39;s.</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>    lda (<span class="dv">$10</span>),y     <span class="co">; indirect indexed: read the 2-byte pointer at (D+$10),</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>                     <span class="co">;   THEN add Y to it. This is the classic &quot;iterate a</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>                     <span class="co">;   table of structures&quot; pattern — Y walks fields within</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>                     <span class="co">;   one entry while the pointer itself picks the entry.</span></span></code></pre></div>
+<p>Você vai usar <code>lda [dp],y</code> constantemente quando começar a copiar dados gráficos por aí, porque é uma das poucas formas de endereçar através de fronteiras de banco usando um ponteiro calculado em tempo de execução, em vez de um endereço long fixo em tempo de compilação.</p>
+<h3 id="relativo-à-pilha-lendo-argumentos-passados-na-pilha">Relativo à pilha — lendo argumentos passados na pilha</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>    lda<span class="bn"> $03,</span>s       <span class="co">; A = the byte at (S + 3)</span></span></code></pre></div>
+<p>Útil quando você começar a escrever sub-rotinas que recebem argumentos empilhados antes de um <code>JSR</code>/<code>JSL</code> — um padrão que você vai ver mais em lições posteriores, quando o código passar a ser organizado em rotinas reutilizáveis em vez de um único bloco <code>reset:</code> longo.</p>
+<h2 id="whats-actually-new">6502 → 65816: o que realmente é novo</h2>
+<p>Se você já escreveu código para NES/6502 antes, a maior parte do que veio acima vai parecer familiar, com sabores extras adicionados. Estas são as diferenças que realmente mordem:</p>
+<p><strong>Jumps e chamadas long.</strong> Como o código pode viver em qualquer um dos vários bancos, um <code>JMP</code>/<code>JSR</code> simples (3 bytes: opcode + endereço de 16 bits) só consegue alcançar endereços <em>dentro do banco de programa atual</em>. Para chamar código em um banco diferente, você precisa das formas long:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>    <span class="bu">js</span>l<span class="bn"> $818000     </span><span class="co">; JSL: jump to subroutine, long — pushes PBR too, so...</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>    ...</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>    rtl             <span class="co">; ...RTL (return long) can restore it correctly.</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>    jml<span class="bn"> $818000     </span><span class="co">; JML: jump long, no return expected.</span></span></code></pre></div>
+<p>Misturar isso — dar <code>JSR</code> atravessando uma fronteira de banco, ou dar <code>RTS</code> para sair de uma rotina que foi chamada com <code>JSL</code> — é uma forma clássica de travar o programa. <code>JSR</code>/<code>RTS</code> e <code>JSL</code>/<code>RTL</code> precisam ser usados em pares, de forma consistente.</p>
+<p><strong>O registrador de página direta é realocável.</strong> No 6502, a página zero é sempre <code>$0000</code>–<code>$00FF</code>. No 65816, <code>D</code> pode apontar para qualquer lugar, via <code>TCD</code> (Transfer-C-to-D — carregue um valor de 16 bits em <code>A</code>, depois <code>TCD</code> move-o para <code>D</code>). Isso é um recurso deliberado, não uma pegadinha, mas significa que você não pode assumir “endereçamento de página direta = os primeiros 256 bytes literais da RAM” como podia no 6502 — sempre confira em que valor <code>D</code> foi configurado por último.</p>
+<p><strong>A largura dos registradores é dinâmica, conforme as flags M/X acima</strong> — no 6502 tudo é simplesmente 8 bits, sempre. Esse é o maior ajuste de todos, e é por isso que existe toda a seção sobre <a href="#two-cpus-in-one-emulation-vs.-native-mode">modo de emulação vs. nativo</a>.</p>
+<p><strong><code>DBR</code> importa para endereçamento absoluto.</strong> No 6502 não existe conceito de banco nenhum. No 65816, um <code>LDA $2122</code> simples resolve contra o que quer que <code>DBR</code> contenha no momento — quase sempre o que você quer, uma vez configurado corretamente na inicialização, mas vale saber que ele está ali, especialmente quando você começar a escrever código que roda a partir de um banco diferente do banco 0.</p>
+<p><strong>Instruções novas e úteis que não existem no 6502</strong>, vale a pena conhecer pelo nome mesmo antes de precisar delas: <code>PHX</code>/<code>PHY</code>/<code>PLX</code>/<code>PLY</code> (empilhar/desempilhar X e Y — o 6502 só consegue empilhar/desempilhar A), <code>PEA</code>/<code>PEI</code> (empilha um endereço efetivo, útil para preparar chamadas distantes), <code>MVN</code>/<code>MVP</code> (block move — copia um intervalo inteiro de memória em uma única instrução, extremamente útil para limpar ou copiar buffers grandes), e <code>WAI</code> (espera por interrupção — coloca a CPU para dormir até o próximo IRQ/NMI, útil quando você estiver sincronizando com o vblank em vez de simplesmente girar em um loop de espera).</p>
+<h2 id="exemplo-resolvido-uma-pequena-sub-rotina">Exemplo resolvido: uma pequena sub-rotina</h2>
+<p>Aqui está uma rotina autocontida que preenche 32 bytes de RAM em página direta com um valor, usando alguns dos modos acima em conjunto. Ela ainda não faz parte da ROM em execução — trate-a como um exercício de leitura, e tente percorrê-la manualmente antes de ler a explicação.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="co">; Fills direct-page addresses $00-$1F with the value in A.</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="co">; Assumes: 8-bit A, 16-bit X (the same convention as Lesson 1&#39;s reset code).</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>.a8</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>.i16</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a><span class="fu">fill_zeropage:</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>    pha             <span class="co">; save the fill value — X is about to clobber nothing,</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>                     <span class="co">;   but we&#39;re about to use A as a loop variable via TDC/TAX</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>                     <span class="co">;   in a fancier version of this; for now we just keep A</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>                     <span class="co">;   as-is and use X purely as the index.</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>    ldx #<span class="bn">$0000</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a><span class="fu">@loop:</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>    pla             <span class="co">; restore the fill value into A...</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a>    pha             <span class="co">; ...and push it right back (a cheap way to &quot;peek&quot; the</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true"></a>                     <span class="co">;   stack without a dedicated stack-relative read, since</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true"></a>                     <span class="co">;   we already have it sitting there from the first PHA)</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true"></a>    sta<span class="bn"> $00,</span>x       <span class="co">; direct page indexed: write A to (D + $00 + X)</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true"></a>    inx</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true"></a>    cpx #<span class="bn">$0020      </span><span class="co">; compare 16-bit X against 32</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true"></a>    bne @loop</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true"></a>    pla             <span class="co">; balance the stack — pull the value we&#39;ve been peeking</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true"></a>    rts</span></code></pre></div>
+<p>Percorrendo o código: o <code>pha</code> no início salva o valor de preenchimento na pilha, para que a rotina não dependa dele ficar em um local fixo de memória ou em um registrador que talvez a gente queira usar para outra coisa. O loop usa <code>X</code> como um contador de 16 bits (endereçamento indexado precisa de um registrador de índice, e <code>X</code> é a escolha convencional), e <code>sta $00,x</code> é endereçamento indexado de página direta — exatamente o modo da tabela acima, só que aplicado a uma escrita em vez de uma leitura. O par <code>pla</code>/<code>pha</code> dentro do loop é uma forma um pouco desajeitada de reutilizar repetidamente um valor guardado na pilha sem uma variável dedicada; uma vez que você tiver visto o endereçamento <code>stack relative</code> em uso real mais adiante, vai reconhecer isso como o tipo de coisa que <code>lda $01,s</code> existe para simplificar.</p>
+<p>Isso é propositalmente um pouco ineficiente — o objetivo é ver o endereçamento indexado, a pilha, e um loop limitado por uma comparação de 16 bits, todos funcionando juntos de verdade, não escrever a rotina de preenchimento mais rápida possível.</p>
+<h2 id="exercícios">Exercícios</h2>
+<ol type="1">
+<li>Na rotina <code>reset:</code> da Lição 1, encontre todo <code>REP</code>/<code>SEP</code> e confirme que cada um tem uma diretiva <code>.a8</code>/<code>.a16</code>/<code>.i8</code>/<code>.i16</code> correspondente logo depois. Existe exatamente um par — mas crie o hábito de checar, porque lições posteriores adicionam mais.</li>
+<li>Reescreva o loop de limpeza de registradores da Lição 1 (<code>ldx #$33</code> / <code>stz $2100,x</code> / <code>stz $4200,x</code> / <code>dex</code> / <code>bpl</code>) usando words em vez de bytes: o que mudaria se você quisesse limpar valores de 16 bits, dois bytes por vez, em vez de um byte por vez? (Você não precisa implementar isso de fato — raciocinar sobre <em>o que precisaria mudar</em> — o modo de endereçamento do STZ, o limite do loop, o tamanho do passo — é o exercício.)</li>
+<li>Preveja o que dá errado se você apagar a diretiva <code>.i16</code> logo depois de <code>rep #$10</code> no código de reset da Lição 1, deixando a instrução <code>rep #$10</code> em si no lugar. Depois, uma vez que sua toolchain esteja confirmadamente funcionando a partir da Lição 1, tente de fato e veja se o resultado montado bate com sua previsão (dica: compare a quantidade de bytes de <code>ldx #$1FFF</code> antes e depois da sua mudança — você pode checar isso com <code>ca65 -l</code> para gerar um arquivo de listagem, ou inspecionando <code>lesson1.o</code> com um visualizador hexadecimal).</li>
+</ol>
+<hr />
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="01-toolchain-setup-and-first-rom.html">Lição 1 — Configurando as ferramentas &amp; sua primeira ROM</a> Next: <a href="03-memory-map-and-registers.html">Lição 3 — Mapa de memória do SNES &amp; registradores de hardware</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

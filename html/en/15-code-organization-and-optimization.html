@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 15: Code Organization &amp; Optimization</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="../index.html">&larr; Home</a>
+    <a class="lang-link" href="../pt/index.html">Português</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 15: Code Organization &amp; Optimization</h1>
+</header>
+<h1 id="lesson-15-code-organization-optimization">Lesson 15: Code Organization &amp; Optimization</h1>
+<p><strong>Goal:</strong> everything up to this point has lived in one file with generous comments — reasonable for a tutorial, unrealistic for a growing project. This lesson covers splitting code up, reusing patterns with macros, respecting the hardware’s real time budget, and finally using the ROM banks Lesson 1’s linker config reserved but never explained.</p>
+<h2 id="splitting-one-file-into-several">Splitting one file into several</h2>
+<p><code>ca65</code> supports <code>.include "filename.s"</code>, which works exactly like pasting the named file’s contents in place — the assembler still treats everything as one compilation unit. This is the approach <a href="https://nesdoug.com/2020/03/19/snes-projects/">nesdoug’s example projects</a> use, and it’s the natural next step once one file starts feeling unwieldy:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">; main.s</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;regs.s&quot;</span>          <span class="co">; hardware register address constants</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;variables.s&quot;</span>     <span class="co">; direct-page variable definitions</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;macros.s&quot;</span>        <span class="co">; reusable macros (see below)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;reset.s&quot;</span>         <span class="co">; reset: and the setup code from Lessons 1-11</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;gameplay.s&quot;</span>      <span class="co">; nmi_handler: and the per-frame logic</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;VECTORS&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>    <span class="co">; ... unchanged from Lesson 1 ...</span></span></code></pre></div>
+<p>Each <code>.s</code> file can freely reference labels defined in another, as long as <code>ca65</code> sees them all before linking — <code>.include</code> guarantees that, since it’s resolved before assembly even starts. (A separate technique — assembling each file independently with <code>ca65</code> and linking multiple <code>.o</code> files with <code>ld65</code> — also works, and is closer to how large C/C++ projects are organized, but requires <code>.import</code>/<code>.export</code> declarations between files. For a project this size, <code>.include</code> is simpler and is what this tutorial recommends.)</p>
+<h2 id="macros-naming-a-pattern-instead-of-repeating-it">Macros: naming a pattern instead of repeating it</h2>
+<p>You’ve hand-written the same “set an address register, then loop into a data register” shape at least four times now — CGRAM (Lesson 4), VRAM (Lesson 5), the tilemap fill (Lesson 6), OAM (Lesson 10). A <code>.macro</code> turns a pattern like that into something you invoke by name:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>.<span class="pp">macro</span> write_dsp_reg reg, value</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    ldx #(value &lt;&lt; <span class="dv">8</span>) | reg</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    <span class="bu">js</span>r write_dsp</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>.endmacro</span></code></pre></div>
+<p>Every <code>write_dsp</code> call table from <a href="13-spc700-and-audio-basics.html">Lesson 13</a> becomes one line instead of a <code>ldx</code>/<code>jsr</code> pair:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    write_dsp_reg<span class="bn"> $6C, $20    </span><span class="co">; FLG</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    write_dsp_reg<span class="bn"> $4C, $00    </span><span class="co">; KON</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    write_dsp_reg<span class="bn"> $5C, </span><span class="dv">$</span>FF    <span class="co">; KOFF</span></span></code></pre></div>
+<p>Macros cost nothing at runtime — <code>ca65</code> expands them inline at assembly time, identical to writing the <code>ldx</code>/<code>jsr</code> pair by hand. Use them wherever a pattern repeats often enough that naming it improves readability; resist the urge to macro-ize something used only once or twice, where a plain comment does the job with less indirection to mentally unwind while reading.</p>
+<h2 id="respecting-the-v-blank-time-budget">Respecting the V-Blank time budget</h2>
+<p>Recall <a href="03-memory-map-and-registers.html#reading-a-register-diagram">Lesson 3</a>’s register-diagram timing flags — most PPU registers are only safe to write during forced blank or V-Blank. That window is not infinite. NTSC gives you 38 blanked scanlines out of 262 total, each 1364 master cycles long — about 51,800 master cycles of V-Blank per frame. At the default slowROM CPU speed (8 master cycles per CPU cycle), that’s roughly <strong>6,500 CPU cycles</strong> — before subtracting the auto-joypad read and your NMI handler’s own overhead. Compare that to a single instruction like <code>lda $2122</code> costing 3-4 cycles, and it’s clear why large VRAM/CGRAM/OAM updates lean on DMA (Lesson 8) rather than CPU loops: DMA’s per-byte cost is a fraction of a hand-written loop’s, and it’s the difference between an update comfortably fitting in one V-Blank and one that doesn’t, causing visibly torn or delayed graphics.</p>
+<p>The practical habits worth building now: do all PPU-touching work at the very top of <code>nmi_handler</code>, before other logic; prefer DMA over CPU loops for anything more than a handful of bytes; and if you’re ever unsure whether an update is safely finishing inside the window, <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer shows you directly rather than leaving it to arithmetic.</p>
+<h2 id="using-more-than-one-bank">Using more than one bank</h2>
+<p>Lesson 1’s linker config deliberately kept things simple: one 32 KB ROM region, even though the ROM header (<code>romsize = $07</code>) claims a full 128 KB. That white lie was harmless while every lesson’s code and data fit comfortably in 32 KB — but it’s worth fixing now, both for correctness and to actually use the capacity the header claims. Extend <code>lorom128.cfg</code> to the full four banks:</p>
+<pre><code>MEMORY {
+    ZEROPAGE:   start =      0, size =  $100;
+    BSS:        start =   $200, size = $1800;
+    ROM:        start =  $8000, size = $8000, fill = yes;
+    BANK1:      start = $18000, size = $8000, fill = yes;
+    BANK2:      start = $28000, size = $8000, fill = yes;
+    BANK3:      start = $38000, size = $8000, fill = yes;
+}
+
+SEGMENTS {
+    ZEROPAGE:   load = ZEROPAGE,    type = zp;
+    BSS:        load = BSS,         type = bss, align = $100;
+    CODE:       load = ROM,         align = $8000;
+    RODATA:     load = ROM;
+    HEADER:     load = ROM,         start =  $FFC0;
+    ROMINFO:    load = ROM,         start =  $FFD5, optional = yes;
+    VECTORS:    load = ROM,         start =  $FFE0;
+
+    BANK1:      load = BANK1,       align = $8000, optional = yes;
+    BANK2:      load = BANK2,       align = $8000, optional = yes;
+    BANK3:      load = BANK3,       align = $8000, optional = yes;
+}</code></pre>
+<p>Anything placed in <code>.segment "BANK1"</code> lives in a different physical bank than your main <code>CODE</code> segment — which means <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a>’s <code>JSL</code>/<code>RTL</code> (long call/return) are required to reach it, not the plain <code>JSR</code>/<code>RTS</code> you’ve used everywhere so far:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;BANK1&quot;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="fu">big_table:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    .<span class="dt">byte</span> ...     <span class="co">; a large data table that doesn&#39;t need to fit in bank 0</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;CODE&quot;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    <span class="bu">js</span>l big_table_lookup   <span class="co">; must be JSL: big_table_lookup lives in a</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>                             <span class="co">; different bank than this call site</span></span></code></pre></div>
+<p>This is exactly the mistake <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a> warned about in the abstract — mixing <code>JSR</code>/<code>RTS</code> with <code>JSL</code>/<code>RTL</code> — now with a concrete reason it happens: code and data spread across banks as a project grows past 32 KB, and every cross-bank call needs the long form.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Split your current single-file ROM into <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, and <code>gameplay.s</code>, wired together with <code>.include</code> from a small <code>main.s</code>. Confirm it still assembles and runs identically.</li>
+<li>Write a macro for the “set OAMADD, then write 4 bytes” sprite-record pattern from <a href="10-sprites-oam-basics.html">Lesson 10</a>, and use it to shorten the hide-loop from that lesson.</li>
+<li>Using the extended 4-bank config above, move <code>collision_map</code> from <a href="12-collision-detection.html">Lesson 12</a> into <code>BANK1</code>, and update whatever reads it to use long addressing. Since <code>collision_map</code> is only read, not called as a subroutine, think about whether it needs <code>JSL</code> or whether a plain long address (<code>lda $18xxxx,x</code>) is enough — these are not the same requirement.</li>
+</ol>
+<hr />
+<p>Root: <a href="../../README.md">README.md</a> Previous: <a href="14-music-and-sound-effects.html">Lesson 14 — Music &amp; sound effects</a> Next: <a href="16-capstone.html">Lesson 16 — Capstone project</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

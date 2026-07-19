@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 11: Controller Input &amp; Sprite Animation</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="../index.html">&larr; Home</a>
+    <a class="lang-link" href="../pt/index.html">Português</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 11: Controller Input &amp; Sprite Animation</h1>
+</header>
+<h1 id="lesson-11-controller-input-sprite-animation">Lesson 11: Controller Input &amp; Sprite Animation</h1>
+<p><strong>Goal:</strong> replace <a href="09-background-scrolling.html">Lesson 9</a>’s V-Blank polling loop with a proper NMI handler, read the controller, and use it to move and animate the sprite from <a href="10-sprites-oam-basics.html">Lesson 10</a>.</p>
+<h2 id="from-polling-to-interrupts">From polling to interrupts</h2>
+<p>Lesson 9’s frame loop worked by busy-waiting on <code>HVBJOY</code>. That’s fine for a single scrolling background, but it wastes CPU time doing nothing but checking a flag, and it doesn’t scale well once a frame’s logic gets more involved. The proper mechanism is the <strong>NMI</strong> (Non-Maskable Interrupt), which the PPU fires automatically at the start of every V-Blank — no polling required.</p>
+<h3 id="enabling-nmi">Enabling NMI</h3>
+<pre><code>$4200  NMITIMEN  n-yx---a
+        n = Enable NMI
+        a = Auto-Joypad Read Enable</code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    lda #%<span class="dv">10000001</span>    <span class="co">; n=1 (enable NMI), a=1 (enable auto-joypad read)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    sta<span class="bn"> $4200</span></span></code></pre></div>
+<p>Setting bit 0 here is what makes <code>$4218</code>-<code>$421F</code> (the latched joypad registers below) update automatically every frame, with no manual polling of the old <code>$4016</code>/<code>$4017</code> port needed.</p>
+<h3 id="wiring-up-the-handler">Wiring up the handler</h3>
+<p>Go back to your ROM’s <code>VECTORS</code> segment from Lesson 1 and change the one word that was <code>.word trap ; NMI</code> to point at a real handler instead:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    .<span class="dt">word</span> nmi_handler   <span class="co">; NMI (was: trap)</span></span></code></pre></div>
+<p>Then acknowledge the NMI at the top of the handler by reading <code>$4210</code> (<code>RDNMI</code>) — per the <a href="https://wiki.superfamicom.org/registers#nmi-flag-and-5a22-version-942">register reference</a>, this is required, not optional bookkeeping:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">nmi_handler:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    pha</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    phx</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    phy</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    lda<span class="bn"> $4210         </span><span class="co">; RDNMI: must be read during the NMI handler</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    <span class="co">; ... per-frame logic goes here ...</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>    ply</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>    plx</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    pla</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    rti</span></code></pre></div>
+<p>Since this tutorial’s code never changes register widths anywhere after <a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a>’s initial <code>REP</code>/<code>SEP</code> (every lesson has stayed in 8-bit-A/16-bit-X the whole time), the handler only needs to save and restore the registers it actually touches — <code>A</code>, <code>X</code>, <code>Y</code> — with plain <code>PHA</code>/<code>PHX</code>/<code>PHY</code>. A handler that changes register widths mid-interrupt would need to save and restore the <code>P</code> register too, which this tutorial deliberately avoids needing.</p>
+<h2 id="reading-the-controller">Reading the controller</h2>
+<p>Auto-joypad read populates <code>JOY1L</code>/<code>JOY1H</code> (<code>$4218</code>/<code>$4219</code>) once per frame:</p>
+<pre><code>$4219 (high byte): byetUDLR   B / Y / Select / Start / Up / Down / Left / Right
+$4218 (low byte):  axlr0000   A / X / L / R / (unused)</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>    lda<span class="bn"> $4219          </span><span class="co">; JOY1H: bit0=Right, bit1=Left, bit2=Down, bit3=Up</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>    sta buttons</span></code></pre></div>
+<p>One honest caveat: the hardware finishes this auto-read a few scanlines <em>after</em> NMI fires, so the value your handler reads is technically left over from the <em>previous</em> frame’s completed read, not a value freshly captured this exact frame — a lag of at most one frame, generally imperceptible. Waiting for <code>HVBJOY</code> bit 0 to clear before trusting <code>JOY1L</code>/<code>H</code> would close that gap entirely; this tutorial accepts the tiny lag for simplicity, which is what most small SNES projects do in practice.</p>
+<h2 id="extending-your-rom">Extending your ROM</h2>
+<p>Reserve a few more direct-page bytes, move Lesson 9’s scroll update into the new handler, and add movement plus a simple two-frame animation on top:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="co">; --- new direct-page variables ---</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>sprite_x :=<span class="bn"> $02</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>sprite_y :=<span class="bn"> $03</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>buttons  :=<span class="bn"> $04</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>anim_ctr :=<span class="bn"> $05</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a><span class="co">; --- inside reset:, before enabling NMI, initialize the sprite position ---</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>    lda #<span class="dv">120</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>    sta sprite_x</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a>    lda #<span class="dv">100</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a>    sta sprite_y</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>    stz anim_ctr</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a><span class="fu">nmi_handler:</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true"></a>    pha</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true"></a>    phx</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true"></a>    phy</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true"></a>    lda<span class="bn"> $4210            </span><span class="co">; acknowledge NMI</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true"></a>    <span class="co">; --- scroll the background (moved here from Lesson 9) ---</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true"></a>    <span class="bu">inc</span> scroll_lo</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true"></a>    bne @no_carry</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true"></a>    <span class="bu">inc</span> scroll_hi</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true"></a><span class="fu">@no_carry:</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true"></a>    lda scroll_lo</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true"></a>    sta<span class="bn"> $2111</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true"></a>    lda scroll_hi</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true"></a>    sta<span class="bn"> $2111</span></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true"></a></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true"></a>    <span class="co">; --- read the controller ---</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true"></a>    lda<span class="bn"> $4219</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true"></a>    sta buttons</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true"></a></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true"></a>    <span class="co">; --- move the sprite ---</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true"></a>    lda buttons</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true"></a>    <span class="bu">and</span> #%<span class="dv">00000001</span>        <span class="co">; Right</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true"></a>    beq @not_right</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true"></a>    <span class="bu">inc</span> sprite_x</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true"></a><span class="fu">@not_right:</span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true"></a>    lda buttons</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true"></a>    <span class="bu">and</span> #%<span class="dv">00000010</span>         <span class="co">; Left</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true"></a>    beq @not_left</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true"></a>    <span class="bu">dec</span> sprite_x</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true"></a><span class="fu">@not_left:</span></span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true"></a>    lda buttons</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true"></a>    <span class="bu">and</span> #%<span class="dv">00000100</span>          <span class="co">; Down</span></span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true"></a>    beq @not_down</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true"></a>    <span class="bu">inc</span> sprite_y</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true"></a><span class="fu">@not_down:</span></span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true"></a>    lda buttons</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true"></a>    <span class="bu">and</span> #%<span class="dv">00001000</span>           <span class="co">; Up</span></span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true"></a>    beq @not_up</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true"></a>    <span class="bu">dec</span> sprite_y</span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true"></a><span class="fu">@not_up:</span></span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true"></a></span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true"></a>    <span class="co">; --- pick an animation frame: tile 1 alternates every 16 frames,</span></span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true"></a>    <span class="co">;     but only while a direction is actually held ---</span></span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true"></a>    lda buttons</span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true"></a>    <span class="bu">and</span> #%<span class="dv">00001111</span></span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true"></a>    beq @idle</span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true"></a>    <span class="bu">inc</span> anim_ctr</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true"></a>    lda anim_ctr</span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true"></a>    <span class="bu">and</span> #<span class="bn">$10</span></span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true"></a>    beq @frame0</span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true"></a>    lda #<span class="dv">1</span></span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true"></a>    bra @write_oam</span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true"></a><span class="fu">@frame0:</span></span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true"></a>    lda #<span class="dv">0</span></span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true"></a>    bra @write_oam</span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true"></a><span class="fu">@idle:</span></span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true"></a>    lda #<span class="dv">0</span></span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true"></a></span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true"></a><span class="fu">@write_oam:</span></span>
+<span id="cb7-74"><a href="#cb7-74" aria-hidden="true"></a>    pha                    <span class="co">; save chosen tile number</span></span>
+<span id="cb7-75"><a href="#cb7-75" aria-hidden="true"></a>    stz<span class="bn"> $2102</span></span>
+<span id="cb7-76"><a href="#cb7-76" aria-hidden="true"></a>    stz<span class="bn"> $2103</span></span>
+<span id="cb7-77"><a href="#cb7-77" aria-hidden="true"></a>    lda sprite_x</span>
+<span id="cb7-78"><a href="#cb7-78" aria-hidden="true"></a>    sta<span class="bn"> $2104</span></span>
+<span id="cb7-79"><a href="#cb7-79" aria-hidden="true"></a>    lda sprite_y</span>
+<span id="cb7-80"><a href="#cb7-80" aria-hidden="true"></a>    sta<span class="bn"> $2104</span></span>
+<span id="cb7-81"><a href="#cb7-81" aria-hidden="true"></a>    pla</span>
+<span id="cb7-82"><a href="#cb7-82" aria-hidden="true"></a>    sta<span class="bn"> $2104               </span><span class="co">; tile number: 0 or 1</span></span>
+<span id="cb7-83"><a href="#cb7-83" aria-hidden="true"></a>    stz<span class="bn"> $2104                </span><span class="co">; attributes</span></span>
+<span id="cb7-84"><a href="#cb7-84" aria-hidden="true"></a></span>
+<span id="cb7-85"><a href="#cb7-85" aria-hidden="true"></a>    ply</span>
+<span id="cb7-86"><a href="#cb7-86" aria-hidden="true"></a>    plx</span>
+<span id="cb7-87"><a href="#cb7-87" aria-hidden="true"></a>    pla</span>
+<span id="cb7-88"><a href="#cb7-88" aria-hidden="true"></a>    rti</span></code></pre></div>
+<p>Also add the second sprite tile — a hollow outline, reusing the same palette entry from Lesson 10 so no new colors are needed — immediately after <code>sprite_tile</code> in VRAM (tile numbers are just steps of 32 bytes, so placing it right after makes it tile number 1 automatically):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="fu">sprite_tile2:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $81, $00</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00        </span><span class="co">; bitplanes 2/3: all zero, same as sprite_tile</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, $00</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a><span class="fu">sprite_tile2_end:</span></span></code></pre></div>
+<p>Load both tiles as one contiguous 64-byte block when you load sprite graphics into VRAM, instead of just <code>sprite_tile</code> alone.</p>
+<p>Finally, replace the main loop with <code>WAI</code> — the instruction <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a> mentioned but never had a use for yet. With all per-frame work now happening in the NMI handler, the main thread has nothing left to do but sleep until the next interrupt:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="fu">main_loop:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>    wai</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>    bra main_loop</span></code></pre></div>
+<h2 id="build-and-run">Build and run</h2>
+<p>Hold the D-pad. The sprite moves, and toggles between a solid square and a hollow outline every 16 frames while moving — a stand-in for a real walk animation, demonstrating the mechanism (swap the OAM tile number over time) without needing real character art. The background keeps scrolling underneath, now driven by the same interrupt instead of a separate polling loop.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (from <code>JOY1L</code>) to trigger something distinct from movement — for example, instantly reset <code>sprite_x</code>/<code>sprite_y</code> to the starting position.</li>
+<li>The animation counter increments every frame a direction is held, and toggles frames based on bit 4 (every 16 frames). Change it to toggle every 8 frames instead, then every 4 — notice how fast is “too fast” for a convincing animation using only two frames.</li>
+<li>Diagonal movement currently lets Up+Right (for instance) move the sprite faster than a single direction, since both <code>inc</code>/<code>dec</code> pairs apply independently. Is this a bug worth fixing for this tutorial’s purposes? Think about what a real game would do differently, even if you don’t implement it.</li>
+</ol>
+<hr />
+<p>Root: <a href="../../README.md">README.md</a> Previous: <a href="10-sprites-oam-basics.html">Lesson 10 — Sprites (OAM) basics</a> Next: <a href="12-collision-detection.html">Lesson 12 — Collision detection</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

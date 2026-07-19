@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lição 3: Mapa de Memória do SNES &amp; Registradores de Hardware</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lição 3: Mapa de Memória do SNES &amp; Registradores de Hardware</h1>
+</header>
+<h1 id="lição-3-mapa-de-memória-do-snes-registradores-de-hardware">Lição 3: Mapa de Memória do SNES &amp; Registradores de Hardware</h1>
+<p><strong>Objetivo:</strong> construir um mapa mental de onde tudo mora — WRAM, VRAM, CGRAM, OAM, e as janelas de registradores que as controlam — antes de mexer em gráficos. Toda lição a partir daqui aponta de volta para esta, então vale a pena lê-la com calma mesmo sem ter uma nova ROM para montar ainda.</p>
+<h2 id="quatro-tipos-de-memória-quatro-portas-diferentes">Quatro tipos de memória, quatro portas diferentes</h2>
+<p>O SNES não tem um único espaço de memória plano que a CPU possa ler e escrever livremente. Ele tem vários chips de memória fisicamente separados, e o 65816 só consegue alcançar a maioria deles indiretamente, através de pequenos registradores “vigia” (porthole). Deixar isso claro agora poupa muita confusão depois — “por que eu não posso simplesmente dar <code>LDA</code> em um endereço de VRAM?” é uma das perguntas mais comuns de iniciantes, e a resposta é simplesmente que a VRAM não está sequer conectada ao barramento de endereços da CPU.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Memória</th>
+<th>Tamanho</th>
+<th>Contém</th>
+<th>Como a CPU a alcança</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>WRAM</strong></td>
+<td>128 KB</td>
+<td>RAM de propósito geral — variáveis, pilhas, buffers</td>
+<td>Diretamente, como endereços reais (veja abaixo)</td>
+</tr>
+<tr class="even">
+<td><strong>VRAM</strong></td>
+<td>64 KB</td>
+<td>Dados gráficos de tiles e tilemaps</td>
+<td>Indiretamente, através de <code>$2115</code>-<code>$2119</code></td>
+</tr>
+<tr class="odd">
+<td><strong>CGRAM</strong></td>
+<td>512 bytes</td>
+<td>A paleta de cores (256 entradas × cor de 15 bits)</td>
+<td>Indiretamente, através de <code>$2121</code>-<code>$2122</code></td>
+</tr>
+<tr class="even">
+<td><strong>OAM</strong></td>
+<td>544 bytes</td>
+<td>Atributos de sprite (posição, tile, paleta, flags)</td>
+<td>Indiretamente, através de <code>$2102</code>-<code>$2104</code></td>
+</tr>
+</tbody>
+</table>
+<p>A WRAM é a exceção — é a única das quatro que a CPU consegue endereçar como memória comum. VRAM, CGRAM e OAM só são alcançáveis escrevendo um endereço em um registrador e um valor em outro, um passo afastado da CPU. Esta lição apresenta onde cada uma fica e como é sua janela de registradores; as lições <a href="04-palettes-and-cgram.html">4</a>, <a href="05-tiles-and-vram.html">5</a> e <a href="10-sprites-oam-basics.html">10</a> voltam a cada uma delas e aprofundam.</p>
+<h2 id="wram-o-espaço-de-endereços-real-da-cpu">WRAM: o espaço de endereços real da CPU</h2>
+<p>A WRAM tem 128 KB, mapeada em <code>$7E0000</code>-<code>$7FFFFF</code>. Mas você raramente vai escrever um endereço long como <code>$7E1234</code> na prática, porque os <em>primeiros 8 KB</em> desse espaço — <code>$7E0000</code>-<code>$7E1FFF</code> — são adicionalmente <strong>espelhados</strong> em <code>$0000</code>-<code>$1FFF</code> nos bancos <code>$00</code>-<code>$3F</code> e <code>$80</code>-<code>$BF</code>. É por isso que a configuração de pilha da Lição 1 funcionou com um endereço curto:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>    ldx #<span class="bn">$1FFF      </span><span class="co">; top of the WRAM mirror visible in bank 0</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    txs</span></code></pre></div>
+<p>O <code>$0000</code>-<code>$1FFF</code> do banco 0 e a WRAM “real” em <code>$7E0000</code>-<code>$7E1FFF</code> são exatamente os mesmos bytes físicos — escrever em um muda o que você leria do outro. Esse espelhamento é o motivo pelo qual o endereçamento de página direta (veja a <a href="02-cpu-crash-course.html#direct-page-addressing">Lição 2</a>) funciona tão naturalmente para variáveis: contanto que seus dados caibam nesses primeiros 8 KB, você nunca precisa de um endereço long para alcançá-los.</p>
+<p>Se você precisar de WRAM além desses primeiros 8 KB — o resto do chip de 128 KB — existe um segundo caminho: os registradores <code>$2180</code>-<code>$2183</code> (<code>WMDATA</code>/<code>WMADDL</code>/<code>WMADDM</code>/<code>WMADDH</code>) permitem configurar um endereço de WRAM de 17 bits e depois ler/escrever um byte de cada vez através de <code>$2180</code>, com auto-incremento após cada acesso. Isso é mais lento que endereçamento direto (e, a propósito, é como o motor de DMA da Lição 8 alcança a WRAM além de <code>$1FFF</code> sem precisar que <code>DBR</code> aponte para algum lugar incomum), mas funciona a partir de qualquer banco sem mexer em <code>DBR</code>.</p>
+<h2 id="vram-cgram-and-oam-three-porthole-devices">VRAM, CGRAM e OAM: três dispositivos “vigia”</h2>
+<p>Esses três seguem o mesmo padrão: um <strong>registrador de endereço</strong>, um <strong>registrador de dados</strong>, e (geralmente) auto-incremento na escrita. Você vai reconhecer esse padrão imediatamente porque a Lição 1 já o usou para a CGRAM:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    stz<span class="bn"> $2121       </span><span class="co">; CGADD:  &quot;point at palette entry 0&quot;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    lda #<span class="bn">$00</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    sta<span class="bn"> $2122       </span><span class="co">; CGDATA: &quot;write this byte, then advance&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    lda #<span class="bn">$7C</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    sta<span class="bn"> $2122       </span><span class="co">; CGDATA: second byte of the same color, advances again</span></span></code></pre></div>
+<p>A VRAM (<code>$2115</code>-<code>$2119</code>) e a OAM (<code>$2102</code>-<code>$2104</code>) funcionam da mesma forma, só que com nomes de registradores diferentes e peculiaridades um pouco diferentes — a OAM em particular tem um comportamento estranho de escrita em “par bufferizado” que a Lição 10 cobre em detalhes. O importante para internalizar agora: <strong>sempre que você vir código escrevendo repetidamente em um registrador de “dados” dentro de um loop, quase sempre isso está transmitindo bytes para uma dessas três memórias</strong>, com o registrador de “endereço” correspondente configurado uma vez antes.</p>
+<h2 id="as-janelas-de-registradores">As janelas de registradores</h2>
+<p>O Barramento de Endereços B — a janela que a CPU usa para alcançar a PPU, as portas de comunicação da APU, e o DMA — vive inteiramente dentro de <code>$2100</code>-<code>$21FF</code> e <code>$4200</code>-<code>$43FF</code> do banco 0 (também espelhada no banco <code>$80</code>, já que <code>DBR</code> normalmente é <code>$00</code> ou <code>$80</code> no código deste tutorial). Aqui está o mapa que vale a pena marcar para consulta:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Faixa</th>
+<th>O que tem ali</th>
+<th>Coberto em</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2100</code>-<code>$2133</code></td>
+<td>Controle da PPU: tela, backgrounds, portas de VRAM/CGRAM, rolagem</td>
+<td>Lições <a href="04-palettes-and-cgram.html">4</a>, <a href="05-tiles-and-vram.html">5</a>, <a href="06-backgrounds-and-tilemaps.html">6</a>, <a href="09-background-scrolling.html">9</a></td>
+</tr>
+<tr class="even">
+<td><code>$2134</code>-<code>$213F</code></td>
+<td>Status/resultados da PPU: resultado de multiplicação, leitura de volta de OAM/VRAM/CGRAM, posição da scanline</td>
+<td>conforme necessário</td>
+</tr>
+<tr class="odd">
+<td><code>$2140</code>-<code>$2143</code></td>
+<td>Portas de comunicação da APU (SPC700)</td>
+<td>Lições <a href="13-spc700-and-audio-basics.html">13</a>-<a href="14-music-and-sound-effects.html">14</a></td>
+</tr>
+<tr class="even">
+<td><code>$2180</code>-<code>$2183</code></td>
+<td>Porta de acesso indireto à WRAM</td>
+<td>esta lição, e DMA na Lição <a href="08-dma-and-hdma.html">8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4016</code>-<code>$4017</code></td>
+<td>Acesso ao joypad no estilo antigo (compatível com NES)</td>
+<td>raramente usado diretamente — veja a Lição <a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="even">
+<td><code>$4200</code>-<code>$420D</code></td>
+<td>Controle da CPU: habilitação de NMI/IRQ, unidade de matemática, habilitação de DMA, velocidade da ROM</td>
+<td>Lições <a href="08-dma-and-hdma.html">8</a>, <a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4210</code>-<code>$4213</code></td>
+<td>Status da CPU: flags de NMI/IRQ, status de auto-leitura do joypad</td>
+<td>Lição <a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="even">
+<td><code>$4214</code>-<code>$4217</code></td>
+<td>Resultados de multiplicação/divisão por hardware</td>
+<td>não coberto em profundidade neste tutorial</td>
+</tr>
+<tr class="odd">
+<td><code>$4218</code>-<code>$421F</code></td>
+<td>Estados dos botões do joypad capturados (auto-leitura)</td>
+<td>Lição <a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="even">
+<td><code>$4300</code>-<code>$437F</code></td>
+<td>Registradores de canal de DMA/HDMA (8 canais × 16 bytes cada)</td>
+<td>Lição <a href="08-dma-and-hdma.html">8</a></td>
+</tr>
+</tbody>
+</table>
+<p>Essa tabela é propositalmente densa — a ideia não é você decorá-la, é você reconhecê-la depois. Quando uma lição futura apresentar <code>$210D</code> do nada, você vai saber pensar “isso está no bloco de controle da PPU, provavelmente um registrador de background” antes mesmo de ler o que ele faz.</p>
+<p>O detalhamento completo, bit a bit, de todo registrador aqui vive na <a href="https://wiki.superfamicom.org/registers">página de Registradores da Super Famicom Development Wiki</a> — as explicações de registradores deste tutorial são todas conferidas cruzando com ela, e é a aba mais útil para manter aberta enquanto você avança pelo resto deste curso.</p>
+<h3 id="reading-a-register-diagram">Lendo um diagrama de registrador</h3>
+<p>A wiki de referência (e este tutorial) descreve registradores com diagramas de bits compactos como este, para o <code>BGMODE</code>:</p>
+<pre><code>$2105  wb+++-
+        DCBAemmm</code></pre>
+<p>A primeira linha é metadado: <code>w</code> significa gravável (writable), <code>b</code> significa que é um registrador de byte simples (em oposição a uma word dividida em dois endereços), e os quatro símbolos depois disso (<code>+++-</code>) indicam se é seguro escrever durante h-blank/v-blank/forced-blank/a qualquer momento. A segunda linha é o layout de bits, lido da esquerda para a direita, do bit 7 até o bit 0. Então <code>DCBAemmm</code> significa: os bits 7-4 são as flags individuais D, C, B, A; o bit 3 é <code>e</code>; os bits 2-0 juntos formam <code>mmm</code>. Uma vez que essa notação faz sentido, a referência inteira de registradores se torna legível de relance — você vai ver esse formato exato constantemente a partir da Lição 4.</p>
+<h2 id="por-que-o-dbr-importa-aqui">Por que o DBR importa aqui</h2>
+<p>Lembre-se, pela <a href="02-cpu-crash-course.html#absolute-a-full-16-bit-address-in-the-current-data-bank">Lição 2</a>, que o endereçamento absoluto simples (<code>lda $2122</code>) resolve contra o que quer que <code>DBR</code> contenha no momento. Todo acesso a registrador neste tutorial funciona porque o código de reset da Lição 1 deixa <code>DBR</code> em <code>$00</code>, e <code>$2100</code>-<code>$21FF</code>/<code>$4200</code>-<code>$43FF</code> são espelhados de forma idêntica no banco <code>$00</code> e no banco <code>$80</code>. Se algum dia você escrever código que roda a partir de um banco diferente com <code>DBR</code> apontando para outro lugar, escritas em registrador como <code>sta $2122</code> vão silenciosamente ir para o lugar errado — esse é um bug real que aparece quando projetos crescem além de um único banco, então vale lembrar que essa dependência existe mesmo que ela ainda não vá te morder.</p>
+<h2 id="exercícios">Exercícios</h2>
+<ol type="1">
+<li>Sem consultar, tente adivinhar em qual memória (WRAM, VRAM, CGRAM ou OAM) cada um destes moraria: o valor de vida de um jogador; um tilemap de background; a cor da entrada 5 da paleta; a posição X de um sprite. Confira suas respostas com a tabela no topo desta lição.</li>
+<li>Leia a entrada de <code>OAMADDL</code>/<code>OAMADDH</code> na <a href="https://wiki.superfamicom.org/registers#oamaddl-oam-address-low-byte-214">página de Registradores</a> e, usando apenas a técnica de leitura de diagrama de registrador acima, descubra qual bit de <code>$2103</code> é o bit de “rotação de prioridade da OAM” antes de ler a explicação em texto logo abaixo. (A Lição 10 usa isso.)</li>
+<li>Explique com suas próprias palavras por que <code>lda $7E1234</code> e <code>lda $1234</code> (executados a partir do banco <code>$00</code>) leem o mesmo byte, mas <code>lda $7E2000</code> e <code>lda $2000</code> não.</li>
+</ol>
+<hr />
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="02-cpu-crash-course.html">Lição 2 — Curso intensivo sobre a CPU 65816</a> Next: <a href="04-palettes-and-cgram.html">Lição 4 — Paletas &amp; CGRAM</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

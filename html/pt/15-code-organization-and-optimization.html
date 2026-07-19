@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 15: Code Organization &amp; Optimization</title>
+  <title>Lição 15: Organização de Código &amp; Otimização</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,21 +78,24 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 15: Code Organization &amp; Optimization</h1>
+<h1 class="title">Lição 15: Organização de Código &amp; Otimização</h1>
 </header>
-<h1 id="lesson-15-code-organization-optimization">Lesson 15: Code Organization &amp; Optimization</h1>
-<p><strong>Goal:</strong> everything up to this point has lived in one file with generous comments — reasonable for a tutorial, unrealistic for a growing project. This lesson covers splitting code up, reusing patterns with macros, respecting the hardware’s real time budget, and finally using the ROM banks Lesson 1’s linker config reserved but never explained.</p>
-<h2 id="splitting-one-file-into-several">Splitting one file into several</h2>
-<p><code>ca65</code> supports <code>.include "filename.s"</code>, which works exactly like pasting the named file’s contents in place — the assembler still treats everything as one compilation unit. This is the approach <a href="https://nesdoug.com/2020/03/19/snes-projects/">nesdoug’s example projects</a> use, and it’s the natural next step once one file starts feeling unwieldy:</p>
+<h1 id="lição-15-organização-de-código-otimização">Lição 15: Organização de Código &amp; Otimização</h1>
+<p><strong>Objetivo:</strong> tudo até este ponto viveu em um único arquivo com comentários generosos — razoável para um tutorial, irreal para um projeto que cresce. Esta lição cobre dividir o código, reaproveitar padrões com macros, respeitar o orçamento de tempo real do hardware, e finalmente usar os bancos de ROM que a configuração de linker da Lição 1 reservou mas nunca explicou.</p>
+<h2 id="dividindo-um-arquivo-em-vários">Dividindo um arquivo em vários</h2>
+<p>O <code>ca65</code> suporta <code>.include "arquivo.s"</code>, que funciona exatamente como colar o conteúdo do arquivo nomeado no lugar — o assembler continua tratando tudo como uma única unidade de compilação. Essa é a abordagem que os <a href="https://nesdoug.com/2020/03/19/snes-projects/">projetos de exemplo do nesdoug</a> usam, e é o próximo passo natural assim que um arquivo começa a ficar difícil de gerenciar:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">; main.s</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;regs.s&quot;</span>          <span class="co">; hardware register address constants</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>.<span class="bu">include</span> <span class="st">&quot;variables.s&quot;</span>     <span class="co">; direct-page variable definitions</span></span>
@@ -102,23 +105,23 @@
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;VECTORS&quot;</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>    <span class="co">; ... unchanged from Lesson 1 ...</span></span></code></pre></div>
-<p>Each <code>.s</code> file can freely reference labels defined in another, as long as <code>ca65</code> sees them all before linking — <code>.include</code> guarantees that, since it’s resolved before assembly even starts. (A separate technique — assembling each file independently with <code>ca65</code> and linking multiple <code>.o</code> files with <code>ld65</code> — also works, and is closer to how large C/C++ projects are organized, but requires <code>.import</code>/<code>.export</code> declarations between files. For a project this size, <code>.include</code> is simpler and is what this tutorial recommends.)</p>
-<h2 id="macros-naming-a-pattern-instead-of-repeating-it">Macros: naming a pattern instead of repeating it</h2>
-<p>You’ve hand-written the same “set an address register, then loop into a data register” shape at least four times now — CGRAM (Lesson 4), VRAM (Lesson 5), the tilemap fill (Lesson 6), OAM (Lesson 10). A <code>.macro</code> turns a pattern like that into something you invoke by name:</p>
+<p>Cada arquivo <code>.s</code> pode referenciar livremente rótulos definidos em outro, contanto que o <code>ca65</code> os veja todos antes de linkar — <code>.include</code> garante isso, já que é resolvido antes mesmo da montagem começar. (Uma técnica separada — montar cada arquivo independentemente com <code>ca65</code> e linkar múltiplos arquivos <code>.o</code> com <code>ld65</code> — também funciona, e é mais parecida com como projetos grandes em C/C++ são organizados, mas exige declarações <code>.import</code>/<code>.export</code> entre arquivos. Para um projeto deste tamanho, <code>.include</code> é mais simples e é o que este tutorial recomenda.)</p>
+<h2 id="macros-dar-nome-a-um-padrão-em-vez-de-repeti-lo">Macros: dar nome a um padrão em vez de repeti-lo</h2>
+<p>Você já escreveu à mão o mesmo formato de “configure um registrador de endereço, depois faça um loop em um registrador de dados” pelo menos quatro vezes agora — CGRAM (Lição 4), VRAM (Lição 5), o preenchimento de tilemap (Lição 6), OAM (Lição 10). Um <code>.macro</code> transforma um padrão desses em algo que você invoca pelo nome:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>.<span class="pp">macro</span> write_dsp_reg reg, value</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    ldx #(value &lt;&lt; <span class="dv">8</span>) | reg</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    <span class="bu">js</span>r write_dsp</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>.endmacro</span></code></pre></div>
-<p>Every <code>write_dsp</code> call table from <a href="13-spc700-and-audio-basics.html">Lesson 13</a> becomes one line instead of a <code>ldx</code>/<code>jsr</code> pair:</p>
+<p>Toda chamada da tabela de <code>write_dsp</code> da <a href="13-spc700-and-audio-basics.html">Lição 13</a> vira uma linha em vez de um par <code>ldx</code>/<code>jsr</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    write_dsp_reg<span class="bn"> $6C, $20    </span><span class="co">; FLG</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    write_dsp_reg<span class="bn"> $4C, $00    </span><span class="co">; KON</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    write_dsp_reg<span class="bn"> $5C, </span><span class="dv">$</span>FF    <span class="co">; KOFF</span></span></code></pre></div>
-<p>Macros cost nothing at runtime — <code>ca65</code> expands them inline at assembly time, identical to writing the <code>ldx</code>/<code>jsr</code> pair by hand. Use them wherever a pattern repeats often enough that naming it improves readability; resist the urge to macro-ize something used only once or twice, where a plain comment does the job with less indirection to mentally unwind while reading.</p>
-<h2 id="respecting-the-v-blank-time-budget">Respecting the V-Blank time budget</h2>
-<p>Recall <a href="03-memory-map-and-registers.html#reading-a-register-diagram">Lesson 3</a>’s register-diagram timing flags — most PPU registers are only safe to write during forced blank or V-Blank. That window is not infinite. NTSC gives you 38 blanked scanlines out of 262 total, each 1364 master cycles long — about 51,800 master cycles of V-Blank per frame. At the default slowROM CPU speed (8 master cycles per CPU cycle), that’s roughly <strong>6,500 CPU cycles</strong> — before subtracting the auto-joypad read and your NMI handler’s own overhead. Compare that to a single instruction like <code>lda $2122</code> costing 3-4 cycles, and it’s clear why large VRAM/CGRAM/OAM updates lean on DMA (Lesson 8) rather than CPU loops: DMA’s per-byte cost is a fraction of a hand-written loop’s, and it’s the difference between an update comfortably fitting in one V-Blank and one that doesn’t, causing visibly torn or delayed graphics.</p>
-<p>The practical habits worth building now: do all PPU-touching work at the very top of <code>nmi_handler</code>, before other logic; prefer DMA over CPU loops for anything more than a handful of bytes; and if you’re ever unsure whether an update is safely finishing inside the window, <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer shows you directly rather than leaving it to arithmetic.</p>
-<h2 id="using-more-than-one-bank">Using more than one bank</h2>
-<p>Lesson 1’s linker config deliberately kept things simple: one 32 KB ROM region, even though the ROM header (<code>romsize = $07</code>) claims a full 128 KB. That white lie was harmless while every lesson’s code and data fit comfortably in 32 KB — but it’s worth fixing now, both for correctness and to actually use the capacity the header claims. Extend <code>lorom128.cfg</code> to the full four banks:</p>
+<p>Macros não custam nada em tempo de execução — o <code>ca65</code> as expande inline em tempo de montagem, de forma idêntica a escrever o par <code>ldx</code>/<code>jsr</code> à mão. Use-as onde quer que um padrão se repita o suficiente para que nomeá-lo melhore a legibilidade; resista à tentação de transformar em macro algo usado só uma ou duas vezes, onde um comentário simples faz o trabalho com menos indireção para desfazer mentalmente durante a leitura.</p>
+<h2 id="respecting-the-v-blank-time-budget">Respeitando o orçamento de tempo do V-Blank</h2>
+<p>Lembre-se da notação de flags de timing do diagrama de registrador da <a href="03-memory-map-and-registers.html#reading-a-register-diagram">Lição 3</a> — <code>wb+++-</code> e similares — que codifica exatamente quando um registrador é seguro de escrever (forced blank, V-Blank, H-Blank, ou a qualquer momento). Essa janela não é infinita. O NTSC dá a você 38 scanlines em blank de um total de 262, cada uma com 1364 ciclos de clock mestre — cerca de 51.800 ciclos de clock mestre de V-Blank por frame. Na velocidade padrão de CPU do slowROM (8 ciclos de clock mestre por ciclo de CPU), isso é aproximadamente <strong>6.500 ciclos de CPU</strong> — antes de subtrair a auto-leitura do joypad e a própria sobrecarga do seu handler de NMI. Compare isso com uma única instrução como <code>lda $2122</code> custando 3-4 ciclos, e fica claro por que atualizações grandes de VRAM/CGRAM/OAM se apoiam em DMA (Lição 8) em vez de loops de CPU: o custo por byte do DMA é uma fração do custo de um loop escrito à mão, e é a diferença entre uma atualização caber confortavelmente em um V-Blank e uma que não cabe, causando gráficos visivelmente rasgados ou atrasados.</p>
+<p>Os hábitos práticos que vale a pena construir agora: faça todo trabalho que toca a PPU bem no topo do <code>nmi_handler</code>, antes de outra lógica; prefira DMA a loops de CPU para qualquer coisa além de um punhado de bytes; e se você algum dia ficar em dúvida se uma atualização está terminando de forma segura dentro da janela, o Event Viewer da <a href="07-debugging-with-mesen.html">Lição 7</a> mostra isso diretamente, em vez de deixar por conta da aritmética.</p>
+<h2 id="usando-mais-de-um-banco">Usando mais de um banco</h2>
+<p>A configuração de linker da Lição 1 manteve as coisas deliberadamente simples: uma única região de ROM de 32 KB, mesmo que o cabeçalho da ROM (<code>romsize = $07</code>) declare 128 KB completos. Essa mentirinha era inofensiva enquanto o código e os dados de toda lição cabiam confortavelmente em 32 KB — mas vale a pena corrigir isso agora, tanto por correção quanto para de fato usar a capacidade que o cabeçalho declara. Estenda o <code>lorom128.cfg</code> para os quatro bancos completos:</p>
 <pre><code>MEMORY {
     ZEROPAGE:   start =      0, size =  $100;
     BSS:        start =   $200, size = $1800;
@@ -141,7 +144,7 @@ SEGMENTS {
     BANK2:      load = BANK2,       align = $8000, optional = yes;
     BANK3:      load = BANK3,       align = $8000, optional = yes;
 }</code></pre>
-<p>Anything placed in <code>.segment "BANK1"</code> lives in a different physical bank than your main <code>CODE</code> segment — which means <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a>’s <code>JSL</code>/<code>RTL</code> (long call/return) are required to reach it, not the plain <code>JSR</code>/<code>RTS</code> you’ve used everywhere so far:</p>
+<p>Qualquer coisa colocada em <code>.segment "BANK1"</code> vive em um banco físico diferente do seu segmento <code>CODE</code> principal — o que significa que o <code>JSL</code>/<code>RTL</code> (chamada e retorno long) da <a href="02-cpu-crash-course.html#whats-actually-new">Lição 2</a> são necessários para alcançá-lo, não o simples <code>JSR</code>/<code>RTS</code> que você usou em tudo até agora:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;BANK1&quot;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="fu">big_table:</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    .<span class="dt">byte</span> ...     <span class="co">; a large data table that doesn&#39;t need to fit in bank 0</span></span>
@@ -149,15 +152,15 @@ SEGMENTS {
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;CODE&quot;</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    <span class="bu">js</span>l big_table_lookup   <span class="co">; must be JSL: big_table_lookup lives in a</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>                             <span class="co">; different bank than this call site</span></span></code></pre></div>
-<p>This is exactly the mistake <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a> warned about in the abstract — mixing <code>JSR</code>/<code>RTS</code> with <code>JSL</code>/<code>RTL</code> — now with a concrete reason it happens: code and data spread across banks as a project grows past 32 KB, and every cross-bank call needs the long form.</p>
-<h2 id="exercises">Exercises</h2>
+<p>Esse é exatamente o erro que a <a href="02-cpu-crash-course.html#whats-actually-new">Lição 2</a> avisou de forma abstrata — misturar <code>JSR</code>/<code>RTS</code> com <code>JSL</code>/<code>RTL</code> — agora com um motivo concreto para acontecer: código e dados se espalham por bancos quando um projeto cresce além de 32 KB, e toda chamada entre bancos precisa da forma long.</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Split your current single-file ROM into <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, and <code>gameplay.s</code>, wired together with <code>.include</code> from a small <code>main.s</code>. Confirm it still assembles and runs identically.</li>
-<li>Write a macro for the “set OAMADD, then write 4 bytes” sprite-record pattern from <a href="10-sprites-oam-basics.html">Lesson 10</a>, and use it to shorten the hide-loop from that lesson.</li>
-<li>Using the extended 4-bank config above, move <code>collision_map</code> from <a href="12-collision-detection.html">Lesson 12</a> into <code>BANK1</code>, and update whatever reads it to use long addressing. Since <code>collision_map</code> is only read, not called as a subroutine, think about whether it needs <code>JSL</code> or whether a plain long address (<code>lda $18xxxx,x</code>) is enough — these are not the same requirement.</li>
+<li>Divida sua ROM de arquivo único atual em <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, e <code>gameplay.s</code>, conectados via <code>.include</code> a partir de um pequeno <code>main.s</code>. Confirme que ainda monta e roda de forma idêntica.</li>
+<li>Escreva uma macro para o padrão “configure OAMADD, depois escreva 4 bytes” de registro de sprite da <a href="10-sprites-oam-basics.html">Lição 10</a>, e use-a para encurtar o loop de esconder daquela lição.</li>
+<li>Usando a configuração de 4 bancos estendida acima, mova o <code>collision_map</code> da <a href="12-collision-detection.html">Lição 12</a> para o <code>BANK1</code>, e atualize o que quer que o leia para usar endereçamento long. Já que <code>collision_map</code> é só lido, não chamado como uma sub-rotina, pense se ele precisa de <code>JSL</code> ou se um simples endereço long (<code>lda $18xxxx,x</code>) é suficiente — esses não são o mesmo requisito.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="14-music-and-sound-effects.html">Lesson 14 — Music &amp; sound effects</a> Next: <a href="16-capstone.html">Lesson 16 — Capstone project</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="14-music-and-sound-effects.html">Lição 14 — Música &amp; efeitos sonoros</a> Next: <a href="16-capstone.html">Lição 16 — Projeto final</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

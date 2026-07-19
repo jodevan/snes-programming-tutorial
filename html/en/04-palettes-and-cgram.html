@@ -78,13 +78,16 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="../index.html">&larr; Home</a>
+    <a class="lang-link" href="../pt/index.html">Português</a>
+  </div>
 </div>
 <header id="title-block-header">
 <h1 class="title">Lesson 4: Palettes &amp; CGRAM</h1>
@@ -188,7 +191,7 @@ $2122  ww+++-
 <li>The <a href="https://wiki.superfamicom.org/registers#cgwsel-color-addition-select-588">Registers page’s CGWSEL/CGADSUB/COLDATA entries</a> describe “color math” — blending two colors together in hardware. Skim just enough to answer: does color math change what’s stored in CGRAM, or does it change what’s computed at render time? This tutorial doesn’t implement color math, but knowing the answer will save you confusion if you see it in other people’s code.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="03-memory-map-and-registers.html">Lesson 3 — SNES memory map &amp; hardware registers</a> Next: <a href="05-tiles-and-vram.html">Lesson 5 — Tiles &amp; VRAM</a></p>
+<p>Root: <a href="../../README.md">README.md</a> Previous: <a href="03-memory-map-and-registers.html">Lesson 3 — SNES memory map &amp; hardware registers</a> Next: <a href="05-tiles-and-vram.html">Lesson 5 — Tiles &amp; VRAM</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

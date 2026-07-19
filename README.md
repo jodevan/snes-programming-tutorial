@@ -3,7 +3,9 @@
 **A step-by-step tutorial for writing a Super Nintendo game in 65816 assembly,
 built to run on a real emulator at every stage.**
 An HTML version of this tutorial can also be accessed
-[here](https://jodevan.github.io/snes-programming-tutorial/).
+[here](https://jodevan.github.io/snes-programming-tutorial/). A Portuguese
+translation is available in [`pt/`](pt/README.md) (or
+[online](https://jodevan.github.io/snes-programming-tutorial/pt/index.html)).
 
 ## Goal & motivation
 

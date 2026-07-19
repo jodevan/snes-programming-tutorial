@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lição 14: Música &amp; Efeitos Sonoros</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lição 14: Música &amp; Efeitos Sonoros</h1>
+</header>
+<h1 id="lição-14-música-efeitos-sonoros">Lição 14: Música &amp; Efeitos Sonoros</h1>
+<p><strong>Objetivo:</strong> disparar um som a partir de um evento real de gameplay usando a técnica de DSP manual da <a href="13-spc700-and-audio-basics.html">Lição 13</a>, e depois ter uma visão honesta do que é preciso para adicionar música de verdade — que este tutorial deliberadamente não implementa do zero.</p>
+<h2 id="disparando-um-efeito-sonoro-sob-demanda">Disparando um efeito sonoro sob demanda</h2>
+<p>O tom da Lição 13 começava uma vez, no boot, e nunca parava. Um <em>efeito</em> sonoro precisa disparar sob demanda — digamos, quando o <code>check_collision</code> da <a href="12-collision-detection.html">Lição 12</a> reporta um toque. O truque: redisparar uma voz que já está tocando exige um par de <strong>key-off, depois key-on</strong>, não apenas key-on de novo — escrever <code>KON</code> enquanto uma voz já está ativa não reinicia seu envelope, é simplesmente ignorado.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">; Call after check_collision returns with carry set.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="fu">play_hit_sfx:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    ldx #<span class="bn">$015C        </span><span class="co">; KOFF: key off voice 0</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    <span class="bu">js</span>r write_dsp</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>    ldx #<span class="bn">$014C         </span><span class="co">; KON: key on voice 0 (restarts the envelope cleanly)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    <span class="bu">js</span>r write_dsp</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>    rts</span></code></pre></div>
+<p>Conecte isso à checagem de colisão da Lição 12:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    <span class="bu">js</span>r check_collision</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    bcc @no_hit</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    <span class="bu">js</span>r play_hit_sfx</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="fu">@no_hit:</span></span></code></pre></div>
+<p>Como tanto <code>check_collision</code> quanto <code>write_dsp</code>/<code>spc_upload_byte</code> são sub-rotinas comuns, chamar uma a partir do caminho de sucesso da outra não é nada novo — é a mesma disciplina <code>JSR</code>/<code>RTS</code> de toda lição anterior, só que com um chip de som do outro lado em vez de um registrador da PPU.</p>
+<h3 id="um-segundo-som-independente">Um segundo som, independente</h3>
+<p>O DSP tem 8 vozes; a Lição 13 só usou a voz 0. Um segundo efeito sonoro — digamos, um bipe curto ao pressionar um botão — pode rodar na voz 1 inteiramente independente, usando as mesmas chamadas a <code>write_dsp</code> com os offsets de registrador da voz 1 (some <code>$10</code> a cada um dos números de registrador da voz 0: <code>VOLL</code> vira <code>$10</code>, <code>PITCHL</code> vira <code>$12</code>, e assim por diante). Conecte isso ao botão <code>A</code> dos exercícios da <a href="11-controller-input-and-animation.html#reading-the-controller">Lição 11</a>, e você tem dois sons independentemente disparáveis compartilhando os mesmos dados de amostra, distinguidos só por qual voz os toca.</p>
+<h2 id="o-que-música-de-verdade-realmente-exige">O que música de verdade realmente exige</h2>
+<p>Tudo nas Lições 13-14 é deliberadamente mínimo — o suficiente para entender o protocolo de comunicação e fazer <em>um</em> som. Música de fundo de verdade precisa de um sequenciador rodando <em>no próprio SPC700</em>: algo que lê um formato de música compacto da ARAM e atualiza continuamente os registradores do DSP no tempo certo, inteiramente independente do 65816 (que deveria estar livre para rodar código de gameplay, não gastar todo frame escrevendo registradores do DSP manualmente). Escrever esse sequenciador do zero é um projeto sério por si só — comparável em escopo a tudo que foi coberto nas Lições 1-13 juntas, o que é por isso que essencialmente todo jogo homebrew de SNES, por menor que seja, se apoia em um driver de áudio já existente em vez de escrever um do zero. Três opções ativamente usadas e compatíveis com ca65, em ordem aproximada de quão ativamente mantidas e documentadas estão no momento em que isto foi escrito:</p>
+<ul>
+<li><strong><a href="https://github.com/undisbeliever/terrific-audio-driver">Terrific Audio Driver</a></strong> — suporta ca65 diretamente, usa um formato de texto MML (Music Macro Language) para composição, e vem com seu próprio previewer com um emulador de SPC700 embutido, para você ouvir mudanças sem precisar recompilar tudo.</li>
+<li><strong><a href="https://github.com/NovaSquirrel/snesgss-extended">SNESGSS Extended</a></strong> — um fork do motor SNESGSS, de longa data, baseado em um pacote de macros para ca65, com um editor dedicado no estilo tracker.</li>
+<li><strong><a href="https://nesdoug.com/2022/03/02/snesmod/">SNESMOD</a></strong> — licenciado sob MIT, montado com ca65 via pacote de macros do blargg, controlado por arquivos de módulo <code>.it</code> (Impulse Tracker) que você pode compor na ferramenta gratuita OpenMPT.</li>
+</ul>
+<p>Todas as três resolvem o mesmo problema subjacente que esta lição introduziu à mão — colocar uma representação compacta de música na ARAM e fazer o SPC700 tocá-la continuamente — com um sequenciador de verdade em vez de um tom único e fixo. Escolher uma e seguir seu próprio guia de integração é o próximo passo natural depois deste tutorial, e é deixado intencionalmente assim: um próximo passo, não parte do currículo principal aqui.</p>
+<h2 id="exercícios">Exercícios</h2>
+<ol type="1">
+<li>Implemente o bipe da voz 1, disparado por botão, descrito acima, distinto do som de colisão da voz 0, e confirme que os dois conseguem ser ouvidos independentemente (inclusive sobrepostos, se você os disparar próximos um do outro).</li>
+<li>Leia a <a href="https://github.com/undisbeliever/terrific-audio-driver">documentação do Terrific Audio Driver</a> (ou qualquer uma das três opções que mais te interessar) o suficiente para responder: como ele espera que os dados de música sejam incluídos na sua ROM — como um arquivo montado separado, um segmento de linker, ou outra coisa? Você não precisa integrá-lo, só localizar a resposta.</li>
+<li>Olhe de novo para os valores de <code>ADSR1</code>/<code>ADSR2</code> (<code>$C3</code>/<code>$2F</code>) da voz 0 na <a href="13-spc700-and-audio-basics.html">Lição 13</a>. A <a href="https://wiki.superfamicom.org/spc700-reference">referência do SPC700</a> documenta o layout de bits do envelope ADSR — sem necessariamente calcular os tempos exatos, identifique qual dos dois registradores controla o “ataque” (quão rápido o som atinge o volume máximo quando o key-on dispara) versus o “release”.</li>
+</ol>
+<hr />
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="13-spc700-and-audio-basics.html">Lição 13 — O SPC700 &amp; fundamentos de áudio</a> Next: <a href="15-code-organization-and-optimization.html">Lição 15 — Organização de código &amp; otimização</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

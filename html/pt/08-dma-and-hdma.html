@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 8: DMA &amp; HDMA Deep Dive</title>
+  <title>Lição 8: Mergulho Profundo em DMA &amp; HDMA</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,65 +78,73 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 8: DMA &amp; HDMA Deep Dive</h1>
+<h1 class="title">Lição 8: Mergulho Profundo em DMA &amp; HDMA</h1>
 </header>
-<h1 id="lesson-8-dma-hdma-deep-dive">Lesson 8: DMA &amp; HDMA Deep Dive</h1>
-<p><strong>Goal:</strong> replace the CPU loops from Lessons <a href="04-palettes-and-cgram.html">4</a>-<a href="06-backgrounds-and-tilemaps.html">6</a> with hardware DMA transfers, then use HDMA to do something a CPU loop fundamentally can’t: change a register in the middle of the screen, once per scanline, for free.</p>
-<h2 id="dma-let-the-hardware-do-the-loop">DMA: let the hardware do the loop</h2>
-<p>Every “set an address register, then loop writing to a data register” pattern from Lessons 4-6 is exactly what DMA (Direct Memory Access) automates. You set up a source, a destination, a count, and a transfer shape, flip one bit, and the hardware moves the bytes — the CPU is paused for the duration, but no instructions execute the copy.</p>
-<p>There are 8 independent DMA channels, each controlled by a block of registers at <code>$43x0</code>-<code>$43xA</code> (<code>x</code> = channel number 0-7):</p>
+<h1 id="lição-8-mergulho-profundo-em-dma-hdma">Lição 8: Mergulho Profundo em DMA &amp; HDMA</h1>
+<p><strong>Objetivo:</strong> substituir os loops de CPU das Lições <a href="04-palettes-and-cgram.html">4</a>-<a href="06-backgrounds-and-tilemaps.html">6</a> por transferências de DMA por hardware, e depois usar HDMA para fazer algo que um loop de CPU fundamentalmente não consegue: mudar um registrador no meio da tela, uma vez por scanline, de graça.</p>
+<h2 id="dma-deixe-o-hardware-fazer-o-loop">DMA: deixe o hardware fazer o loop</h2>
+<p>Todo padrão “configure um registrador de endereço, depois faça um loop escrevendo em um registrador de dados” das Lições 4-6 é exatamente o que o DMA (Direct Memory Access) automatiza. Você configura uma origem, um destino, uma contagem e um formato de transferência, vira um bit, e o hardware move os bytes — a CPU fica pausada durante esse tempo, mas nenhuma instrução executa a cópia.</p>
+<p>Existem 8 canais de DMA independentes, cada um controlado por um bloco de registradores em <code>$43x0</code>-<code>$43xA</code> (<code>x</code> = número do canal, 0-7):</p>
 <table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th>Register</th>
-<th>Address</th>
-<th>Purpose</th>
+<th>Registrador</th>
+<th>Endereço</th>
+<th>Finalidade</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>DMAPx</code></td>
 <td><code>$43x0</code></td>
-<td>Direction, addressing mode, increment/fixed, transfer shape</td>
+<td>Direção, modo de endereçamento, incremento/fixo, formato de transferência</td>
 </tr>
 <tr class="even">
 <td><code>BBADx</code></td>
 <td><code>$43x1</code></td>
-<td>Destination: low byte of the <code>$21xx</code> register to target</td>
+<td>Destino: byte baixo do registrador <code>$21xx</code> alvo</td>
 </tr>
 <tr class="odd">
 <td><code>A1TxL/H</code></td>
 <td><code>$43x2</code>/<code>$43x3</code></td>
-<td>Source address, low/high byte</td>
+<td>Endereço de origem, byte baixo/alto</td>
 </tr>
 <tr class="even">
 <td><code>A1Bx</code></td>
 <td><code>$43x4</code></td>
-<td>Source address, bank byte</td>
+<td>Endereço de origem, byte de banco</td>
 </tr>
 <tr class="odd">
 <td><code>DASxL/H</code></td>
 <td><code>$43x5</code>/<code>$43x6</code></td>
-<td>Number of bytes to transfer</td>
+<td>Número de bytes a transferir</td>
 </tr>
 </tbody>
 </table>
-<p><code>DMAPx</code>’s transfer-shape bits (<code>ttt</code>) matter a lot — they decide how source bytes map onto destination registers per “unit” of the transfer. The three this lesson uses:</p>
+<p>Os bits de formato de transferência do <code>DMAPx</code> (<code>ttt</code>) importam bastante — eles decidem como os bytes de origem mapeiam para os registradores de destino por “unidade” da transferência. Os três que esta lição usa:</p>
 <pre><code>000 = 1 register write once   (1 byte : p)
 001 = 2 registers write once  (2 bytes: p, p+1)
 010 = 1 register write twice  (2 bytes: p, p)</code></pre>
-<p>Mode <code>010</code> is a natural fit for CGDATA’s low-then-high write pattern; mode <code>001</code> is a natural fit for <code>VMDATAL</code>/<code>VMDATAH</code> (two adjacent single-byte registers). You’ve already learned both of those write patterns by hand — DMA is the same shape, executed by hardware.</p>
-<h2 id="rewriting-the-palette-load">Rewriting the palette load</h2>
-<p>Lesson 4’s <code>load_palette</code> loop becomes:</p>
+<p>O modo <code>010</code> encaixa naturalmente no padrão de escrita baixo-depois-alto do CGDATA; o modo <code>001</code> encaixa naturalmente em <code>VMDATAL</code>/<code>VMDATAH</code> (dois registradores adjacentes de um byte cada). Você já aprendeu os dois padrões de escrita manualmente — DMA é o mesmo formato, executado por hardware.</p>
+<h2 id="reescrevendo-o-carregamento-de-paleta">Reescrevendo o carregamento de paleta</h2>
+<p>O loop <code>load_palette</code> da Lição 4 vira:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    stz<span class="bn"> $2121           </span><span class="co">; CGADD: still need to set the starting index by hand</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    lda #&lt;palette_table</span>
@@ -156,9 +164,9 @@
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a></span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    lda #<span class="bn">$01                 </span><span class="co">; MDMAEN: fire channel 0</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    sta<span class="bn"> $420B</span></span></code></pre></div>
-<p><code>^palette_table</code> is ca65 syntax for “the bank byte of this label’s address” — new here because DMA source addresses are full 24-bit addresses, unlike the absolute addressing you’ve used up to now.</p>
-<h2 id="rewriting-the-tile-load">Rewriting the tile load</h2>
-<p>Same shape, mode <code>001</code> this time, since <code>VMDATAL</code>/<code>VMDATAH</code> are two separate adjacent registers rather than one write-twice register:</p>
+<p><code>^palette_table</code> é sintaxe do ca65 para “o byte de banco do endereço deste rótulo” — novidade aqui porque endereços de origem de DMA são endereços completos de 24 bits, diferente do endereçamento absoluto que você usou até agora.</p>
+<h2 id="reescrevendo-o-carregamento-de-tile">Reescrevendo o carregamento de tile</h2>
+<p>Mesmo formato, modo <code>001</code> desta vez, já que <code>VMDATAL</code>/<code>VMDATAH</code> são dois registradores adjacentes separados, em vez de um único registrador de escrita-dupla:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    lda #<span class="bn">$80</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    sta<span class="bn"> $2115            </span><span class="co">; VMAIN (unchanged from Lesson 5)</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    stz<span class="bn"> $2116</span></span>
@@ -181,8 +189,8 @@
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true"></a></span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true"></a>    lda #<span class="bn">$01</span></span>
 <span id="cb3-22"><a href="#cb3-22" aria-hidden="true"></a>    sta<span class="bn"> $420B</span></span></code></pre></div>
-<h2 id="a-dma-trick-filling-memory-without-a-big-table">A DMA trick: filling memory without a big table</h2>
-<p>Lesson 6’s tilemap loop wrote the same value (<code>$0000</code>) 1024 times. Copying a 1024-entry source table would be wasteful when every entry is identical — and DMA has a bit for exactly this case. <code>DMAPx</code> bit 4 (<code>f</code>, “fixed transfer”) stops the <em>source</em> address from advancing at all, so every byte transferred rereads the same one source byte:</p>
+<h2 id="um-truque-de-dma-preenchendo-memória-sem-uma-tabela-grande">Um truque de DMA: preenchendo memória sem uma tabela grande</h2>
+<p>O loop de tilemap da Lição 6 escreveu o mesmo valor (<code>$0000</code>) 1024 vezes. Copiar uma tabela de origem com 1024 entradas seria um desperdício quando toda entrada é idêntica — e o DMA tem um bit exatamente para esse caso. O bit 4 do <code>DMAPx</code> (<code>f</code>, “transferência fixa”) impede o endereço de <em>origem</em> de avançar, então todo byte transferido relê o mesmo único byte de origem:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">zero_byte:</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">0</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
@@ -206,11 +214,11 @@
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a></span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>    lda #<span class="bn">$01</span></span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a>    sta<span class="bn"> $420B</span></span></code></pre></div>
-<p>One byte of ROM, one DMA call, 2048 bytes written. This “DMA fill” idiom shows up constantly in real SNES code for clearing VRAM, OAM, or WRAM buffers.</p>
-<p>Swap all three loops in your ROM for their DMA equivalents, rebuild, and confirm in Mesen that the screen looks exactly as it did at the end of Lesson 6 — same visual result, far less CPU time spent producing it. If you want to see this concretely rather than take it on faith, <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer will show the DMA transfers as a single tight burst instead of the long scattered sequence of individual writes the CPU-loop versions produced.</p>
-<h2 id="hdma-a-register-write-once-per-scanline-automatically">HDMA: a register write, once per scanline, automatically</h2>
-<p>DMA runs once and stops. <strong>HDMA</strong> (H-Blank DMA) is different: instead of transferring a block once, it performs one small transfer <em>per scanline</em>, automatically, for the whole frame, with zero CPU involvement once it’s set up. This is how the SNES achieves effects a CPU could never keep up with by hand — per-scanline color changes, split scrolling, and gradients.</p>
-<p>HDMA channels use the same register block as DMA (<code>$43x0</code>-<code>$43xA</code>), just interpreted slightly differently, plus one new register:</p>
+<p>Um byte de ROM, uma chamada de DMA, 2048 bytes escritos. Esse idioma de “preenchimento por DMA” aparece constantemente em código real de SNES para limpar buffers de VRAM, OAM ou WRAM.</p>
+<p>Troque os três loops da sua ROM pelos equivalentes em DMA, recompile, e confirme no Mesen que a tela parece exatamente como no final da Lição 6 — mesmo resultado visual, com muito menos tempo de CPU gasto para produzi-lo. Se você quiser ver isso concretamente em vez de apenas confiar, o Event Viewer da <a href="07-debugging-with-mesen.html">Lição 7</a> vai mostrar as transferências de DMA como uma única rajada compacta, em vez da longa sequência espalhada de escritas individuais que as versões com loop de CPU produziam.</p>
+<h2 id="hdma-uma-escrita-de-registrador-uma-vez-por-scanline-automaticamente">HDMA: uma escrita de registrador, uma vez por scanline, automaticamente</h2>
+<p>O DMA roda uma vez e para. O <strong>HDMA</strong> (H-Blank DMA) é diferente: em vez de transferir um bloco de uma vez, ele executa uma pequena transferência <em>por scanline</em>, automaticamente, durante o frame inteiro, com envolvimento zero da CPU depois de configurado. É assim que o SNES consegue efeitos que uma CPU jamais conseguiria acompanhar manualmente — mudanças de cor por scanline, scroll dividido, e gradientes.</p>
+<p>Canais de HDMA usam o mesmo bloco de registradores que o DMA (<code>$43x0</code>-<code>$43xA</code>), só que interpretado de forma um pouco diferente, mais um registrador novo:</p>
 <table>
 <colgroup>
 <col style="width: 33%" />
@@ -219,27 +227,27 @@
 </colgroup>
 <thead>
 <tr class="header">
-<th>Register</th>
-<th>Address</th>
-<th>Purpose</th>
+<th>Registrador</th>
+<th>Endereço</th>
+<th>Finalidade</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>A2AxL/H</code></td>
 <td><code>$43x8</code>/<code>$43x9</code></td>
-<td>Current position in the HDMA table (auto-managed)</td>
+<td>Posição atual na tabela de HDMA (gerenciada automaticamente)</td>
 </tr>
 <tr class="even">
 <td><code>NLTRx</code></td>
 <td><code>$43xA</code></td>
-<td>Line counter: how many scanlines until the next table entry loads</td>
+<td>Contador de linhas: quantas scanlines faltam até a próxima entrada da tabela carregar</td>
 </tr>
 </tbody>
 </table>
-<p>An HDMA table is a sequence of <code>(line count byte, data bytes...)</code> groups, terminated by a <code>$00</code> count byte. Each count byte’s top bit is a “repeat” flag (re-send the same data every line while counting down, rather than once); this lesson uses it clear (<code>0</code>) for a simple <strong>banded</strong> effect — one write, held for N scanlines, then the next entry.</p>
-<h3 id="a-brightness-gradient">A brightness gradient</h3>
-<p>Let’s fade the whole screen from bright to dark, top to bottom, by driving <code>INIDISP</code> (<code>$2100</code> — the same brightness register from Lesson 1) with HDMA instead of a fixed value. 16 bands of 14 scanlines each cover all 224 visible lines:</p>
+<p>Uma tabela de HDMA é uma sequência de grupos <code>(byte de contagem de linhas, bytes de dados...)</code>, terminada por um byte de contagem <code>$00</code>. O bit mais alto de cada byte de contagem é uma flag de “repetição” (reenviar o mesmo dado a cada linha enquanto conta regressivamente, em vez de uma única vez); esta lição a deixa zerada (<code>0</code>) para um efeito <strong>em faixas</strong> simples — uma escrita, mantida por N scanlines, depois a próxima entrada.</p>
+<h3 id="um-gradiente-de-brilho">Um gradiente de brilho</h3>
+<p>Vamos fazer a tela inteira esmaecer de claro para escuro, de cima para baixo, controlando o <code>INIDISP</code> (<code>$2100</code> — o mesmo registrador de brilho da Lição 1) com HDMA em vez de um valor fixo. 16 faixas de 14 scanlines cada cobrem todas as 224 linhas visíveis:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">hdma_gradient:</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0F</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0E</span></span>
@@ -258,7 +266,7 @@
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $01</span></span>
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $00</span></span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">0</span>             <span class="co">; terminator</span></span></code></pre></div>
-<p>Set up channel 1 (kept separate from the DMA channel 0 used above, to avoid any confusion between the two) for a single-register, write-once transfer targeting <code>INIDISP</code>:</p>
+<p>Configure o canal 1 (mantido separado do canal 0 de DMA usado acima, para evitar qualquer confusão entre os dois) para uma transferência de um único registrador, escrita única, tendo o <code>INIDISP</code> como alvo:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>    lda #&lt;hdma_gradient</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>    sta<span class="bn"> $4312             </span><span class="co">; A1T1L</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    lda #&gt;hdma_gradient</span>
@@ -273,16 +281,16 @@
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>    lda #%<span class="dv">00000010</span>               <span class="co">; HDMAEN: enable channel 1</span></span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>    sta<span class="bn"> $420C</span></span></code></pre></div>
-<p>Do this <em>instead of</em> the final fixed <code>lda #$0F / sta $2100</code> from Lesson 1 — HDMA will drive <code>INIDISP</code> for you, every scanline, from here on, automatically re-reading the table from the top at the start of every frame. Build and run: you should see the striped background fade from full brightness at the top of the screen to black at the bottom, a clean 16-step gradient, with no CPU time spent after the initial setup.</p>
-<p>The exact scanline-by-scanline timing of when a table entry’s data is (re-)transferred relative to the line-counter reload has some genuinely subtle edge cases — even the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">authoritative register reference</a> hedges some of the fine print here. The banded-gradient recipe above is a long-established, reliable pattern; if you start building effects with per-scanline (rather than per-band) precision, budget time to test against real hardware behavior in Mesen rather than trusting a mental model alone — and revisit <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer, which is the right tool for watching exactly when each HDMA write actually lands.</p>
-<h2 id="exercises">Exercises</h2>
+<p>Faça isso <em>em vez do</em> <code>lda #$0F / sta $2100</code> fixo e final da Lição 1 — o HDMA vai controlar <code>INIDISP</code> para você, em toda scanline, a partir daqui, relendo automaticamente a tabela desde o topo no início de todo frame. Compile e execute: você deve ver o background listrado esmaecer de brilho total no topo da tela até preto na parte de baixo, um gradiente limpo de 16 passos, sem tempo de CPU gasto depois da configuração inicial.</p>
+<p>O timing exato, scanline por scanline, de quando o dado de uma entrada da tabela é (re-)transferido em relação à recarga do contador de linhas tem alguns casos extremos genuinamente sutis — até a <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">referência oficial de registradores</a> é cautelosa em parte da letra miúda aqui. A receita de gradiente em faixas acima é um padrão bem estabelecido e confiável; se você começar a construir efeitos com precisão por scanline (em vez de por faixa), reserve tempo para testar contra o comportamento real do hardware no Mesen em vez de confiar só em um modelo mental — e revisite o Event Viewer da <a href="07-debugging-with-mesen.html">Lição 7</a>, que é a ferramenta certa para observar exatamente quando cada escrita de HDMA de fato acontece.</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Change the gradient table to fade in the <em>opposite</em> direction (dark at top, bright at bottom) by reversing the byte sequence.</li>
-<li><code>DASxL</code>/<code>DASxH</code> for a <em>DMA</em> channel count down as the transfer runs, ending at 0. What do those same registers mean for an <em>indirect</em> HDMA channel instead? (See the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">DASx register entry</a> — this tutorial only uses direct HDMA, but it’s worth knowing indirect mode exists.)</li>
-<li>Using the DMA fill trick, write a routine that clears all 544 bytes of OAM (sprite memory) to zero in one DMA call, in preparation for <a href="10-sprites-oam-basics.html">Lesson 10</a>.</li>
+<li>Mude a tabela de gradiente para esmaecer na direção <em>oposta</em> (escuro em cima, claro embaixo), invertendo a sequência de bytes.</li>
+<li><code>DASxL</code>/<code>DASxH</code> para um canal de <em>DMA</em> contam regressivamente enquanto a transferência roda, terminando em 0. O que esses mesmos registradores significam para um canal de HDMA <em>indireto</em> em vez disso? (Veja a <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">entrada do registrador DASx</a> — este tutorial só usa HDMA direto, mas vale saber que o modo indireto existe.)</li>
+<li>Usando o truque de preenchimento por DMA, escreva uma rotina que zere todos os 544 bytes da OAM (memória de sprites) em uma única chamada de DMA, em preparação para a <a href="10-sprites-oam-basics.html">Lição 10</a>.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="07-debugging-with-mesen.html">Lesson 7 — Debugging with Mesen</a> Next: <a href="09-background-scrolling.html">Lesson 9 — Background scrolling</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="07-debugging-with-mesen.html">Lição 7 — Depurando com o Mesen</a> Next: <a href="09-background-scrolling.html">Lição 9 — Rolagem de background</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

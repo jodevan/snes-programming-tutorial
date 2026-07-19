@@ -47,6 +47,24 @@ body {
 
 .top-nav a:hover { text-decoration: underline; }
 
+.top-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.top-nav a.lang-link {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-weight: 600;
+}
+
+.top-nav a.lang-link:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, white);
+}
+
 /* pandoc's standalone template repeats the --metadata title as a visible
    header above the content; the markdown's own H1 already covers that. */
 #title-block-header { display: none; }
@@ -194,6 +212,18 @@ hr {
 }
 
 .site-nav .links a:hover { color: var(--accent-dark); }
+
+.site-nav .links a.lang-pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  color: var(--accent-dark);
+}
+
+.site-nav .links a.lang-pill:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, white);
+}
 
 .hero {
   background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);

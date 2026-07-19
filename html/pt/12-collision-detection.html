@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 12: Collision Detection</title>
+  <title>Lição 12: Detecção de Colisão</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,24 +78,27 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 12: Collision Detection</h1>
+<h1 class="title">Lição 12: Detecção de Colisão</h1>
 </header>
-<h1 id="lesson-12-collision-detection">Lesson 12: Collision Detection</h1>
-<p><strong>Goal:</strong> the SNES has no collision hardware — everything in this lesson is plain arithmetic and lookup tables, the same techniques you’d use on any platform. Two flavors: sprite-vs-sprite (bounding boxes) and sprite-vs-world (a lookup table).</p>
-<h2 id="sprite-vs-sprite-axis-aligned-bounding-boxes">Sprite-vs-sprite: axis-aligned bounding boxes</h2>
-<p>Treat each sprite as an 8×8 rectangle. Two rectangles overlap exactly when they overlap on <em>both</em> axes independently — the classic <strong>AABB</strong> (axis-aligned bounding box) test:</p>
+<h1 id="lição-12-detecção-de-colisão">Lição 12: Detecção de Colisão</h1>
+<p><strong>Objetivo:</strong> o SNES não tem hardware de colisão — tudo nesta lição é aritmética comum e tabelas de consulta, as mesmas técnicas que você usaria em qualquer plataforma. Duas variantes: sprite-contra-sprite (bounding boxes) e sprite-contra-cenário (uma tabela de consulta).</p>
+<h2 id="sprite-contra-sprite-bounding-boxes-alinhadas-aos-eixos">Sprite-contra-sprite: bounding boxes alinhadas aos eixos</h2>
+<p>Trate cada sprite como um retângulo 8×8. Dois retângulos se sobrepõem exatamente quando se sobrepõem em <em>ambos</em> os eixos independentemente — o clássico teste <strong>AABB</strong> (axis-aligned bounding box):</p>
 <pre><code>overlap  =  (x1 &lt; x2+w2)  AND  (x2 &lt; x1+w1)  AND  (y1 &lt; y2+h2)  AND  (y2 &lt; y1+h1)</code></pre>
-<p>In words: neither box is entirely to the left, right, above, or below the other. If none of those four “definitely separated” conditions hold, they must be touching.</p>
-<p>Add a second, stationary sprite to your <a href="11-controller-input-and-animation.html">Lesson 11</a> ROM — a “wall” sprite at a fixed <code>wall_x</code>/<code>wall_y</code> — using the same OAM-writing technique from Lesson 10. Then test the player sprite against it every frame:</p>
+<p>Em palavras: nenhuma das caixas está inteiramente à esquerda, à direita, acima, ou abaixo da outra. Se nenhuma dessas quatro condições de “definitivamente separado” se sustenta, elas precisam estar se tocando.</p>
+<p>Adicione um segundo sprite, parado, à sua ROM da <a href="11-controller-input-and-animation.html">Lição 11</a> — uma “parede” em uma posição fixa <code>wall_x</code>/<code>wall_y</code> — usando a mesma técnica de escrita em OAM da Lição 10. Depois teste o sprite do jogador contra ela a cada frame:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">; Sets carry SET if the player sprite overlaps the wall sprite (both 8x8).</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">; Clobbers A. Uses a direct-page scratch byte, `temp`.</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="fu">check_collision:</span></span>
@@ -138,10 +141,10 @@
 <span id="cb2-40"><a href="#cb2-40" aria-hidden="true"></a><span class="fu">@no_collision:</span></span>
 <span id="cb2-41"><a href="#cb2-41" aria-hidden="true"></a>    <span class="bu">clc</span></span>
 <span id="cb2-42"><a href="#cb2-42" aria-hidden="true"></a>    rts</span></code></pre></div>
-<p>The <code>CMP</code>/<code>BCS</code> pattern here relies on 65816 comparison semantics from <a href="02-cpu-crash-course.html#instructions">Lesson 2</a>: <code>CMP</code> sets carry when the accumulator is <strong>greater than or equal to</strong> the operand (unsigned). So <code>lda sprite_x / cmp temp / bcs @no_collision</code> reads as “if <code>sprite_x &gt;= temp</code>, branch” — exactly the negation of the <code>&lt;</code> condition from the overlap formula above. Call <code>check_collision</code> once per frame from <code>nmi_handler</code>, after moving the sprite; if carry comes back set, you know the two boxes touch — Lesson 16’s capstone uses exactly this to detect the player reaching a collectible.</p>
-<h2 id="sprite-vs-world-a-lookup-table">Sprite-vs-world: a lookup table</h2>
-<p>Bounding boxes work for sprite pairs, but checking a moving sprite against an entire background would mean testing dozens of tiles every frame. The standard solution is a <strong>separate, purpose-built lookup table</strong> — not necessarily the same data as your visible tilemap — indexed by position, giving an instant solid/passable answer.</p>
-<p>This tutorial’s background is a repeating stripe with no natural “walls,” so we’ll build a small standalone collision map instead: divide the 256×224 screen into 32×32-pixel cells (8 columns × 7 rows = 56 cells) and mark the border cells solid, keeping the player inside the play area:</p>
+<p>O padrão <code>CMP</code>/<code>BCS</code> aqui se apoia na semântica de comparação do 65816 da <a href="02-cpu-crash-course.html#instructions">Lição 2</a>: <code>CMP</code> ativa o carry quando o acumulador é <strong>maior ou igual</strong> ao operando (sem sinal). Então <code>lda sprite_x / cmp temp / bcs @no_collision</code> se lê como “se <code>sprite_x &gt;= temp</code>, desvie” — exatamente a negação da condição <code>&lt;</code> da fórmula de sobreposição acima. Chame <code>check_collision</code> uma vez por frame a partir de <code>nmi_handler</code>, depois de mover o sprite; se o carry voltar ativado, você sabe que as duas caixas se tocam — o projeto final da Lição 16 usa exatamente isso para detectar o jogador alcançando um colecionável.</p>
+<h2 id="sprite-contra-cenário-uma-tabela-de-consulta">Sprite-contra-cenário: uma tabela de consulta</h2>
+<p>Bounding boxes funcionam para pares de sprites, mas checar um sprite em movimento contra um background inteiro significaria testar dezenas de tiles a cada frame. A solução padrão é uma <strong>tabela de consulta separada, construída para esse propósito</strong> — não necessariamente os mesmos dados do seu tilemap visível — indexada por posição, dando uma resposta instantânea de sólido/passável.</p>
+<p>O background deste tutorial é uma listra repetida sem “paredes” naturais, então vamos construir um mapa de colisão independente: dividir a tela de 256×224 em células de 32×32 pixels (8 colunas × 7 linhas = 56 células) e marcar as células da borda como sólidas, mantendo o jogador dentro da área de jogo:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">; 8 columns x 7 rows, row-major. 1 = solid, 0 = passable.</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="fu">collision_map:</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>     <span class="co">; row 0 (top border)</span></span>
@@ -151,7 +154,7 @@
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>     <span class="co">; row 6 (bottom border)</span></span></code></pre></div>
-<p>Since each cell is 32 pixels (<code>2^5</code>), converting a pixel coordinate to a cell index is just a shift, not a division:</p>
+<p>Como cada célula tem 32 pixels (<code>2^5</code>), converter uma coordenada de pixel em um índice de célula é apenas um shift, não uma divisão:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">; Computes collision_map[(y&gt;&gt;5)*8 + (x&gt;&gt;5)] and returns it in A.</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="co">; Input: A = x, temp = y (caller sets temp first). Clobbers A, X.</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="fu">get_cell:</span></span>
@@ -175,8 +178,8 @@
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a>    tax</span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>    lda collision_map,x</span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a>    rts</span></code></pre></div>
-<h3 id="using-it-to-gate-movement">Using it to gate movement</h3>
-<p>Rather than unconditionally applying the D-pad movement from Lesson 11, check whether the <em>destination</em> cell is passable first. Here’s the pattern for one direction — Right — the other three follow the same shape:</p>
+<h3 id="usando-isso-para-controlar-movimento">Usando isso para controlar movimento</h3>
+<p>Em vez de aplicar incondicionalmente o movimento do D-pad da Lição 11, verifique se a célula de <em>destino</em> é passável primeiro. Aqui está o padrão para uma direção — Direita — as outras três seguem a mesma forma:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    lda buttons</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    <span class="bu">and</span> #%<span class="dv">00000001</span>          <span class="co">; Right held?</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    beq @not_right</span>
@@ -197,17 +200,17 @@
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a><span class="fu">@blocked:</span></span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a>    pla                           <span class="co">; discard the proposed position</span></span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a><span class="fu">@not_right:</span></span></code></pre></div>
-<p>This is the same shape you’ll recognize from every “porthole register” loop since Lesson 4, applied to logic instead of hardware: compute a candidate value, check it against a table, only commit if it passes.</p>
-<h2 id="build-and-run">Build and run</h2>
-<p>With both pieces in place, the player sprite now stops at the edges of the 32-pixel border instead of scrolling off the visible play area, and touching the stationary wall sprite is something your code can detect (even if nothing visibly reacts to it yet — that’s what <a href="16-capstone.html">Lesson 16</a> adds).</p>
-<h2 id="exercises">Exercises</h2>
+<p>Esse é o mesmo formato que você vai reconhecer de todo loop de “registrador vigia” desde a Lição 4, aplicado à lógica em vez de hardware: calcule um valor candidato, verifique-o contra uma tabela, só confirme se ele passar.</p>
+<h2 id="compile-e-execute">Compile e execute</h2>
+<p>Com as duas peças no lugar, o sprite do jogador agora para nas bordas do limite de 32 pixels em vez de rolar para fora da área de jogo visível, e tocar o sprite de parede parado é algo que seu código consegue detectar (mesmo que nada reaja visivelmente a isso ainda — é isso que a <a href="16-capstone.html">Lição 16</a> adiciona).</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Finish the Left/Up/Down cases of the movement-gating pattern above.</li>
-<li>Make <code>check_collision</code> react to something observable — for example, changing the wall sprite’s own tile number when it’s touched, so you get visible confirmation without waiting for the capstone.</li>
-<li>The collision map here is hand-written. Real games generate collision data from the same source as their visual tilemap (often by tagging certain tile numbers as solid when the level is built). Sketch — in comments, not full code — how you’d turn Lesson 6’s tilemap into a collision map automatically, given a rule like “tile numbers 16 and above are solid.”</li>
+<li>Termine os casos de Esquerda/Cima/Baixo do padrão de controle de movimento acima.</li>
+<li>Faça <code>check_collision</code> reagir a algo observável — por exemplo, mudando o número de tile do próprio sprite de parede quando ele é tocado, para você ter confirmação visual sem esperar pelo projeto final.</li>
+<li>O mapa de colisão aqui é escrito à mão. Jogos de verdade geram dados de colisão a partir da mesma fonte que seu tilemap visual (geralmente marcando certos números de tile como sólidos quando o nível é construído). Esboce — em comentários, não código completo — como você transformaria o tilemap da Lição 6 em um mapa de colisão automaticamente, dada uma regra como “números de tile 16 e acima são sólidos”.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="11-controller-input-and-animation.html">Lesson 11 — Controller input &amp; sprite animation</a> Next: <a href="13-spc700-and-audio-basics.html">Lesson 13 — The SPC700 &amp; audio basics</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="11-controller-input-and-animation.html">Lição 11 — Entrada do controle &amp; animação de sprite</a> Next: <a href="13-spc700-and-audio-basics.html">Lição 13 — O SPC700 &amp; fundamentos de áudio</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

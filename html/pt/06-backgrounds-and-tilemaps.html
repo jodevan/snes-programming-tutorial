@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Lesson 6: Backgrounds &amp; Tilemaps</title>
+  <title>Lição 6: Backgrounds &amp; Tilemaps</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -78,49 +78,52 @@
     code span.vs { color: #bf0303; } /* VerbatimString */
     code span.wa { color: #bf0303; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
 <div class="page">
 <div class="top-nav">
   <span>SNES Tutorial</span>
-  <a href="index.html">&larr; Home</a>
+  <div class="top-nav-right">
+    <a href="index.html">&larr; Início</a>
+    <a class="lang-link" href="../index.html">English</a>
+  </div>
 </div>
 <header id="title-block-header">
-<h1 class="title">Lesson 6: Backgrounds &amp; Tilemaps</h1>
+<h1 class="title">Lição 6: Backgrounds &amp; Tilemaps</h1>
 </header>
-<h1 id="lesson-6-backgrounds-tilemaps">Lesson 6: Backgrounds &amp; Tilemaps</h1>
-<p><strong>Goal:</strong> the payoff lesson. You have a palette (Lesson 4) and a tile (Lesson 5) sitting in memory doing nothing — this lesson builds the tilemap that finally puts them on screen, and turns on the background layer that displays it.</p>
-<h2 id="two-more-pieces-bg-modes-and-tilemaps">Two more pieces: BG modes and tilemaps</h2>
-<p>A background layer needs three things, two of which you already have:</p>
+<h1 id="lição-6-backgrounds-tilemaps">Lição 6: Backgrounds &amp; Tilemaps</h1>
+<p><strong>Objetivo:</strong> a lição da recompensa. Você tem uma paleta (Lição 4) e um tile (Lição 5) parados na memória sem fazer nada — esta lição constrói o tilemap que finalmente os coloca na tela, e liga a camada de background que os exibe.</p>
+<h2 id="mais-duas-peças-modos-de-bg-e-tilemaps">Mais duas peças: modos de BG e tilemaps</h2>
+<p>Uma camada de background precisa de três coisas, duas das quais você já tem:</p>
 <ol type="1">
-<li><strong>Character data</strong> — the tile bitmaps (built in <a href="05-tiles-and-vram.html">Lesson 5</a>).</li>
-<li><strong>A tilemap</strong> — a grid that says <em>which</em> tile (and which palette) goes in each screen cell. This is new in this lesson.</li>
-<li><strong>A BG mode</strong> — a global setting (<code>BGMODE</code>, <code>$2105</code>) that decides how many background layers exist and how many colors each one gets.</li>
+<li><strong>Dados de caractere</strong> — os bitmaps de tile (construídos na <a href="05-tiles-and-vram.html">Lição 5</a>).</li>
+<li><strong>Um tilemap</strong> — uma grade que diz <em>qual</em> tile (e qual paleta) vai em cada célula da tela. Isso é novo nesta lição.</li>
+<li><strong>Um modo de BG</strong> — uma configuração global (<code>BGMODE</code>, <code>$2105</code>) que decide quantas camadas de background existem e quantas cores cada uma recebe.</li>
 </ol>
-<h3 id="bg-modes-briefly">BG modes, briefly</h3>
-<p>The SNES has 8 background modes, selected by the low 3 bits of <code>$2105</code>. Modes trade off “how many layers” against “how many colors per layer” — see the full <a href="https://wiki.superfamicom.org/backgrounds#bg-modes">BG Modes table</a> for all eight. This tutorial uses <strong>Mode 1</strong>: two 16-color (4bpp) layers plus one 4-color (2bpp) layer. We’ll only turn on the 2bpp layer, <code>BG3</code>, since it matches the tile you already built in Lesson 5.</p>
+<h3 id="modos-de-bg-brevemente">Modos de BG, brevemente</h3>
+<p>O SNES tem 8 modos de background, selecionados pelos 3 bits mais baixos de <code>$2105</code>. Os modos trocam “quantas camadas” por “quantas cores por camada” — veja a <a href="https://wiki.superfamicom.org/backgrounds#bg-modes">tabela completa de modos de BG</a> para todos os oito. Este tutorial usa o <strong>Modo 1</strong>: duas camadas de 16 cores (4bpp) mais uma camada de 4 cores (2bpp). Vamos ligar só a camada 2bpp, <code>BG3</code>, já que ela combina com o tile que você já construiu na Lição 5.</p>
 <pre><code>$2105  wb+++-
         DCBAemmm
         mmm = 001           -&gt; Mode 1
         e   = 0             -&gt; BG3 priority bit, default behavior
         A/B/C/D = 0         -&gt; all BGs use 8x8 tiles, not 16x16</code></pre>
-<h3 id="the-tilemap-entry-format">The tilemap entry format</h3>
-<p>A tilemap is a grid of 16-bit entries, one per 8×8 (or 16×16) screen cell. Per the <a href="https://wiki.superfamicom.org/backgrounds#tile-maps--character-maps">background reference</a>:</p>
+<h3 id="o-formato-das-entradas-do-tilemap">O formato das entradas do tilemap</h3>
+<p>Um tilemap é uma grade de entradas de 16 bits, uma por célula de tela de 8×8 (ou 16×16). Pela <a href="https://wiki.superfamicom.org/backgrounds#tile-maps--character-maps">referência de backgrounds</a>:</p>
 <pre><code>vhopppcc cccccccc
 v/h  = vertical/horizontal flip this tile
 o    = tile priority
 ppp  = palette number for this tile
 cccccccccc = tile number (10 bits)</code></pre>
-<p>The default “empty” entry <code>$0000</code> means: no flip, priority 0, palette 0, tile 0 — which is exactly the tile you built in Lesson 5, in the palette you built in Lesson 4. A tilemap filled entirely with <code>$0000</code> will show that same striped tile, repeated, across the whole screen. That’s what we’re about to build.</p>
-<p>Tilemaps are always 32×32 tiles internally (more on larger maps in <a href="09-background-scrolling.html">Lesson 9</a>), which is exactly 256×256 pixels — bigger than the visible 256×224 screen, so a single 32×32 map already fills the display with room to spare.</p>
-<h2 id="a-crucial-gotcha-word-addresses-vs.-byte-addresses">A crucial gotcha: word addresses vs. byte addresses</h2>
-<p>This trips up nearly everyone the first time. <code>VMADDL</code>/<code>VMADDH</code> (which you used directly in Lesson 5) always take a <strong>word address</strong> — VRAM is fundamentally 16-bit-addressed from the CPU’s side. But the <em>base address</em> fields inside <code>BG34NBA</code> (character data location) and <code>BG3SC</code> (tilemap location) describe positions in VRAM’s 64 KB <strong>byte</strong> address space, pre-shifted:</p>
+<p>A entrada “vazia” padrão <code>$0000</code> significa: sem flip, prioridade 0, paleta 0, tile 0 — que é exatamente o tile que você construiu na Lição 5, na paleta que você construiu na Lição 4. Um tilemap preenchido inteiramente com <code>$0000</code> vai mostrar esse mesmo tile listrado, repetido, pela tela toda. É isso que estamos prestes a construir.</p>
+<p>Tilemaps são sempre 32×32 tiles internamente (mais sobre mapas maiores na <a href="09-background-scrolling.html">Lição 9</a>), o que dá exatamente 256×256 pixels — maior que a área visível de 256×224, então um único mapa 32×32 já preenche a tela com sobra.</p>
+<h2 id="a-crucial-gotcha-word-addresses-vs.-byte-addresses">Uma pegadinha crucial: endereços de word vs. endereços de byte</h2>
+<p>Isso engana quase todo mundo na primeira vez. <code>VMADDL</code>/<code>VMADDH</code> (que você usou diretamente na Lição 5) sempre recebem um <strong>endereço de word</strong> — a VRAM é, fundamentalmente, endereçada em 16 bits do lado da CPU. Mas os campos de <em>endereço base</em> dentro de <code>BG34NBA</code> (localização dos dados de caractere) e <code>BG3SC</code> (localização do tilemap) descrevem posições no espaço de endereços de <strong>byte</strong> de 64 KB da VRAM, já pré-deslocados:</p>
 <pre><code>BG34NBA:  aaaa = BG3 character base, as (byte address) &gt;&gt; 12
 BG3SC:    aaaaaa = BG3 tilemap base, as (byte address) &gt;&gt; 10</code></pre>
-<p>The conversion you need to remember: <strong>word address = byte address ÷ 2</strong>. Since Lesson 5 put the tile at VRAM word address <code>$0000</code> (byte address <code>$0000</code> too, conveniently), <code>BG34NBA</code>’s BG3 field is just <code>0</code>. For the tilemap, we’ll pick byte address <code>$1000</code> (well clear of the 16-byte tile) — that’s word address <code>$0800</code> when we write it with <code>VMADDL</code>/<code>VMADDH</code>, but <code>$1000 &gt;&gt; 10 = 4</code> when we write it into <code>BG3SC</code>. Two different registers, two different units, same physical location. Getting this wrong (writing a word address into <code>BG3SC</code>, or vice versa) produces a classic symptom: your tile data looks fine in a VRAM viewer, but the screen shows garbage or nothing — worth remembering when <a href="07-debugging-with-mesen.html">Lesson 7</a> covers debugging techniques.</p>
-<h2 id="extending-your-rom">Extending your ROM</h2>
-<p>Add this after the VRAM tile-loading loop from Lesson 5:</p>
+<p>A conversão que você precisa lembrar: <strong>endereço de word = endereço de byte ÷ 2</strong>. Como a Lição 5 colocou o tile no endereço de word <code>$0000</code> da VRAM (endereço de byte <code>$0000</code> também, convenientemente), o campo de BG3 do <code>BG34NBA</code> é simplesmente <code>0</code>. Para o tilemap, vamos escolher o endereço de byte <code>$1000</code> (bem longe dos 16 bytes do tile) — isso é o endereço de word <code>$0800</code> quando escrevemos com <code>VMADDL</code>/<code>VMADDH</code>, mas <code>$1000 &gt;&gt; 10 = 4</code> quando escrevemos no <code>BG3SC</code>. Dois registradores diferentes, duas unidades diferentes, o mesmo local físico. Errar isso (escrever um endereço de word no <code>BG3SC</code>, ou vice-versa) produz um sintoma clássico: os dados do seu tile parecem corretos em um visualizador de VRAM, mas a tela mostra lixo ou nada — vale lembrar disso quando a <a href="07-debugging-with-mesen.html">Lição 7</a> cobrir técnicas de depuração.</p>
+<h2 id="estendendo-sua-rom">Estendendo sua ROM</h2>
+<p>Adicione isto depois do loop de carregamento de tile na VRAM da Lição 5:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    <span class="co">; --- Fill a 32x32 tilemap at VRAM byte $1000 (word $0800) with</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    <span class="co">;     zeros: tile 0, palette 0, no flip, priority 0, everywhere. ---</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    lda #<span class="bn">$08</span></span>
@@ -148,17 +151,17 @@ BG3SC:    aaaaaa = BG3 tilemap base, as (byte address) &gt;&gt; 10</code></pre>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true"></a>    <span class="co">; --- Enable BG3 on the main screen. ---</span></span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true"></a>    lda #<span class="bn">$04</span></span>
 <span id="cb4-27"><a href="#cb4-27" aria-hidden="true"></a>    sta<span class="bn"> $212C            </span><span class="co">; TM: bit 2 = BG3</span></span></code></pre></div>
-<p>This all needs to happen <em>before</em> the <code>INIDISP</code> write that turns on the screen (the last few lines of Lesson 1’s <code>reset:</code>) — everything here writes to PPU registers that are only safe to touch during forced blank or V-Blank, and forced blank is exactly the state the CPU is in for this whole <code>reset:</code> routine, right up until that final brightness write.</p>
-<h2 id="build-and-run">Build and run</h2>
-<p>Assemble and run it. This time the screen changes: instead of a flat backdrop color, you should see the entire visible area filled with horizontal red and green stripes — the Lesson 5 tile, repeated across a 32×32 tilemap, rendered through the Lesson 4 palette. This is the first lesson where every earlier piece of the tutorial visibly comes together.</p>
-<h2 id="exercises">Exercises</h2>
+<p>Tudo isso precisa acontecer <em>antes</em> da escrita em <code>INIDISP</code> que liga a tela (as últimas linhas do <code>reset:</code> da Lição 1) — tudo aqui escreve em registradores da PPU que só são seguros de tocar durante forced blank ou V-Blank, e forced blank é exatamente o estado em que a CPU está durante toda essa rotina <code>reset:</code>, até bem perto dessa escrita final de brilho.</p>
+<h2 id="compile-e-execute">Compile e execute</h2>
+<p>Monte e execute. Desta vez a tela muda: em vez de uma cor de fundo plana, você deve ver toda a área visível preenchida com listras horizontais vermelhas e verdes — o tile da Lição 5, repetido em um tilemap 32×32, renderizado através da paleta da Lição 4. Esta é a primeira lição em que cada peça anterior do tutorial visivelmente se junta.</p>
+<h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Change <code>BG3SC</code> to place the tilemap at a different (still non-overlapping) VRAM location, recomputing both the byte-address shift for <code>BG3SC</code> and the word address for the <code>VMADDL</code>/<code>VMADDH</code> write. Confirm the display is unchanged — the exact address doesn’t matter as long as it’s consistent and doesn’t collide with the tile data.</li>
-<li>Write a <em>different</em> tilemap value for just one entry (say, tilemap index 5) that sets the priority bit or flips the tile, and figure out which one 8×8 square on screen changed as a result. (Hint: tilemap entries fill in row-major order — entry 0 is the top-left cell, entry 1 is the cell to its right.)</li>
-<li><code>TM</code> (<code>$212C</code>) enables layers on the <em>main</em> screen; <code>TS</code> (<code>$212D</code>) is the identical register for the <em>sub</em>screen, used for color-math effects this tutorial doesn’t cover. Skim its entry in the <a href="https://wiki.superfamicom.org/registers#tm-main-screen-designation-567">register reference</a> just enough to confirm it uses the exact same bit layout as <code>TM</code>.</li>
+<li>Mude <code>BG3SC</code> para colocar o tilemap em uma localização diferente (ainda sem sobreposição) na VRAM, recalculando tanto o deslocamento de endereço de byte para <code>BG3SC</code> quanto o endereço de word para a escrita em <code>VMADDL</code>/<code>VMADDH</code>. Confirme que a exibição não muda — o endereço exato não importa, contanto que seja consistente e não colida com os dados do tile.</li>
+<li>Escreva um valor de tilemap <em>diferente</em> para apenas uma entrada (digamos, o índice 5 do tilemap) que ative o bit de prioridade ou espelhe o tile, e descubra qual quadrado 8×8 na tela mudou como resultado. (Dica: as entradas do tilemap preenchem em ordem row-major — a entrada 0 é a célula superior esquerda, a entrada 1 é a célula à direita dela.)</li>
+<li><code>TM</code> (<code>$212C</code>) habilita camadas na tela <em>principal</em>; <code>TS</code> (<code>$212D</code>) é o registrador idêntico para a <em>subtela</em>, usado em efeitos de color-math que este tutorial não cobre. Dê uma olhada rápida na entrada dele na <a href="https://wiki.superfamicom.org/registers#tm-main-screen-designation-567">referência de registradores</a>, só o suficiente para confirmar que ele usa exatamente o mesmo layout de bits que o <code>TM</code>.</li>
 </ol>
 <hr />
-<p>Root: <a href="../README.md">README.md</a> Previous: <a href="05-tiles-and-vram.html">Lesson 5 — Tiles &amp; VRAM</a> Next: <a href="07-debugging-with-mesen.html">Lesson 7 — Debugging with Mesen</a></p>
+<p>Root: <a href="../../pt/README.md">README.md</a> Previous: <a href="05-tiles-and-vram.html">Lição 5 — Tiles &amp; VRAM</a> Next: <a href="07-debugging-with-mesen.html">Lição 7 — Depurando com o Mesen</a></p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>
