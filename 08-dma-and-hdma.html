@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 8: DMA &amp; HDMA Deep Dive</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 8: DMA &amp; HDMA Deep Dive</h1>
+</header>
+<h1 id="lesson-8-dma-hdma-deep-dive">Lesson 8: DMA &amp; HDMA Deep Dive</h1>
+<p><strong>Goal:</strong> replace the CPU loops from Lessons <a href="04-palettes-and-cgram.html">4</a>-<a href="06-backgrounds-and-tilemaps.html">6</a> with hardware DMA transfers, then use HDMA to do something a CPU loop fundamentally can’t: change a register in the middle of the screen, once per scanline, for free.</p>
+<h2 id="dma-let-the-hardware-do-the-loop">DMA: let the hardware do the loop</h2>
+<p>Every “set an address register, then loop writing to a data register” pattern from Lessons 4-6 is exactly what DMA (Direct Memory Access) automates. You set up a source, a destination, a count, and a transfer shape, flip one bit, and the hardware moves the bytes — the CPU is paused for the duration, but no instructions execute the copy.</p>
+<p>There are 8 independent DMA channels, each controlled by a block of registers at <code>$43x0</code>-<code>$43xA</code> (<code>x</code> = channel number 0-7):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Register</th>
+<th>Address</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>DMAPx</code></td>
+<td><code>$43x0</code></td>
+<td>Direction, addressing mode, increment/fixed, transfer shape</td>
+</tr>
+<tr class="even">
+<td><code>BBADx</code></td>
+<td><code>$43x1</code></td>
+<td>Destination: low byte of the <code>$21xx</code> register to target</td>
+</tr>
+<tr class="odd">
+<td><code>A1TxL/H</code></td>
+<td><code>$43x2</code>/<code>$43x3</code></td>
+<td>Source address, low/high byte</td>
+</tr>
+<tr class="even">
+<td><code>A1Bx</code></td>
+<td><code>$43x4</code></td>
+<td>Source address, bank byte</td>
+</tr>
+<tr class="odd">
+<td><code>DASxL/H</code></td>
+<td><code>$43x5</code>/<code>$43x6</code></td>
+<td>Number of bytes to transfer</td>
+</tr>
+</tbody>
+</table>
+<p><code>DMAPx</code>’s transfer-shape bits (<code>ttt</code>) matter a lot — they decide how source bytes map onto destination registers per “unit” of the transfer. The three this lesson uses:</p>
+<pre><code>000 = 1 register write once   (1 byte : p)
+001 = 2 registers write once  (2 bytes: p, p+1)
+010 = 1 register write twice  (2 bytes: p, p)</code></pre>
+<p>Mode <code>010</code> is a natural fit for CGDATA’s low-then-high write pattern; mode <code>001</code> is a natural fit for <code>VMDATAL</code>/<code>VMDATAH</code> (two adjacent single-byte registers). You’ve already learned both of those write patterns by hand — DMA is the same shape, executed by hardware.</p>
+<h2 id="rewriting-the-palette-load">Rewriting the palette load</h2>
+<p>Lesson 4’s <code>load_palette</code> loop becomes:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    stz<span class="bn"> $2121           </span><span class="co">; CGADD: still need to set the starting index by hand</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    lda #&lt;palette_table</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    sta<span class="bn"> $4302            </span><span class="co">; A1T0L</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    lda #&gt;palette_table</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    sta<span class="bn"> $4303            </span><span class="co">; A1T0H</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    lda #^palette_table</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    sta<span class="bn"> $4304            </span><span class="co">; A1B0 (bank byte)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    lda #(PALETTE_COUNT*<span class="dv">2</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    sta<span class="bn"> $4305             </span><span class="co">; DAS0L: byte count, low</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    stz<span class="bn"> $4306              </span><span class="co">; DAS0H: byte count, high (0 since count &lt; 256)</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    lda #%<span class="dv">00000010</span>         <span class="co">; DMAP0: CPU-&gt;PPU, incrementing source, mode 010</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    sta<span class="bn"> $4300</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    lda #<span class="bn">$22                </span><span class="co">; BBAD0: target $2122 (CGDATA)</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    sta<span class="bn"> $4301</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    lda #<span class="bn">$01                 </span><span class="co">; MDMAEN: fire channel 0</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    sta<span class="bn"> $420B</span></span></code></pre></div>
+<p><code>^palette_table</code> is ca65 syntax for “the bank byte of this label’s address” — new here because DMA source addresses are full 24-bit addresses, unlike the absolute addressing you’ve used up to now.</p>
+<h2 id="rewriting-the-tile-load">Rewriting the tile load</h2>
+<p>Same shape, mode <code>001</code> this time, since <code>VMDATAL</code>/<code>VMDATAH</code> are two separate adjacent registers rather than one write-twice register:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    lda #<span class="bn">$80</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    sta<span class="bn"> $2115            </span><span class="co">; VMAIN (unchanged from Lesson 5)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    stz<span class="bn"> $2116</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    stz<span class="bn"> $2117             </span><span class="co">; VMADDL/H: word address 0 (unchanged)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    lda #&lt;tile_stripe</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    sta<span class="bn"> $4302</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    lda #&gt;tile_stripe</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    sta<span class="bn"> $4303</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>    lda #^tile_stripe</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>    sta<span class="bn"> $4304</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a>    lda #(tile_stripe_end - tile_stripe)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>    sta<span class="bn"> $4305</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true"></a>    stz<span class="bn"> $4306</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true"></a>    lda #%<span class="dv">00000001</span>          <span class="co">; DMAP0: CPU-&gt;PPU, incrementing source, mode 001</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true"></a>    sta<span class="bn"> $4300</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true"></a>    lda #<span class="bn">$18                 </span><span class="co">; BBAD0: target $2118 (VMDATAL, then VMDATAH)</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true"></a>    sta<span class="bn"> $4301</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true"></a>    lda #<span class="bn">$01</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true"></a>    sta<span class="bn"> $420B</span></span></code></pre></div>
+<h2 id="a-dma-trick-filling-memory-without-a-big-table">A DMA trick: filling memory without a big table</h2>
+<p>Lesson 6’s tilemap loop wrote the same value (<code>$0000</code>) 1024 times. Copying a 1024-entry source table would be wasteful when every entry is identical — and DMA has a bit for exactly this case. <code>DMAPx</code> bit 4 (<code>f</code>, “fixed transfer”) stops the <em>source</em> address from advancing at all, so every byte transferred rereads the same one source byte:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">zero_byte:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">0</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    <span class="co">; ... (VMADDL/H already point at the tilemap&#39;s VRAM location)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    lda #&lt;zero_byte</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    sta<span class="bn"> $4302</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    lda #&gt;zero_byte</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>    sta<span class="bn"> $4303</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>    lda #^zero_byte</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>    sta<span class="bn"> $4304</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    lda #&lt;<span class="dv">2048</span>               <span class="co">; 1024 words = 2048 bytes total</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    sta<span class="bn"> $4305</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>    lda #&gt;<span class="dv">2048</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>    sta<span class="bn"> $4306</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>    lda #%<span class="dv">00010001</span>            <span class="co">; DMAP0: fixed source (bit 4 set), mode 001</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>    sta<span class="bn"> $4300</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>    lda #<span class="bn">$18                   </span><span class="co">; BBAD0: $2118/$2119 again</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a>    sta<span class="bn"> $4301</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>    lda #<span class="bn">$01</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a>    sta<span class="bn"> $420B</span></span></code></pre></div>
+<p>One byte of ROM, one DMA call, 2048 bytes written. This “DMA fill” idiom shows up constantly in real SNES code for clearing VRAM, OAM, or WRAM buffers.</p>
+<p>Swap all three loops in your ROM for their DMA equivalents, rebuild, and confirm in Mesen that the screen looks exactly as it did at the end of Lesson 6 — same visual result, far less CPU time spent producing it. If you want to see this concretely rather than take it on faith, <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer will show the DMA transfers as a single tight burst instead of the long scattered sequence of individual writes the CPU-loop versions produced.</p>
+<h2 id="hdma-a-register-write-once-per-scanline-automatically">HDMA: a register write, once per scanline, automatically</h2>
+<p>DMA runs once and stops. <strong>HDMA</strong> (H-Blank DMA) is different: instead of transferring a block once, it performs one small transfer <em>per scanline</em>, automatically, for the whole frame, with zero CPU involvement once it’s set up. This is how the SNES achieves effects a CPU could never keep up with by hand — per-scanline color changes, split scrolling, and gradients.</p>
+<p>HDMA channels use the same register block as DMA (<code>$43x0</code>-<code>$43xA</code>), just interpreted slightly differently, plus one new register:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Register</th>
+<th>Address</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>A2AxL/H</code></td>
+<td><code>$43x8</code>/<code>$43x9</code></td>
+<td>Current position in the HDMA table (auto-managed)</td>
+</tr>
+<tr class="even">
+<td><code>NLTRx</code></td>
+<td><code>$43xA</code></td>
+<td>Line counter: how many scanlines until the next table entry loads</td>
+</tr>
+</tbody>
+</table>
+<p>An HDMA table is a sequence of <code>(line count byte, data bytes...)</code> groups, terminated by a <code>$00</code> count byte. Each count byte’s top bit is a “repeat” flag (re-send the same data every line while counting down, rather than once); this lesson uses it clear (<code>0</code>) for a simple <strong>banded</strong> effect — one write, held for N scanlines, then the next entry.</p>
+<h3 id="a-brightness-gradient">A brightness gradient</h3>
+<p>Let’s fade the whole screen from bright to dark, top to bottom, by driving <code>INIDISP</code> (<code>$2100</code> — the same brightness register from Lesson 1) with HDMA instead of a fixed value. 16 bands of 14 scanlines each cover all 224 visible lines:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">hdma_gradient:</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0F</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0E</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0D</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0C</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0B</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $0A</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $09</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $08</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $07</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $06</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $05</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $04</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $03</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $02</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $01</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">14</span><span class="bn">, $00</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">0</span>             <span class="co">; terminator</span></span></code></pre></div>
+<p>Set up channel 1 (kept separate from the DMA channel 0 used above, to avoid any confusion between the two) for a single-register, write-once transfer targeting <code>INIDISP</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>    lda #&lt;hdma_gradient</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>    sta<span class="bn"> $4312             </span><span class="co">; A1T1L</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    lda #&gt;hdma_gradient</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    sta<span class="bn"> $4313              </span><span class="co">; A1T1H</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    lda #^hdma_gradient</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>    sta<span class="bn"> $4314               </span><span class="co">; A1B1</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>    lda #%<span class="dv">00000000</span>            <span class="co">; DMAP1: direct table, mode 000 (1 byte)</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>    sta<span class="bn"> $4310</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>    lda #<span class="bn">$00                   </span><span class="co">; BBAD1: target $2100 (INIDISP)</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>    sta<span class="bn"> $4311</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>    lda #%<span class="dv">00000010</span>               <span class="co">; HDMAEN: enable channel 1</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>    sta<span class="bn"> $420C</span></span></code></pre></div>
+<p>Do this <em>instead of</em> the final fixed <code>lda #$0F / sta $2100</code> from Lesson 1 — HDMA will drive <code>INIDISP</code> for you, every scanline, from here on, automatically re-reading the table from the top at the start of every frame. Build and run: you should see the striped background fade from full brightness at the top of the screen to black at the bottom, a clean 16-step gradient, with no CPU time spent after the initial setup.</p>
+<p>The exact scanline-by-scanline timing of when a table entry’s data is (re-)transferred relative to the line-counter reload has some genuinely subtle edge cases — even the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">authoritative register reference</a> hedges some of the fine print here. The banded-gradient recipe above is a long-established, reliable pattern; if you start building effects with per-scanline (rather than per-band) precision, budget time to test against real hardware behavior in Mesen rather than trusting a mental model alone — and revisit <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer, which is the right tool for watching exactly when each HDMA write actually lands.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Change the gradient table to fade in the <em>opposite</em> direction (dark at top, bright at bottom) by reversing the byte sequence.</li>
+<li><code>DASxL</code>/<code>DASxH</code> for a <em>DMA</em> channel count down as the transfer runs, ending at 0. What do those same registers mean for an <em>indirect</em> HDMA channel instead? (See the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">DASx register entry</a> — this tutorial only uses direct HDMA, but it’s worth knowing indirect mode exists.)</li>
+<li>Using the DMA fill trick, write a routine that clears all 544 bytes of OAM (sprite memory) to zero in one DMA call, in preparation for <a href="10-sprites-oam-basics.html">Lesson 10</a>.</li>
+</ol>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="07-debugging-with-mesen.html">Lesson 7 — Debugging with Mesen</a> Next: <a href="09-background-scrolling.html">Lesson 9 — Background scrolling</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

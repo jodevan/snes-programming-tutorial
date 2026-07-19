@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Building a Game for the SNES — A Step-by-Step Tutorial</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <a class="brand" href="index.html">SNES<span>Tutorial</span></a>
+  <div class="links">
+    <a href="#lessons">Lessons</a>
+    <a href="#resources">Resources</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">A hands-on 65816 / SNES programming course</div>
+    <h1>Building a Game for the SNES</h1>
+    <p class="lede">
+      From an empty folder to a small, playable Super Nintendo game — one concept
+      at a time. Every lesson assembles into a real <code style="background:rgba(255,255,255,0.18); color:#fff;">.sfc</code>
+      ROM you run in an emulator, so you're never just reading. You're building.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">ca65 / cc65</span>
+      <span class="badge">Mesen emulator</span>
+      <span class="badge">macOS</span>
+      <span class="badge">No prior 65816 experience needed</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="intro-grid">
+    <div>
+      <h3>Who this is for</h3>
+      <p>
+        You're comfortable programming and have <code>asar</code>, <code>ca65</code>
+        (part of the <code>cc65</code> suite), and the <strong>Mesen</strong> emulator
+        installed. You don't need prior 6502/65816 or SNES experience — Lesson 2
+        covers the CPU from scratch.
+      </p>
+    </div>
+    <div>
+      <h3>How each lesson works</h3>
+      <p>
+        A short concept explanation, one fully-commented assembly file, the exact
+        build commands, and what you should see in Mesen. Lessons build on each
+        other — by the end you'll have a running codebase, not disconnected demos.
+      </p>
+    </div>
+  </div>
+
+  <h2 id="lessons" style="border:none; padding:0; margin-top:0; font-size:1.5rem;">Course index</h2>
+  <p style="color: var(--muted); margin-top: -0.5rem;">
+    This tutorial standardizes on <strong>ca65</strong> over asar — mainly because
+    Mesen's debugger has first-class ca65 support, and the reference material this
+    course leans on (nesdoug's series, the Super Famicom Development Wiki) is
+    written for it too.
+  </p>
+
+  <div class="part-heading">
+    <span class="part-label">Part 0</span>
+    <h2>Foundations</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="01-toolchain-setup-and-first-rom.html">
+      <div class="lesson-num">1</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Toolchain setup &amp; your first ROM</div>
+        <div class="lesson-desc">Install/verify ca65 and Mesen, understand the ROM header and reset vector, display a solid color.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="02-cpu-crash-course.html">
+      <div class="lesson-num">2</div>
+      <div class="lesson-body">
+        <div class="lesson-title">The 65816 CPU crash course</div>
+        <div class="lesson-desc">Registers, 8/16-bit mode switching, addressing modes, the <code>.smart</code> directive, and 6502-vs-65816 gotchas.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="03-memory-map-and-registers.html">
+      <div class="lesson-num">3</div>
+      <div class="lesson-body">
+        <div class="lesson-title">SNES memory map &amp; hardware registers</div>
+        <div class="lesson-desc">WRAM, VRAM, CGRAM, OAM, the PPU/CPU register windows, and how to read the reference wiki.</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Part 1</span>
+    <h2>Graphics fundamentals</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="04-palettes-and-cgram.html">
+      <div class="lesson-num">4</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Palettes &amp; CGRAM</div>
+        <div class="lesson-desc">SNES color format (15-bit BGR), writing a palette from ROM in a loop.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="05-tiles-and-vram.html">
+      <div class="lesson-num">5</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Tiles &amp; VRAM</div>
+        <div class="lesson-desc">Tile bitplane formats (2bpp/4bpp/8bpp), loading graphics data into VRAM.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="06-backgrounds-and-tilemaps.html">
+      <div class="lesson-num">6</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Backgrounds &amp; tilemaps</div>
+        <div class="lesson-desc">BG modes, the tilemap entry format, turning on a background layer.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="07-debugging-with-mesen.html">
+      <div class="lesson-num">7</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Debugging with Mesen</div>
+        <div class="lesson-desc">Breakpoints, PPU viewers, memory tools, the event viewer, and trace logger.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="08-dma-and-hdma.html">
+      <div class="lesson-num">8</div>
+      <div class="lesson-body">
+        <div class="lesson-title">DMA &amp; HDMA deep dive</div>
+        <div class="lesson-desc">General-purpose DMA channels, the DMA fill trick, HDMA for scanline effects.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="09-background-scrolling.html">
+      <div class="lesson-num">9</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Background scrolling</div>
+        <div class="lesson-desc"><code>BGxHOFS</code>/<code>BGxVOFS</code>, a real per-frame game loop, seamless wrapping.</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Part 2</span>
+    <h2>Sprites &amp; interaction</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="10-sprites-oam-basics.html">
+      <div class="lesson-num">10</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Sprites (OAM) basics</div>
+        <div class="lesson-desc">Sprite graphics, the OAM table, size/priority attributes.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="11-controller-input-and-animation.html">
+      <div class="lesson-num">11</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Controller input &amp; sprite animation</div>
+        <div class="lesson-desc">NMI setup, joypad reading, moving and animating a sprite.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="12-collision-detection.html">
+      <div class="lesson-num">12</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Collision detection</div>
+        <div class="lesson-desc">Sprite-vs-sprite (AABB boxes) and sprite-vs-world (a lookup table).</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Part 3</span>
+    <h2>Audio</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="13-spc700-and-audio-basics.html">
+      <div class="lesson-num">13</div>
+      <div class="lesson-body">
+        <div class="lesson-title">The SPC700 &amp; audio basics</div>
+        <div class="lesson-desc">The second CPU, the boot handshake, making a sound with no SPC700 code.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="14-music-and-sound-effects.html">
+      <div class="lesson-num">14</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Music &amp; sound effects</div>
+        <div class="lesson-desc">Triggering sound effects from gameplay, and a realistic path to real music.</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="part-heading">
+    <span class="part-label">Part 4</span>
+    <h2>Wrapping up</h2>
+  </div>
+  <div class="lesson-grid">
+    <a class="lesson-card available" href="15-code-organization-and-optimization.html">
+      <div class="lesson-num">15</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Code organization &amp; optimization</div>
+        <div class="lesson-desc">Multi-file projects, macros, the V-Blank time budget, ROM banking.</div>
+      </div>
+    </a>
+    <a class="lesson-card available" href="16-capstone.html">
+      <div class="lesson-num">16</div>
+      <div class="lesson-body">
+        <div class="lesson-title">Capstone project</div>
+        <div class="lesson-desc">A small playable game combining a scrolling background, an animated/collidable player sprite, a collectible, and sound.</div>
+      </div>
+    </a>
+  </div>
+
+  <h2 id="resources">Reference resources</h2>
+  <div class="resources-list">
+    <div><a href="https://wiki.superfamicom.org/65816-reference" target="_blank" rel="noopener">65816 Reference</a><br><span>Full instruction set.</span></div>
+    <div><a href="https://wiki.superfamicom.org/spc700-reference" target="_blank" rel="noopener">SPC700 Reference</a><br><span>Sound CPU instruction set.</span></div>
+    <div><a href="https://wiki.superfamicom.org/registers" target="_blank" rel="noopener">Registers</a><br><span>Every PPU/CPU hardware register, bit by bit.</span></div>
+    <div><a href="https://wiki.superfamicom.org/memory-mapping" target="_blank" rel="noopener">Memory Mapping</a><br><span>LoROM/HiROM layout details.</span></div>
+    <div><a href="https://nesdoug.com/2020/03/19/snes-projects/" target="_blank" rel="noopener">nesdoug's SNES tutorial series</a><br><span>A second explanation style, ca65-based.</span></div>
+    <div><a href="https://github.com/nesdoug" target="_blank" rel="noopener">nesdoug's SNES example code</a><br><span>Companion repos per lesson.</span></div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  Built lesson by lesson — ask to continue whenever you're ready for the next one.
+</footer>
+
+</body>
+</html>

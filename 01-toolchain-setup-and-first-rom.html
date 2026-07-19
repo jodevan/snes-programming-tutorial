@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 1: Toolchain Setup &amp; Your First ROM</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 1: Toolchain Setup &amp; Your First ROM</h1>
+</header>
+<h1 id="lesson-1-toolchain-setup-your-first-rom">Lesson 1: Toolchain Setup &amp; Your First ROM</h1>
+<p><strong>Goal:</strong> get <code>ca65</code>/<code>ld65</code> and Mesen working together, understand what a minimal SNES ROM file actually contains, and produce a ROM that paints the screen a solid color. That’s it — no graphics engine yet. The point is to prove the whole write → assemble → link → run loop works before anything else gets layered on top.</p>
+<h2 id="install-the-toolchain">1. Install the toolchain</h2>
+<p>You said you already have <code>asar</code>, <code>ca65</code>, and Mesen installed. Quick way to confirm:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">ca65</span> --version</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="ex">ld65</span> --version</span></code></pre></div>
+<p>If either command isn’t found, install (or reinstall) <code>cc65</code> via Homebrew:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ex">brew</span> install cc65</span></code></pre></div>
+<p>That gives you both <code>ca65</code> (the assembler) and <code>ld65</code> (the linker) — cc65 is a whole suite (assembler, linker, and a C compiler you won’t need for this).</p>
+<p>For Mesen, confirm it opens and can load a ROM. Recent Mesen builds are a single app bundle; if you installed it standalone, the emulator core that matters here is the SNES core (sometimes labeled Mesen-S in older releases, merged into plain “Mesen” in current ones).</p>
+<h2 id="whats-actually-in-a-snes-rom-file">2. What’s actually in a SNES ROM file</h2>
+<p>Before writing code, know what you’re building. A <code>.sfc</code> file is just a flat binary blob that gets mapped into the SNES’s address space in a specific pattern. There are two common mapping schemes, <strong>LoROM</strong> and <strong>HiROM</strong> — this tutorial uses LoROM throughout because it’s simpler to reason about and is what most beginner material (including nesdoug’s series) uses.</p>
+<p>In LoROM, the cartridge is split into 32 KB chunks, and each chunk is mapped into the upper half (<code>$8000</code>–<code>$FFFF</code>) of a CPU bank. So ROM offset <code>$0000</code> ends up at CPU address <code>$808000</code>, offset <code>$8000</code> at <code>$818000</code>, and so on.</p>
+<p>Three fixed locations near the end of the first 32 KB chunk matter immediately:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>CPU address</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$80FFC0</code>–<code>$80FFD4</code></td>
+<td><strong>Header</strong>: 21-byte ROM name (padded with spaces), used by emulators/flash carts for display.</td>
+</tr>
+<tr class="even">
+<td><code>$80FFD5</code>–<code>$80FFDF</code></td>
+<td><strong>ROM info</strong>: mapping mode, cartridge type, ROM size, RAM size, region, etc.</td>
+</tr>
+<tr class="odd">
+<td><code>$80FFE0</code>–<code>$80FFFF</code></td>
+<td><strong>Vectors</strong>: addresses the CPU jumps to for interrupts and reset, for both native and emulation mode.</td>
+</tr>
+</tbody>
+</table>
+<p>The only vector we care about right now is the <strong>native-mode reset vector</strong> (the last word in that table). When you power on the SNES, the 65816 starts in 6502-compatible “emulation mode” and immediately reads the <em>emulation-mode</em> reset vector at <code>$80FFFC</code>. Our reset code switches the CPU into native mode within its first few instructions, so from then on the <em>native</em> vectors apply — but the initial jump-in point is always emulation-mode reset. We’ll write our reset routine there and it will handle the mode switch itself.</p>
+<p>You don’t need to memorize this table — you’ll come back to it. The point is: a SNES ROM isn’t “code that starts at address 0.” It’s a binary with specific bytes at specific offsets that the hardware reads before your code ever runs.</p>
+<h2 id="the-linker-config">3. The linker config</h2>
+<p><code>ld65</code> needs to know how to lay out those regions. Create <code>lorom128.cfg</code>:</p>
+<pre><code># lorom128.cfg — ca65 linker config for a 128KB LoROM SNES ROM.
+
+MEMORY {
+    ZEROPAGE:   start =      0, size =  $100;
+    BSS:        start =   $200, size = $1800;
+    ROM:        start =  $8000, size = $8000, fill = yes;
+}
+
+SEGMENTS {
+    ZEROPAGE:   load = ZEROPAGE,    type = zp;
+    BSS:        load = BSS,         type = bss, align = $100;
+
+    CODE:       load = ROM,         align = $8000;
+    RODATA:     load = ROM;
+    HEADER:     load = ROM,         start = $FFC0;
+    ROMINFO:    load = ROM,         start = $FFD5, optional = yes;
+    VECTORS:    load = ROM,         start = $FFE0;
+}</code></pre>
+<p>Read this as: “here are the physical memory regions (<code>MEMORY</code>), and here are the named buckets of code/data (<code>SEGMENTS</code>) that get poured into them.” <code>ZEROPAGE</code> and <code>BSS</code> are RAM (they don’t end up <em>in</em> the ROM file — they’re just reserved addresses for variables). <code>HEADER</code>, <code>ROMINFO</code>, and <code>VECTORS</code> are pinned to the exact offsets from the table above. We’re keeping this to a single 32 KB bank for now; later lessons extend it to more banks once we need more room for graphics data.</p>
+<h2 id="the-rom-itself">4. The ROM itself</h2>
+<p>Create <code>lesson1.asm</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">; ============================================================</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="co">; Lesson 1: minimal SNES ROM — fills the screen with one color.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="co">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co">; Build:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="co">;   ca65 lesson1.asm -o lesson1.o</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a><span class="co">;   ld65 -C lorom128.cfg -o lesson1.sfc lesson1.o</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a><span class="co">; ============================================================</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>.p816                   <span class="co">; assemble for the 65816 instruction set</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>.i16                    <span class="co">; reminder: X/Y start out 16-bit after our init code</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>.a8                     <span class="co">; reminder: A will be 8-bit after our init code</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a><span class="co">; Header: 21-byte ROM title, space-padded. Purely cosmetic —</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a><span class="co">; shown by emulators/flash carts, ignored by the hardware.</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;HEADER&quot;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="st">&quot;LESSON 1 TUTORIAL    &quot;</span>  <span class="co">; must be exactly 21 bytes</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a><span class="co">; ROM info block. Byte-by-byte:</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;ROMINFO&quot;</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $20      </span><span class="co">; map mode: LoROM, slow ROM (bit4 set = fast; we leave it slow/safe)</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00      </span><span class="co">; cartridge type: $00 = ROM only, no extra chips</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $07      </span><span class="co">; ROM size: 2^$07 KB = 128 KB</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00      </span><span class="co">; RAM size: none</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $01      </span><span class="co">; destination/region code: $01 = USA/NTSC (cosmetic here)</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00      </span><span class="co">; fixed / licensee byte</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00      </span><span class="co">; ROM version / revision</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; checksum complement (placeholder — real carts need this</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true"></a>                    <span class="co">;   computed correctly; emulators don&#39;t care)</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; checksum (placeholder, same note as above)</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true"></a><span class="co">; Interrupt/reset vectors. We only fill in what we use; the</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true"></a><span class="co">; rest point at a &quot;do nothing forever&quot; trap for safety, so</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true"></a><span class="co">; that if the CPU ever jumps somewhere we didn&#39;t expect, it</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true"></a><span class="co">; halts visibly instead of running garbage.</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;VECTORS&quot;</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true"></a>    <span class="co">; --- Native mode vectors (used once we&#39;ve switched out of</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true"></a>    <span class="co">;     emulation mode, which our reset code does immediately) ---</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; unused</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; unused</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; COP</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; BRK</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; ABORT</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; NMI  (vertical blank interrupt — unused for now)</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; unused (reserved)</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; IRQ</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true"></a></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true"></a>    <span class="co">; --- Emulation mode vectors (this is what the CPU actually</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true"></a>    <span class="co">;     reads on power-on / reset, before our code runs) ---</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; unused</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; unused</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; COP (emulation)</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0000    </span><span class="co">; unused (reserved)</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; ABORT (emulation)</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; NMI (emulation)</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true"></a>    .<span class="dt">word</span> reset    <span class="co">; RESET — this is the one that matters at power-on</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true"></a>    .<span class="dt">word</span> trap     <span class="co">; IRQ/BRK (emulation)</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true"></a></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true"></a><span class="co">; Code</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true"></a><span class="co">; ------------------------------------------------------------</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true"></a>.<span class="bu">segment</span> <span class="st">&quot;CODE&quot;</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true"></a></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true"></a><span class="fu">reset:</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true"></a>    sei             <span class="co">; disable interrupts while we set things up</span></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true"></a>    <span class="bu">clc</span>             <span class="co">; clear carry...</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true"></a>    xce             <span class="co">; ...then exchange carry with emulation flag:</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true"></a>                     <span class="co">;   this is the standard idiom that switches the</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true"></a>                     <span class="co">;   65816 from 6502-compatible emulation mode</span></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true"></a>                     <span class="co">;   into full native 16-bit-capable mode.</span></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true"></a></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true"></a>    rep #<span class="bn">$10        </span><span class="co">; REP = &quot;reset processor status bits&quot; — clears bits</span></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true"></a>                     <span class="co">;   in the flag register. Bit 4 (X) controls</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true"></a>                     <span class="co">;   X/Y register width; clearing it makes X/Y 16-bit.</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true"></a>    sep #<span class="bn">$20        </span><span class="co">; SEP = &quot;set processor status bits&quot;. Bit 5 (M)</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true"></a>                     <span class="co">;   controls the A register width; setting it makes</span></span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true"></a>                     <span class="co">;   A 8-bit. Mixed 16-bit index / 8-bit accumulator</span></span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true"></a>                     <span class="co">;   is the most common working mode for SNES code.</span></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true"></a>    .a8</span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true"></a>    .i16</span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true"></a></span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true"></a>    ldx #<span class="bn">$1FFF      </span><span class="co">; set up the stack pointer — SNES RAM is $0000-$1FFF</span></span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true"></a>    txs             <span class="co">;   in bank 0, so $1FFF is the top of low RAM.</span></span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true"></a></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true"></a>    <span class="co">; --- Reset every PPU and DMA register to a known state. ---</span></span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true"></a>    <span class="co">; On power-on these registers can contain garbage. Rather than</span></span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true"></a>    <span class="co">; hand-initialize the ones we care about and hope the rest don&#39;t</span></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true"></a>    <span class="co">; matter, we zero the whole block. $2100-$2133 is  the PPU/CGRAM</span></span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true"></a>    <span class="co">; register window; $4200-$421F is CPU/DMA control.</span></span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true"></a>    ldx #<span class="bn">$33</span></span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true"></a><span class="fu">clear_regs:</span></span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true"></a>    stz<span class="bn"> $2100,</span>x</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true"></a>    stz<span class="bn"> $4200,</span>x</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true"></a>    dex</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true"></a>    bpl clear_regs</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true"></a></span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true"></a>    <span class="co">; --- Set the background color (CGRAM entry 0) to blue. ---</span></span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true"></a>    <span class="co">; CGRAM holds the SNES&#39;s palette memory: 256 entries, each a</span></span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true"></a>    <span class="co">; 15-bit BGR color (5 bits per channel, top bit unused).</span></span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true"></a>    <span class="co">; With no background layers or sprites turned on (which we</span></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true"></a>    <span class="co">; haven&#39;t touched yet), the screen just shows palette entry 0</span></span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true"></a>    <span class="co">; directly — it&#39;s the simplest possible visual proof that code</span></span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true"></a>    <span class="co">; is running.</span></span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true"></a>    stz<span class="bn"> $2121       </span><span class="co">; CGADD: set the CGRAM write address to entry 0</span></span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true"></a>    lda #<span class="bn">$00        </span><span class="co">; low byte of color $7C00 (blue): gggrrrrr = 00000000</span></span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true"></a>    sta<span class="bn"> $2122       </span><span class="co">; CGDATA — first write is the low byte</span></span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true"></a>    lda #<span class="bn">$7C        </span><span class="co">; high byte: -bbbbbgg = 01111100 (blue = 11111, top bit 0)</span></span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true"></a>    sta<span class="bn"> $2122       </span><span class="co">; CGDATA — second write is the high byte</span></span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true"></a></span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true"></a>    <span class="co">; --- Turn the screen on. ---</span></span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true"></a>    <span class="co">; $2100 (INIDISP): bit 7 = forced blank (1 = screen off, ignore</span></span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true"></a>    <span class="co">; everything else). Low nibble = brightness, 0-$0F.</span></span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true"></a>    lda #<span class="bn">$0F        </span><span class="co">; forced blank OFF, full brightness</span></span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true"></a>    sta<span class="bn"> $2100</span></span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true"></a></span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true"></a><span class="fu">forever:</span></span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true"></a>    <span class="bu">jmp</span> forever     <span class="co">; nothing left to do — spin here.</span></span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true"></a></span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true"></a><span class="co">; A landing pad for any vector we didn&#39;t wire up to real code.</span></span>
+<span id="cb4-125"><a href="#cb4-125" aria-hidden="true"></a><span class="co">; If you ever see the screen do something unexpected and suspect</span></span>
+<span id="cb4-126"><a href="#cb4-126" aria-hidden="true"></a><span class="co">; a stray interrupt, this is what lets you notice: put a break-</span></span>
+<span id="cb4-127"><a href="#cb4-127" aria-hidden="true"></a><span class="co">; point on `trap` in Mesen&#39;s debugger and see if it gets hit.</span></span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true"></a><span class="fu">trap:</span></span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true"></a>    <span class="bu">jmp</span> trap</span></code></pre></div>
+<p>A few things worth pausing on, since they’re easy to skim past:</p>
+<ul>
+<li><p><strong><code>rep</code>/<code>sep</code> and the <code>.a8</code>/<code>.i16</code> directives are two different things.</strong> <code>rep #$10</code> / <code>sep #$20</code> are real 65816 instructions — they change the CPU’s actual register widths at runtime. <code>.a8</code> / <code>.i16</code> are assembler directives that tell <em>ca65</em> what width to assume when it encodes instructions after that point (so <code>lda #$0F</code> gets assembled as an 8-bit immediate load, not a 16-bit one). Get these out of sync — tell the assembler <code>.a16</code> while the CPU is actually in 8-bit mode — and you’ll get corrupted, hard-to-diagnose bugs. Lesson 2 covers this in depth; for now, just notice the pattern: change the CPU, then immediately tell the assembler to match.</p></li>
+<li><p><strong>Why $001F vs $7C00 for colors</strong> — a SNES color is 15 bits, laid out <code>-bbbbbgg gggrrrrr</code> across two bytes. Pure red is <code>$001F</code> (all 5 red bits set), pure green is <code>$03E0</code>, pure blue is <code>$7C00</code>. We used blue here — try changing it and re-assembling once you’re set up.</p></li>
+<li><p><strong>The placeholder checksum.</strong> Real cartridges need a correct checksum/ complement pair or some hardware (and picky emulators) will refuse to boot. Mesen doesn’t care, so we’re leaving it as <code>$0000</code>/<code>$0000</code> for now. You’ll fix this properly once you’re closer to a real release — it’s not worth the complexity this early.</p></li>
+</ul>
+<h2 id="build-and-run">5. Build and run</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ex">ca65</span> lesson1.asm -o lesson1.o</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="ex">ld65</span> -C lorom128.cfg -o lesson1.sfc lesson1.o</span></code></pre></div>
+<p>If both commands complete with no output, it worked — <code>ca65</code>/<code>ld65</code> are silent on success. Open <code>lesson1.sfc</code> in Mesen. You should see a solid blue screen.</p>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li><em>Mesen shows black, or shows nothing:</em> Use File → Open (or Reload from file) — not double-clicking the ROM again while Mesen is already open, which can reload a cached save state instead of the fresh binary. This trips people up constantly and is worth remembering for every lesson from here on.</li>
+<li><em><code>ca65</code> reports a segment or range error:</em> almost always means a segment in the <code>.asm</code> file doesn’t match <code>lorom128.cfg</code>, or the total code overflowed 32 KB (won’t happen here, but will eventually — that’s what the multi-bank config in later lessons is for).</li>
+<li><em>Screen shows a color, but the wrong one:</em> double check the byte order — CGDATA writes are low byte first, then high byte, and it’s easy to swap them.</li>
+</ul>
+<h2 id="what-you-just-built">What you just built</h2>
+<p>A ROM with a correct header, a reset vector the hardware can actually find, a CPU mode switch, cleared hardware state, and one visible side effect. That’s the skeleton every later lesson builds on — Lesson 3 onward will replace the “solid color” step with real backgrounds and sprites, but the setup code above barely changes.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Change the background color to something else using the BGR table in the comments above. Re-assemble, reload in Mesen, confirm it changed.</li>
+<li>Try setting <code>$2100</code> brightness to <code>$00</code> instead of <code>$0F</code> — confirm the screen goes dark even though the color is still set in CGRAM. This previews why “forced blank” exists: it lets you update VRAM/CGRAM/OAM safely without the PPU reading them mid-update, which matters a lot once real graphics are involved.</li>
+<li>Deliberately break something — comment out the <code>xce</code> line and try to re-assemble/run. Note what happens (or doesn’t) so you have a feel for what a “stuck in emulation mode” failure looks like before it happens by accident later.</li>
+</ol>
+<h2 id="appendix-a-the-same-rom-in-asar-for-comparison">Appendix A: the same ROM in asar (for comparison)</h2>
+<p>Since you have asar installed too, here’s the equivalent in asar’s syntax — note it’s a single file, no separate linker config, because asar infers the layout from <code>lorom</code> and directive-based placement:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="co">; lesson1_asar.asm</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>lorom</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="bu">org</span><span class="bn"> $00FFC0</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="dt">db</span> <span class="st">&quot;LESSON 1 TUTORIAL   &quot;</span>     <span class="co">; 21-byte header</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="bu">org</span><span class="bn"> $00FFD5</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a><span class="dt">db</span><span class="bn"> $20, $00, $07, $00, $01, $00, $00</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a><span class="dt">dw</span><span class="bn"> $0000, $0000               </span><span class="co">; checksum placeholders</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a><span class="bu">org</span><span class="bn"> $00FFE0</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a><span class="dt">dw</span><span class="bn"> $0000, $0000, </span>trap, trap, trap, trap<span class="bn">, $0000, </span>trap   <span class="co">; native vectors</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a><span class="dt">dw</span><span class="bn"> $0000, $0000, </span>trap<span class="bn">, $0000, </span>trap, trap, reset, trap  <span class="co">; emulation vectors</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a><span class="bu">org</span><span class="bn"> $008000</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a><span class="fu">reset:</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>    sei</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a>    <span class="bu">clc</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>    xce</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a>    rep #<span class="bn">$10</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true"></a>    sep #<span class="bn">$20</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true"></a>    ldx #<span class="bn">$1FFF</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true"></a>    txs</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true"></a>    ldx #<span class="bn">$33</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true"></a><span class="fu">.clear_regs:</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true"></a>    stz<span class="bn"> $2100,</span>x</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true"></a>    stz<span class="bn"> $4200,</span>x</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true"></a>    dex</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true"></a>    bpl .clear_regs</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true"></a>    stz<span class="bn"> $2121</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true"></a>    lda #<span class="bn">$00</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true"></a>    sta<span class="bn"> $2122</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true"></a>    lda #<span class="bn">$7C</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true"></a>    sta<span class="bn"> $2122</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true"></a>    lda #<span class="bn">$0F</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true"></a>    sta<span class="bn"> $2100</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true"></a><span class="fu">forever:</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true"></a>    <span class="bu">jmp</span> forever</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true"></a><span class="fu">trap:</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true"></a>    <span class="bu">jmp</span> trap</span></code></pre></div>
+<p>Build with a single command: <code>asar lesson1_asar.asm lesson1_asar.sfc</code>. We won’t maintain this asar version past Lesson 1 — it’s here purely so you can see how the same concepts map onto the other toolchain if you’re curious.</p>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Next: <a href="02-cpu-crash-course.html">Lesson 2 — The 65816 CPU crash course</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

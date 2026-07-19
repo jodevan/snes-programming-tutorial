@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 7: Debugging with Mesen</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 7: Debugging with Mesen</h1>
+</header>
+<h1 id="lesson-7-debugging-with-mesen">Lesson 7: Debugging with Mesen</h1>
+<p><strong>Goal:</strong> stop guessing and start looking. You now have a ROM with real state — a palette, a tile, a tilemap — which makes this the right moment to learn Mesen’s debugging tools properly, before projects get complex enough that guessing stops working. This is also, incidentally, <em>why</em> this tutorial picked <a href="index.html#lessons">ca65 over asar back in the outline</a>: Mesen’s debugger has first-class support for ca65’s debug symbols, so breakpoints and the disassembly view show your actual source labels, not just raw addresses.</p>
+<h2 id="the-toolkit">The toolkit</h2>
+<p>Everything below lives under Mesen’s <strong>Debug</strong> menu. The <a href="https://www.mesen.ca/snes/docs/debugging.md">official documentation</a> covers each tool in full detail; this lesson is a guided tour of the ones you’ll reach for constantly, using bugs deliberately planted in your own Lesson 6 code as practice targets.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Tool</th>
+<th>What it’s for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Debugger</strong></td>
+<td>Source-mapped disassembly, breakpoints, a watch window, and register state — the main window you’ll live in.</td>
+</tr>
+<tr class="even">
+<td><strong>PPU Viewers</strong></td>
+<td>Live views of tiles, tilemaps, sprites, and palettes, read directly out of VRAM/CGRAM/OAM.</td>
+</tr>
+<tr class="odd">
+<td><strong>Memory Tools</strong></td>
+<td>A hex editor plus read/write/execute access counters for every memory type.</td>
+</tr>
+<tr class="even">
+<td><strong>Event Viewer</strong></td>
+<td>A per-scanline timeline of register accesses, NMI, and IRQ.</td>
+</tr>
+<tr class="odd">
+<td><strong>Trace Logger</strong></td>
+<td>A scrollable (or file-logged) instruction-by-instruction execution trace.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-debugger-window-and-breakpoints">The Debugger window and breakpoints</h3>
+<p>Open <strong>Debug → Debugger</strong> while your ROM is running. You’ll see disassembly with your ca65 labels intact (<code>reset:</code>, <code>@pal_loop:</code>, and so on) — this is the payoff of the toolchain choice made all the way back in the outline. Breakpoints can trigger on <strong>read</strong>, <strong>write</strong>, or <strong>execute</strong> access to a given address or address range, in any of the SNES’s memory types (CPU address space, VRAM, CGRAM, OAM, and more), optionally gated by a condition expression.</p>
+<p>Try this concretely: set a <strong>write</strong> breakpoint on <code>$2122</code> (CGDATA) and re-run your Lesson 4/5/6 ROM from the start. Execution will pause on every single palette write, letting you step through and confirm — byte by byte — that <code>load_palette</code>’s loop is writing what you think it’s writing. Do the same for <code>$2118</code>/<code>$2119</code> to watch the VRAM tile upload. This is a far more reliable way to answer “is my loop doing what I think it’s doing?” than staring at source code.</p>
+<h3 id="ppu-viewers-seeing-the-data-not-just-the-writes">PPU Viewers: seeing the data, not just the writes</h3>
+<p>Open <strong>Debug → PPU Viewers</strong>. Three views matter most for what you’ve built so far:</p>
+<ul>
+<li><strong>Palette viewer</strong> — shows all 256 CGRAM entries as color swatches. Confirm entries 0-3 are black/red/green/blue, exactly as Lesson 4’s table specified.</li>
+<li><strong>Tile viewer</strong> — renders raw VRAM bytes as tiles, with presets for “tiles currently used by BG3” and similar. Confirm your Lesson 5 tile actually shows a red-over-green stripe, using the palette you just confirmed above. You can even right-click a tile here and set a breakpoint on it directly, jumping straight to the code that last wrote it — much faster than hunting through source for the right <code>VMDATAL</code> write by hand.</li>
+<li><strong>Tilemap viewer</strong> — shows the assembled tilemap (tile choice, palette, flip, priority per cell) as a grid. This is where Lesson 6’s “word address vs. byte address” gotcha becomes visible instantly: if <code>BG3SC</code> were pointed at the wrong VRAM location, this view would show garbage tiles pulled from whatever random data happens to live there, even though the tile viewer and palette viewer both look correct in isolation.</li>
+</ul>
+<h3 id="memory-tools-catching-uninitialized-reads">Memory Tools: catching uninitialized reads</h3>
+<p><strong>Debug → Memory Tools</strong> gives you a hex editor over any memory type, plus access counters — Mesen tracks every read, write, and execute per address while the debugger is active. This is the tool for a specific, very common bug category: reading a variable before anything has written to it. If an address shows reads but zero writes in the counter view, you’ve found a variable your code assumes is initialized but never actually set.</p>
+<h3 id="event-viewer-catching-timing-violations">Event Viewer: catching timing violations</h3>
+<p>Recall <a href="03-memory-map-and-registers.html#reading-a-register-diagram">Lesson 3</a>’s register-diagram notation — <code>wb+++-</code> and similar — which encodes exactly when a register is safe to write (forced blank, V-Blank, H-Blank, or any time). <strong>Debug → Event Viewer</strong> draws a visual timeline, one row per scanline, marking every register access as a colored dot at the horizontal position it happened. It’s the empirical way to confirm you’re respecting those timing windows: PPU register writes should cluster tightly around the forced-blank/V-Blank period at the top of the timeline. A write scattered into the middle of active rendering is exactly the kind of bug that produces the “glitched for a few tiles” symptom mentioned back in Lesson 3’s <code>INIDISP</code> notes — and it’s very hard to spot from source code alone, but immediately obvious as a stray dot in the wrong place on this timeline.</p>
+<h3 id="trace-logger-the-last-resort-that-always-works">Trace Logger: the last resort that always works</h3>
+<p><strong>Debug → Trace Logger</strong> records (or displays live) every instruction executed, in order, with register state at each step. It’s verbose — you generally don’t read a full trace top to bottom — but it’s invaluable when you know <em>roughly</em> when something went wrong (say, “sometime after the third palette write”) and need to see the exact instruction-by-instruction path the CPU took, including any branches that didn’t go the way you expected.</p>
+<h2 id="a-practice-bug">A practice bug</h2>
+<p>Deliberately break your Lesson 6 code to get real practice: swap the order of the <code>VMADDL</code>/<code>VMADDH</code> writes in the tilemap-loading loop (write the high byte first, low byte second). Rebuild, run, and use the tools above in this order to find it without looking at the diff:</p>
+<ol type="1">
+<li><strong>Tile viewer</strong> — the striped tile itself still looks correct, since Lesson 5’s tile-loading loop wasn’t touched. This tells you the bug is downstream of tile loading.</li>
+<li><strong>Tilemap viewer</strong> — now shows the tilemap reading from the wrong VRAM region entirely, because the address it landed on isn’t what <code>BG3SC</code> expects.</li>
+<li><strong>Debugger breakpoint</strong> on write to <code>$2117</code> (VMADDH) — step through and watch the actual address bytes land in the wrong order relative to <code>$2116</code>.</li>
+</ol>
+<p>This workflow — narrow down <em>which</em> stage is wrong using the viewers, then pinpoint <em>why</em> using breakpoints — is the general pattern you’ll use for the rest of this tutorial, and for any SNES project after it.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Set a breakpoint that triggers only when <code>X</code> equals a specific value inside the tilemap-filling loop from Lesson 6, using a condition expression rather than stepping through all 1024 iterations by hand.</li>
+<li>Open the Event Viewer on your working (unbroken) Lesson 6 ROM and confirm for yourself that every PPU register write happens before the <code>INIDISP</code> brightness write — i.e., entirely within forced blank.</li>
+<li>Undo the practice bug above, then introduce a different one on purpose (for example, load Lesson 4’s palette into CGRAM index 4 instead of index 0) and use the Palette Viewer to confirm your prediction of what would go wrong before fixing it.</li>
+</ol>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a> Next: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

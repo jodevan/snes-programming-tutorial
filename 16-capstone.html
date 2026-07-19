@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 16: Capstone Project</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 16: Capstone Project</h1>
+</header>
+<h1 id="lesson-16-capstone-project">Lesson 16: Capstone Project</h1>
+<p><strong>Goal:</strong> wire together everything from Lessons 1-15 into one small, coherent, playable scene — not new material, but the first time all of it runs as a single program instead of fifteen separate demos.</p>
+<h2 id="what-youre-building">What you’re building</h2>
+<p>A player-controlled sprite that: moves around a scrolling background, stays inside the play area via tile-based collision, can touch a collectible sprite that disappears and plays a sound when collected, and is built from files organized the way <a href="15-code-organization-and-optimization.html">Lesson 15</a> described rather than one monolithic file. Concretely, every piece maps to a lesson you’ve already built:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Piece</th>
+<th>From</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ROM skeleton, header, reset routine</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a></td>
+</tr>
+<tr class="even">
+<td>Palette</td>
+<td><a href="04-palettes-and-cgram.html">Lesson 4</a></td>
+</tr>
+<tr class="odd">
+<td>Background tile + tilemap</td>
+<td><a href="05-tiles-and-vram.html">Lessons 5</a>-<a href="06-backgrounds-and-tilemaps.html">6</a></td>
+</tr>
+<tr class="even">
+<td>Fast loading via DMA</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="odd">
+<td>Background scrolling</td>
+<td><a href="09-background-scrolling.html">Lesson 9</a></td>
+</tr>
+<tr class="even">
+<td>Player sprite + animation</td>
+<td><a href="10-sprites-oam-basics.html">Lesson 10</a>-<a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="odd">
+<td>Movement bounds + collectible detection</td>
+<td><a href="12-collision-detection.html">Lesson 12</a></td>
+</tr>
+<tr class="even">
+<td>Collection sound effect</td>
+<td><a href="13-spc700-and-audio-basics.html">Lessons 13</a>-<a href="14-music-and-sound-effects.html">14</a></td>
+</tr>
+<tr class="odd">
+<td>File layout</td>
+<td><a href="15-code-organization-and-optimization.html">Lesson 15</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="suggested-file-layout">Suggested file layout</h2>
+<pre><code>main.s          ; .includes everything below, HEADER/ROMINFO/VECTORS segments
+regs.s          ; hardware register address constants
+variables.s     ; direct-page variable definitions
+macros.s        ; write_dsp_reg and any other macros you&#39;ve written
+reset.s         ; reset: — CPU init, palette/tile/tilemap/sprite loading (DMA)
+gameplay.s       ; nmi_handler: — scroll, input, movement, collision, sound
+audio.s           ; spc_wait_boot, spc_begin_upload, spc_upload_byte, write_dsp
+lorom128.cfg       ; the 4-bank linker config from Lesson 15</code></pre>
+<h2 id="the-collectible-mechanic">The collectible mechanic</h2>
+<p>This is the one genuinely new piece — everything else is direct reuse. Extend Lesson 12’s <code>wall_x</code>/<code>wall_y</code> sprite into a real collectible: when <code>check_collision</code> reports a hit, hide it (move it off-screen, the same technique Lesson 10 used for unused sprites) and trigger Lesson 14’s sound, guarded so it only fires once:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">; --- new variable ---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>collected :=<span class="bn"> $06     </span><span class="co">; 0 = not yet collected, 1 = collected</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="co">; --- inside nmi_handler, after the existing check_collision call ---</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    lda collected</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    bne @already_done       <span class="co">; skip entirely once collected</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="bu">js</span>r check_collision</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    bcc @no_hit</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    lda #<span class="dv">1</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    sta collected</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    <span class="co">; hide the collectible sprite (same technique as Lesson 10&#39;s off-screen sprites)</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    stz<span class="bn"> $2102</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    lda #<span class="dv">4</span>                    <span class="co">; OAMADDL: sprite 1&#39;s record starts at byte 4</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    sta<span class="bn"> $2102</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>    stz<span class="bn"> $2103</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    lda #<span class="dv">$</span>F0</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    sta<span class="bn"> $2104                  </span><span class="co">; overwrite its Y with an off-screen value</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>                                 <span class="co">; (X/tile/attr bytes stay as previously set;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>                                 <span class="co">; only Y needs to change to hide it)</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a>    <span class="bu">js</span>r play_hit_sfx             <span class="co">; from Lesson 14</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a><span class="fu">@no_hit:</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a><span class="fu">@already_done:</span></span></code></pre></div>
+<h2 id="build-run-and-verify">Build, run, and verify</h2>
+<p>This is the point where <a href="07-debugging-with-mesen.html">Lesson 7</a>’s tools stop being optional. Before considering the capstone finished, use them deliberately:</p>
+<ol type="1">
+<li><strong>Palette and tile viewers</strong> — confirm the collectible sprite and player sprite both render with the colors and tile data you expect.</li>
+<li><strong>A breakpoint on <code>collected</code></strong> (write access) — confirm it’s set exactly once, not repeatedly, when the sprites overlap.</li>
+<li><strong>The Event Viewer</strong> — confirm the extra OAM/DMA work this lesson added still completes inside V-Blank, per <a href="15-code-organization-and-optimization.html#respecting-the-v-blank-time-budget">Lesson 15</a>’s budget discussion. A capstone that works but silently blows the timing budget is a good habit to catch now, before a bigger project makes it much harder to find.</li>
+</ol>
+<h2 id="where-to-go-from-here">Where to go from here</h2>
+<p>This tutorial stops here on purpose — not because there’s nothing left, but because everything past this point is variation and depth on the same foundations, better explored by building something you actually want to make. Some directions, each a natural extension of a specific lesson:</p>
+<ul>
+<li><strong>A real level</strong> instead of a repeating stripe: multiple tile designs, a hand-authored tilemap (Lesson 6), and collision data derived from it (Lesson 12’s third exercise sketched exactly this).</li>
+<li><strong>More background layers</strong>: Mode 1 leaves <code>BG1</code>/<code>BG2</code> unused in this tutorial — a parallax layer or a HUD layer is a direct extension of Lesson 6, mindful of the shared-scroll-latch gotcha from Lesson 9.</li>
+<li><strong>Real music</strong>, via one of the drivers Lesson 14 pointed to, replacing the single hand-tuned tone with an actual composed track.</li>
+<li><strong>HDMA effects</strong> beyond the brightness gradient — per-scanline color changes or a split-scroll effect, building on Lesson 8.</li>
+<li><strong>Graphics tooling</strong> — hand-encoding tiles byte-by-byte (as every lesson here did) doesn’t scale; look into tools that convert a PNG into SNES tile format directly.</li>
+<li>The <a href="https://wiki.superfamicom.org">Super Famicom Development Wiki</a> and the <a href="https://snes.nesdev.org/wiki/SNESdev_Wiki">SNESdev Wiki</a> — both cited throughout this tutorial — cover everything from Mode 7 to save-data chips to multiplayer, well beyond this course’s scope.</li>
+</ul>
+<p>If you get stuck on any of these, or on anything in Lessons 1-16, that’s exactly the situation this tutorial’s format was built for — bring the question back, and the relevant lesson gets corrected or extended based on it.</p>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="15-code-organization-and-optimization.html">Lesson 15 — Code organization &amp; optimization</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

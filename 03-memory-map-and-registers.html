@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 3: SNES Memory Map &amp; Hardware Registers</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 3: SNES Memory Map &amp; Hardware Registers</h1>
+</header>
+<h1 id="lesson-3-snes-memory-map-hardware-registers">Lesson 3: SNES Memory Map &amp; Hardware Registers</h1>
+<p><strong>Goal:</strong> build a mental map of where everything lives — WRAM, VRAM, CGRAM, OAM, and the register windows that control them — before touching graphics. Every lesson from here on points back at this one, so it’s worth reading slowly even though there’s no new ROM to assemble yet.</p>
+<h2 id="four-kinds-of-memory-four-different-doors">Four kinds of memory, four different doors</h2>
+<p>The SNES doesn’t have one flat memory space the CPU can freely read and write. It has several physically separate memory chips, and the 65816 can only reach most of them indirectly, through small “porthole” registers. Getting this straight now saves a lot of confusion later — “why can’t I just <code>LDA</code> a VRAM address?” is one of the most common beginner questions, and the answer is simply that VRAM isn’t wired to the CPU’s address bus at all.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Memory</th>
+<th>Size</th>
+<th>Holds</th>
+<th>How the CPU reaches it</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>WRAM</strong></td>
+<td>128 KB</td>
+<td>General-purpose RAM — variables, stacks, buffers</td>
+<td>Directly, as real addresses (see below)</td>
+</tr>
+<tr class="even">
+<td><strong>VRAM</strong></td>
+<td>64 KB</td>
+<td>Tile graphics data and tilemaps</td>
+<td>Indirectly, through <code>$2115</code>-<code>$2119</code></td>
+</tr>
+<tr class="odd">
+<td><strong>CGRAM</strong></td>
+<td>512 bytes</td>
+<td>The color palette (256 entries × 15-bit color)</td>
+<td>Indirectly, through <code>$2121</code>-<code>$2122</code></td>
+</tr>
+<tr class="even">
+<td><strong>OAM</strong></td>
+<td>544 bytes</td>
+<td>Sprite attributes (position, tile, palette, flags)</td>
+<td>Indirectly, through <code>$2102</code>-<code>$2104</code></td>
+</tr>
+</tbody>
+</table>
+<p>WRAM is the odd one out — it’s the only one of the four the CPU can address like normal memory. VRAM, CGRAM, and OAM are only reachable by writing an address into one register and a value into another, one step removed from the CPU. This lesson introduces where each one is and what its register window looks like; Lessons <a href="04-palettes-and-cgram.html">4</a>, <a href="05-tiles-and-vram.html">5</a>, and <a href="10-sprites-oam-basics.html">9</a> each come back and go deep on one of them.</p>
+<h2 id="wram-the-cpus-real-address-space">WRAM: the CPU’s real address space</h2>
+<p>WRAM is 128 KB, mapped at <code>$7E0000</code>-<code>$7FFFFF</code>. But you’ll rarely write a long address like <code>$7E1234</code> in practice, because the <em>first 8 KB</em> of that space — <code>$7E0000</code>-<code>$7E1FFF</code> — is additionally <strong>mirrored</strong> at <code>$0000</code>-<code>$1FFF</code> in banks <code>$00</code>-<code>$3F</code> and <code>$80</code>-<code>$BF</code>. That’s why Lesson 1’s stack setup worked with a short address:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>    ldx #<span class="bn">$1FFF      </span><span class="co">; top of the WRAM mirror visible in bank 0</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    txs</span></code></pre></div>
+<p>Bank 0’s <code>$0000</code>-<code>$1FFF</code> and the “real” WRAM at <code>$7E0000</code>-<code>$7E1FFF</code> are the exact same physical bytes — writing one changes what you’d read from the other. This mirroring is why direct-page addressing (see <a href="02-cpu-crash-course.html#direct-page-addressing">Lesson 2</a>) works so naturally for variables: as long as your data fits in that first 8 KB, you never need a long address to reach it.</p>
+<p>If you need WRAM beyond that first 8 KB — the rest of the 128 KB chip — there’s a second path: registers <code>$2180</code>-<code>$2183</code> (<code>WMDATA</code>/<code>WMADDL</code>/<code>WMADDM</code>/<code>WMADDH</code>) let you set a 17-bit WRAM address and then read/write it one byte at a time through <code>$2180</code>, auto-incrementing after each access. This is slower than direct addressing (and, notably, it’s how Lesson 8’s DMA engine reaches WRAM beyond <code>$1FFF</code> without needing <code>DBR</code> pointed anywhere unusual), but it works from any bank without touching <code>DBR</code>.</p>
+<h2 id="vram-cgram-and-oam-three-porthole-devices">VRAM, CGRAM, and OAM: three “porthole” devices</h2>
+<p>These three all follow the same pattern: an <strong>address register</strong>, a <strong>data register</strong>, and (usually) auto-increment on write. You’ll recognize this pattern immediately because Lesson 1 already used it for CGRAM:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    stz<span class="bn"> $2121       </span><span class="co">; CGADD:  &quot;point at palette entry 0&quot;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    lda #<span class="bn">$00</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    sta<span class="bn"> $2122       </span><span class="co">; CGDATA: &quot;write this byte, then advance&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    lda #<span class="bn">$7C</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    sta<span class="bn"> $2122       </span><span class="co">; CGDATA: second byte of the same color, advances again</span></span></code></pre></div>
+<p>VRAM (<code>$2115</code>-<code>$2119</code>) and OAM (<code>$2102</code>-<code>$2104</code>) work the same way, just with different register names and slightly different quirks — OAM in particular has an odd “buffered pair” write behavior that Lesson 10 covers in detail. The important thing to internalize now: <strong>whenever you see code repeatedly writing to one “data” register in a loop, it’s almost always streaming bytes into one of these three memories</strong>, with the matching “address” register set up once beforehand.</p>
+<h2 id="the-register-windows">The register windows</h2>
+<p>Address Bus B — the window the CPU uses to reach the PPU, the APU communication ports, and DMA — lives entirely inside <code>$2100</code>-<code>$21FF</code> and <code>$4200</code>-<code>$43FF</code> of bank 0 (mirrored into bank <code>$80</code> too, since <code>DBR</code> is usually <code>$00</code> or <code>$80</code> in this tutorial’s code). Here’s the map worth bookmarking:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Range</th>
+<th>What’s there</th>
+<th>Covered in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2100</code>-<code>$2133</code></td>
+<td>PPU control: screen, backgrounds, VRAM/CGRAM ports, scrolling</td>
+<td>Lessons <a href="04-palettes-and-cgram.html">4</a>, <a href="05-tiles-and-vram.html">5</a>, <a href="06-backgrounds-and-tilemaps.html">6</a>, <a href="09-background-scrolling.html">8</a></td>
+</tr>
+<tr class="even">
+<td><code>$2134</code>-<code>$213F</code></td>
+<td>PPU status/results: multiplication result, OAM/VRAM/CGRAM readback, scanline position</td>
+<td>as needed</td>
+</tr>
+<tr class="odd">
+<td><code>$2140</code>-<code>$2143</code></td>
+<td>APU (SPC700) communication ports</td>
+<td>Lessons <a href="13-spc700-and-audio-basics.html">12</a>-<a href="14-music-and-sound-effects.html">13</a></td>
+</tr>
+<tr class="even">
+<td><code>$2180</code>-<code>$2183</code></td>
+<td>Indirect WRAM access port</td>
+<td>this lesson, and DMA in Lesson <a href="08-dma-and-hdma.html">7</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4016</code>-<code>$4017</code></td>
+<td>Old-style (NES-compatible) joypad access</td>
+<td>rarely used directly — see Lesson <a href="11-controller-input-and-animation.html">10</a></td>
+</tr>
+<tr class="even">
+<td><code>$4200</code>-<code>$420D</code></td>
+<td>CPU control: NMI/IRQ enable, math unit, DMA enable, ROM speed</td>
+<td>Lessons <a href="08-dma-and-hdma.html">7</a>, <a href="11-controller-input-and-animation.html">10</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4210</code>-<code>$4213</code></td>
+<td>CPU status: NMI/IRQ flags, auto-joypad status</td>
+<td>Lesson <a href="11-controller-input-and-animation.html">10</a></td>
+</tr>
+<tr class="even">
+<td><code>$4214</code>-<code>$4217</code></td>
+<td>Hardware multiply/divide results</td>
+<td>not covered in depth in this tutorial</td>
+</tr>
+<tr class="odd">
+<td><code>$4218</code>-<code>$421F</code></td>
+<td>Latched joypad button states (auto-read)</td>
+<td>Lesson <a href="11-controller-input-and-animation.html">10</a></td>
+</tr>
+<tr class="even">
+<td><code>$4300</code>-<code>$437F</code></td>
+<td>DMA/HDMA channel registers (8 channels × 16 bytes each)</td>
+<td>Lesson <a href="08-dma-and-hdma.html">7</a></td>
+</tr>
+</tbody>
+</table>
+<p>This table is deliberately dense — you’re not meant to memorize it, you’re meant to recognize it later. When a future lesson introduces <code>$210D</code> out of nowhere, you’ll know to think “that’s in the PPU control block, probably a background register” before even reading what it does.</p>
+<p>The full bit-level breakdown of every register here lives on the <a href="https://wiki.superfamicom.org/registers">Super Famicom Development Wiki’s Registers page</a> — this tutorial’s register explanations are all cross-checked against it, and it’s the single most useful tab to keep open while you work through the rest of this course.</p>
+<h3 id="reading-a-register-diagram">Reading a register diagram</h3>
+<p>The reference wiki (and this tutorial) describes registers with compact bit diagrams like this one, for <code>BGMODE</code>:</p>
+<pre><code>$2105  wb+++-
+        DCBAemmm</code></pre>
+<p>The first line is metadata: <code>w</code> means writable, <code>b</code> means it’s a plain byte register (as opposed to a word split across two addresses), and the four symbols after that (<code>+++-</code>) indicate whether it’s safe to write during h-blank/v-blank/forced-blank/any-time. The second line is the bit layout, read left to right from bit 7 down to bit 0. So <code>DCBAemmm</code> means: bits 7-4 are individual flags D, C, B, A; bit 3 is <code>e</code>; bits 2-0 together form <code>mmm</code>. Once this notation clicks, the entire register reference becomes readable at a glance — you’ll see this exact format constantly starting in Lesson 4.</p>
+<h2 id="why-dbr-matters-here">Why DBR matters here</h2>
+<p>Recall from <a href="02-cpu-crash-course.html#absolute-a-full-16-bit-address-in-the-current-data-bank">Lesson 2</a> that plain absolute addressing (<code>lda $2122</code>) resolves against whatever <code>DBR</code> currently holds. Every register access in this tutorial works because Lesson 1’s reset code leaves <code>DBR</code> at <code>$00</code>, and <code>$2100</code>-<code>$21FF</code>/<code>$4200</code>-<code>$43FF</code> are identically mirrored in bank <code>$00</code> and bank <code>$80</code>. If you ever write code that runs from a different bank with <code>DBR</code> pointed elsewhere, register writes like <code>sta $2122</code> will silently go to the wrong place — this is a real bug that shows up once projects grow past a single bank, so it’s worth remembering this dependency exists even though it won’t bite you yet.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Without looking it up, guess which memory (WRAM, VRAM, CGRAM, or OAM) each of these would live in: a player’s health value; a background tilemap; the color of palette entry 5; a sprite’s X position. Check your answers against the table at the top of this lesson.</li>
+<li>Read the <code>OAMADDL</code>/<code>OAMADDH</code> entry on the <a href="https://wiki.superfamicom.org/registers#oamaddl-oam-address-low-byte-214">Registers page</a> and, using only the reading-a-register-diagram technique above, figure out which bit of <code>$2103</code> is the “OAM priority rotation” bit before reading the prose explanation underneath. (Lesson 10 uses this.)</li>
+<li>Explain in your own words why <code>lda $7E1234</code> and <code>lda $1234</code> (executed from bank <code>$00</code>) read the same byte, but <code>lda $7E2000</code> and <code>lda $2000</code> do not.</li>
+</ol>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="02-cpu-crash-course.html">Lesson 2 — The 65816 CPU crash course</a> Next: <a href="04-palettes-and-cgram.html">Lesson 4 — Palettes &amp; CGRAM</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

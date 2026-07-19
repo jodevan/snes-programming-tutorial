@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>SNES Tutorial — Table of Contents</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">SNES Tutorial — Table of Contents</h1>
+</header>
+<h1 id="building-a-game-for-the-snes-a-step-by-step-tutorial">Building a Game for the SNES: A Step-by-Step Tutorial</h1>
+<p>Welcome. This tutorial takes you from “empty folder” to a small, playable SNES game, one concept at a time. Every lesson assembles into a real <code>.sfc</code> ROM you run in an emulator, so you’re never just reading — you’re building.</p>
+<h2 id="who-this-is-for">Who this is for</h2>
+<p>You’re comfortable programming and you’ve installed <code>asar</code>, <code>ca65</code> (part of the <code>cc65</code> suite), and the <strong>Mesen</strong> emulator on a Mac. You don’t need prior 6502/65816 or SNES experience — Lesson 2 covers the CPU from scratch.</p>
+<h2 id="toolchain-choice">Toolchain choice</h2>
+<p>This tutorial standardizes on <strong>ca65</strong> (from cc65), not asar. Reasoning:</p>
+<ul>
+<li><strong>Mesen’s debugger has full, first-class support for ca65</strong> (breakpoints tied to source lines, symbol names in the disassembly, watch expressions). asar’s debug symbol support is partial in comparison, and debugging is where most of the learning-by-doing actually happens.</li>
+<li>The two resources this tutorial leans on most heavily — <a href="https://nesdoug.com/2020/03/19/snes-projects/">nesdoug’s SNES series</a> and the <a href="https://wiki.superfamicom.org">Super Famicom Development Wiki</a> — both use ca65 in their canonical examples, so you’ll be able to read outside material without a mental translation step.</li>
+<li>ca65 forces you to write an explicit linker config (<code>.cfg</code>) and segment layout. That’s slightly more typing on day one, but it makes the SNES’s memory mapping — the thing that trips up most beginners — visible instead of hidden behind magic.</li>
+</ul>
+<p>asar isn’t a bad choice (single-file ROMs, gentler syntax), and you already have it installed if you ever want to compare. Appendix A briefly shows the same Lesson 1 ROM in asar for reference. Everything else in this tutorial is ca65 only.</p>
+<h2 id="how-each-lesson-works">How each lesson works</h2>
+<p>Every lesson has: a short concept explanation, one fully-commented <code>.asm</code> file (or a diff against the previous lesson’s file), the exact <code>ca65</code>/<code>ld65</code> commands to build it, and what you should see when you load the ROM in Mesen. Lessons build on each other — by the end you’ll have a running codebase, not sixteen disconnected demos.</p>
+<p>If something in a lesson confuses you or breaks on your machine, ask — this tutorial gets corrected and expanded based on those questions.</p>
+<h2 id="table-of-contents">Table of contents</h2>
+<h3 id="part-0-foundations">Part 0 — Foundations</h3>
+<ul>
+<li><a href="01-toolchain-setup-and-first-rom.md">Lesson 1: Toolchain setup &amp; your first ROM</a> — install/verify ca65 and Mesen, understand the ROM header and reset vector, display a solid color.</li>
+<li><a href="02-cpu-crash-course.md">Lesson 2: The 65816 CPU crash course</a> — registers, 8/16-bit mode switching, addressing modes, the <code>.smart</code> directive, and 6502-vs-65816 gotchas.</li>
+<li><a href="03-memory-map-and-registers.md">Lesson 3: SNES memory map &amp; hardware registers</a> — WRAM, VRAM, CGRAM, OAM, the PPU/CPU register windows, and how to read the reference wiki.</li>
+</ul>
+<h3 id="part-1-graphics-fundamentals">Part 1 — Graphics fundamentals</h3>
+<ul>
+<li><a href="04-palettes-and-cgram.md">Lesson 4: Palettes &amp; CGRAM</a> — SNES color format (15-bit BGR), writing a palette from ROM in a loop.</li>
+<li><a href="05-tiles-and-vram.md">Lesson 5: Tiles &amp; VRAM</a> — tile bitplane formats (2bpp/4bpp/8bpp), loading graphics data into VRAM.</li>
+<li><a href="06-backgrounds-and-tilemaps.md">Lesson 6: Backgrounds &amp; tilemaps</a> — BG modes, tilemap format, turning on a background layer.</li>
+<li><a href="07-debugging-with-mesen.md">Lesson 7: Debugging with Mesen</a> — breakpoints, PPU viewers, memory tools, the event viewer, and trace logger.</li>
+<li><a href="08-dma-and-hdma.md">Lesson 8: DMA &amp; HDMA deep dive</a> — general-purpose DMA channels, the DMA fill trick, HDMA for scanline effects.</li>
+<li><a href="09-background-scrolling.md">Lesson 9: Background scrolling</a> — <code>BGxHOFS</code>/<code>BGxVOFS</code>, a real per-frame game loop, seamless tilemap wrapping.</li>
+</ul>
+<h3 id="part-2-sprites-interaction">Part 2 — Sprites &amp; interaction</h3>
+<ul>
+<li><a href="10-sprites-oam-basics.md">Lesson 10: Sprites (OAM) basics</a> — sprite graphics, the OAM table, size/priority attributes.</li>
+<li><a href="11-controller-input-and-animation.md">Lesson 11: Controller input &amp; sprite animation</a> — NMI setup, joypad reading, moving and animating a sprite.</li>
+<li><a href="12-collision-detection.md">Lesson 12: Collision detection</a> — sprite-vs-sprite (AABB boxes) and sprite-vs-world (a lookup table).</li>
+</ul>
+<h3 id="part-3-audio">Part 3 — Audio</h3>
+<ul>
+<li><a href="13-spc700-and-audio-basics.md">Lesson 13: The SPC700 &amp; audio basics</a> — the second CPU, the boot handshake, making a sound with no SPC700 code.</li>
+<li><a href="14-music-and-sound-effects.md">Lesson 14: Music &amp; sound effects</a> — triggering sound effects from gameplay, and a realistic path to real music.</li>
+</ul>
+<h3 id="part-4-wrapping-up">Part 4 — Wrapping up</h3>
+<ul>
+<li><a href="15-code-organization-and-optimization.md">Lesson 15: Code organization &amp; optimization</a> — multi-file projects, macros, the V-Blank time budget, ROM banking.</li>
+<li><a href="16-capstone.md">Lesson 16: Capstone project</a> — a small playable game combining everything: scrolling background, animated/collidable player sprite, a collectible, and sound.</li>
+</ul>
+<h2 id="reference-resources">Reference resources</h2>
+<ul>
+<li><a href="https://wiki.superfamicom.org/65816-reference">65816 Reference</a> — full instruction set.</li>
+<li><a href="https://wiki.superfamicom.org/spc700-reference">SPC700 Reference</a> — sound CPU instruction set.</li>
+<li><a href="https://wiki.superfamicom.org/registers">Registers</a> — every PPU/CPU hardware register, bit by bit.</li>
+<li><a href="https://wiki.superfamicom.org/memory-mapping">Memory Mapping</a> — LoROM/HiROM layout details.</li>
+<li><a href="https://nesdoug.com/2020/03/19/snes-projects/">nesdoug’s SNES tutorial series</a> — a second explanation style for the same topics, ca65-based.</li>
+<li><a href="https://github.com/nesdoug">nesdoug’s SNES example code</a> — companion repos per lesson.</li>
+</ul>
+<h2 id="status">Status</h2>
+<p>All 16 lessons are written. See the <a href="index.html">homepage</a> for the full course index.</p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

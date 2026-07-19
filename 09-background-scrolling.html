@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 9: Background Scrolling</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 9: Background Scrolling</h1>
+</header>
+<h1 id="lesson-9-background-scrolling">Lesson 9: Background Scrolling</h1>
+<p><strong>Goal:</strong> turn the static striped background from Lessons 4-8 into a moving one, and along the way replace the <code>forever: jmp forever</code> spin-loop every earlier lesson ended with, with a real per-frame game loop.</p>
+<h2 id="bgxhofs-bgxvofs">BGxHOFS / BGxVOFS</h2>
+<p>Each background layer has a horizontal and vertical scroll register: <code>BG3HOFS</code> (<code>$2111</code>) and <code>BG3VOFS</code> (<code>$2112</code>) for the layer you’ve been building. Both are “write-twice” registers, same idea as <code>CGDATA</code> in Lesson 4 — write the low byte, then the high byte, to the <em>same</em> address:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>    lda scroll_lo</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    sta<span class="bn"> $2111        </span><span class="co">; BG3HOFS: first write = low byte</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    lda scroll_hi</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    sta<span class="bn"> $2111         </span><span class="co">; BG3HOFS: second write = high byte</span></span></code></pre></div>
+<h3 id="a-shared-latch-gotcha-worth-knowing-before-you-hit-it">A shared-latch gotcha worth knowing before you hit it</h3>
+<p>Per the <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">background scrolling reference</a>, all eight <code>BGnHOFS</code>/<code>BGnVOFS</code> registers share a <em>single</em> internal “previous byte written” latch, not one latch per register. If you write BG3’s low byte, then write BG1’s low byte before coming back to finish BG3’s high byte, the hardware combines your BG3 high-byte write with the <em>wrong</em> leftover latch data, corrupting the result. The rule that keeps you safe: <strong>always write a scroll register’s low byte immediately followed by its high byte, with no other scroll-register write in between.</strong> This tutorial only scrolls one layer, so it can’t bite you yet — but the moment you scroll two layers independently (a parallax effect, for instance), this is the bug waiting for you.</p>
+<h2 id="building-a-per-frame-loop">Building a per-frame loop</h2>
+<p>Every ROM so far has ended in an infinite spin — nothing happened after setup. Real games update state once per frame, synchronized to the screen refresh. Without proper interrupts (which <a href="11-controller-input-and-animation.html">Lesson 11</a> introduces), the simplest correct way to do this is to <strong>poll <code>HVBJOY</code></strong> (<code>$4212</code>) — bit 7 is set for the entire duration of V-Blank, and clear otherwise:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">frame_loop:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="fu">@wait_vblank_start:</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    lda<span class="bn"> $4212</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    bpl @wait_vblank_start   <span class="co">; loop while bit 7 (N) is clear = not yet in vblank</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    <span class="co">; --- game logic goes here, once per frame ---</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="fu">@wait_vblank_end:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    lda<span class="bn"> $4212</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    bmi @wait_vblank_end      <span class="co">; loop while bit 7 is still set = still in vblank</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    <span class="bu">jmp</span> frame_loop</span></code></pre></div>
+<p>The second wait matters as much as the first: without it, your “once per frame” code would actually run dozens of times during a single ~40-scanline V-Blank period, since the poll loop would keep passing the first check the whole time V-Blank stays active. Waiting for V-Blank to <em>end</em> before looping back guarantees exactly one update per frame. <a href="11-controller-input-and-animation.html">Lesson 11</a> replaces this whole polling pattern with an NMI handler, which is both more precise and frees the CPU to do other work while waiting — but polling is worth understanding first, since it makes the underlying timing explicit instead of hiding it inside an interrupt.</p>
+<h2 id="extending-your-rom">Extending your ROM</h2>
+<p>Reserve two direct-page bytes for a 16-bit scroll counter, replace your ROM’s final <code>forever:</code> loop with the frame loop above, and increment the scroll value once per frame using the classic 8-bit “increment low byte, propagate carry to high byte” idiom:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">; --- direct-page variables, reserved once near the top of your code ---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>scroll_lo :=<span class="bn"> $00</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>scroll_hi :=<span class="bn"> $01</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="co">; --- inside the frame loop, replacing the &quot;game logic&quot; comment above ---</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    <span class="bu">inc</span> scroll_lo</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    bne @no_carry</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    <span class="bu">inc</span> scroll_hi</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a><span class="fu">@no_carry:</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>    lda scroll_lo</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>    sta<span class="bn"> $2111        </span><span class="co">; BG3HOFS low byte</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a>    lda scroll_hi</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>    sta<span class="bn"> $2111         </span><span class="co">; BG3HOFS high byte</span></span></code></pre></div>
+<p>A tempting shortcut to avoid: don’t reach for a single 16-bit <code>sta $2111</code> here even though <code>scroll_lo</code>/<code>scroll_hi</code> sit in consecutive memory as a natural 16-bit value. A 16-bit store writes its low byte to <code>$2111</code> and its high byte to <code>$2113</code> — sorry, to <code>$2112</code>, the <em>next</em> address, which is <code>BG3VOFS</code>, not the second half of <code>BG3HOFS</code>. Two deliberate 8-bit writes to the same address is the correct pattern here, not one 16-bit write to two addresses — a mistake easy enough to make that it’s worth naming explicitly.</p>
+<h2 id="build-and-run">Build and run</h2>
+<p>Assemble and run it. The striped background should now scroll smoothly and continuously to one side, wrapping seamlessly — because your tilemap is a single 32×32-tile (256×256-pixel) block and, per the <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">background reference</a>, “the display can never fall outside the BG: it simply wraps around automatically.” You didn’t write any wrapping logic; the hardware did it for you.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Add a second counter for <code>BG3VOFS</code> and scroll diagonally.</li>
+<li>The <code>BG3SC</code> register’s low two bits (from <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs-byte-addresses">Lesson 6</a>) select 32×32, 64×32, 32×64, or 64×64 tile arrangements. Try <code>01</code> (64×32) and fill the second 32×32 block with a different tilemap pattern — confirm the scroll now reveals two distinct halves before wrapping, instead of one repeating block.</li>
+<li>Slow the scroll rate down to one pixel every 4 frames instead of every frame, without changing the frame loop’s structure — think about what condition should gate the <code>inc scroll_lo</code> line.</li>
+</ol>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a> Next: <a href="10-sprites-oam-basics.html">Lesson 10 — Sprites (OAM) basics</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

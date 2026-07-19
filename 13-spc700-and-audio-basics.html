@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 13: The SPC700 &amp; Audio Basics</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 13: The SPC700 &amp; Audio Basics</h1>
+</header>
+<h1 id="lesson-13-the-spc700-audio-basics">Lesson 13: The SPC700 &amp; Audio Basics</h1>
+<p><strong>Goal:</strong> understand why SNES audio programming feels so different from everything else in this tutorial (it’s a second, separate computer), and make a sound — without writing a single line of SPC700 assembly.</p>
+<h2 id="a-second-cpu-you-can-barely-talk-to">A second CPU you can barely talk to</h2>
+<p>Every lesson so far has run entirely on the 65816. Sound is different: the SNES has a completely independent second processor, the <strong>SPC700</strong>, with its own 64 KB of RAM (called ARAM) and its own instruction set, dedicated to driving the audio hardware (the DSP). The 65816 cannot read or write ARAM directly, and the SPC700 cannot see the rest of the console’s memory at all. The <em>only</em> connection between the two is four one-byte communication ports:</p>
+<pre><code>$2140-$2143  (65816 side, APUIO0-3)
+$00F4-$00F7  (SPC700 side, same four ports, different addresses)</code></pre>
+<p>Whatever the 65816 writes to <code>$2140</code>, the SPC700 reads back at <code>$00F4</code> — and vice versa. That’s the entire interface. Every SNES game’s music and sound effects get into ARAM through this four-byte mail slot, using a boot-time handshake protocol built into the SPC700’s boot ROM (its “IPL ROM”).</p>
+<p>This tutorial does not write an SPC700 audio driver from scratch — that’s a substantial project on its own, and real games almost universally use an existing, battle-tested sound engine rather than writing one from first principles. What this lesson <em>does</em> cover — the upload handshake, and a neat trick for making sound with zero SPC700 code — is the piece every driver, however sophisticated, ultimately sits on top of.</p>
+<h2 id="the-boot-handshake">The boot handshake</h2>
+<p>This protocol (and the routines below) closely follow the well-documented, long-established recipe on the <a href="https://snes.nesdev.org/wiki/Booting_the_SPC700">SNESdev wiki’s “Booting the SPC700”</a> page — worth reading directly if you want the full detail on indirect/relocating uploads, which this lesson doesn’t need.</p>
+<p><strong>Step 1 — wait for ready.</strong> On power-on, the SPC700’s boot ROM writes <code>$AA</code> to <code>APUIO0</code> and <code>$BB</code> to <code>APUIO1</code> once it’s finished initializing:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">spc_wait_boot:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    lda #<span class="dv">$</span>AA</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="fu">@wait:</span>  <span class="bu">cmp</span><span class="bn"> $2140</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    bne @wait</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    sta<span class="bn"> $2140          </span><span class="co">; clear it, in case a stale $CC is still sitting there</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    lda #<span class="dv">$</span>BB</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="fu">@wait2:</span> <span class="bu">cmp</span><span class="bn"> $2141</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    bne @wait2</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    rts</span></code></pre></div>
+<p><strong>Step 2 — start an upload at a given address</strong>, and <strong>step 3 — send bytes one at a time</strong>, each acknowledged before the next is sent:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">; Starts upload to SPC address Y; leaves Y=0 for use as an index.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="fu">spc_begin_upload:</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    sty<span class="bn"> $2142</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    lda<span class="bn"> $2140</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    <span class="bu">clc</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    <span class="bu">adc</span> #<span class="bn">$22</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    bne @skip</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    <span class="bu">inc</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a><span class="fu">@skip:</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>    sta<span class="bn"> $2141</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>    sta<span class="bn"> $2140</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a><span class="fu">@wait:</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>    <span class="bu">cmp</span><span class="bn"> $2140</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true"></a>    bne @wait</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true"></a>    ldy #<span class="dv">0</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true"></a>    rts</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true"></a><span class="co">; Uploads byte A to SPC and increments Y.</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true"></a><span class="fu">spc_upload_byte:</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true"></a>    sta<span class="bn"> $2141</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true"></a>    tya</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true"></a>    sta<span class="bn"> $2140</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true"></a>    iny</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true"></a><span class="fu">@wait:</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true"></a>    <span class="bu">cmp</span><span class="bn"> $2140</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true"></a>    bne @wait</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true"></a>    rts</span></code></pre></div>
+<p>This tutorial doesn’t need a “start execution” routine — the trick in the next section skips running any uploaded SPC700 program entirely.</p>
+<h2 id="making-a-sound-without-writing-spc700-code">Making a sound without writing SPC700 code</h2>
+<p>The SPC700’s audio chip (the DSP) has 128 one-byte registers controlling volume, pitch, and playback for 8 independent voices. Normally, only SPC700 code can touch them. But the boot ROM has a special case: if you target upload address <code>$00F2</code>, the two bytes you send are interpreted directly as <em>(DSP register number, value)</em> — meaning <strong>you can drive the DSP from the 65816 alone</strong>, with no SPC700 program running at all. This is a genuinely useful technique, not just a teaching shortcut — it’s a documented, real way to get a simple beep out before a full music driver exists in a project.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">; Writes DSP register (low byte of X) = value (high byte of X).</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">write_dsp:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    phx</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    ldy #<span class="bn">$00F2</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    <span class="bu">js</span>r spc_begin_upload</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    pla</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    <span class="bu">js</span>r spc_upload_byte     <span class="co">; register number -&gt; $00F2</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    pla</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>    <span class="bu">js</span>r spc_upload_byte     <span class="co">; value -&gt; $00F3</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>    rts</span></code></pre></div>
+<p>Even the DSP needs <em>something</em> to play, though — a tiny looping waveform in ARAM, uploaded the normal way first. This one-tile-sized BRR sample (the SNES’s compressed audio format; two bytes of header describing loop points, then a tiny repeating waveform) is enough for a test tone:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">sample:</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0204      </span><span class="co">; sample directory: this sample&#39;s start address</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $0204       </span><span class="co">; sample directory: this sample&#39;s loop point</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>B0<span class="bn">,$78,$78,$78,$78,$78,$78,$78,$78</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>B3<span class="bn">,$78,$78,$78,$78,$78,$78,$78,$78</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="fu">sample_end:</span></span></code></pre></div>
+<h2 id="putting-it-together">Putting it together</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>    <span class="bu">js</span>r spc_wait_boot</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    <span class="co">; Upload the sample to SPC RAM at $0200 (the conventional first free</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    <span class="co">; address, since $0000-01FF holds the SPC700&#39;s zero page and stack).</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    ldy #<span class="bn">$0200</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>    <span class="bu">js</span>r spc_begin_upload</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="fu">@upload_loop:</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>    lda sample,y</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>    <span class="bu">js</span>r spc_upload_byte</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>    cpy #(sample_end - sample)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>    bne @upload_loop</span></code></pre></div>
+<p>Then a sequence of <code>write_dsp</code> calls configures voice 0 and starts it playing:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Call</th>
+<th>Register</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ldx #$206C</code></td>
+<td><code>FLG</code></td>
+<td>Echo-buffer write protect on (safe default)</td>
+</tr>
+<tr class="even">
+<td><code>ldx #$004C</code></td>
+<td><code>KON</code></td>
+<td>Key-on: no voices yet</td>
+</tr>
+<tr class="odd">
+<td><code>ldx #$FF5C</code></td>
+<td><code>KOFF</code></td>
+<td>Key-off: silence everything first</td>
+</tr>
+<tr class="even">
+<td><code>ldx #$025D</code></td>
+<td><code>DIR</code></td>
+<td>Sample directory at ARAM page 2 (<code>$0200</code>), matching the upload above</td>
+</tr>
+<tr class="odd">
+<td><code>ldx #$7F00</code> / <code>ldx #$7F01</code></td>
+<td><code>VOLL</code>/<code>VOLR</code> (voice 0)</td>
+<td>Max volume, both channels</td>
+</tr>
+<tr class="even">
+<td><code>ldx #$0002</code> / <code>ldx #$0203</code></td>
+<td><code>PITCHL</code>/<code>PITCHH</code> (voice 0)</td>
+<td>Playback rate — this sets the tone’s pitch</td>
+</tr>
+<tr class="odd">
+<td><code>ldx #$0004</code></td>
+<td><code>SRCN</code> (voice 0)</td>
+<td>Use sample directory entry 0 (the one we uploaded)</td>
+</tr>
+<tr class="even">
+<td><code>ldx #$C305</code> / <code>ldx #$2F06</code></td>
+<td><code>ADSR1</code>/<code>ADSR2</code> (voice 0)</td>
+<td>Enable the volume envelope</td>
+</tr>
+<tr class="odd">
+<td><code>ldx #$005C</code></td>
+<td><code>KOFF</code></td>
+<td>Clear key-off (undo the earlier silence)</td>
+</tr>
+<tr class="even">
+<td><code>ldx #$7F0C</code> / <code>ldx #$7F1C</code></td>
+<td><code>MVOLL</code>/<code>MVOLR</code></td>
+<td>Master volume, max</td>
+</tr>
+<tr class="odd">
+<td><code>ldx #$014C</code></td>
+<td><code>KON</code></td>
+<td><strong>Key on voice 0 — this line starts the sound</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Every one of those is a call to <code>write_dsp</code> with that value. Build, run, and you should hear a continuous tone starting the moment the last <code>write_dsp</code> call executes.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Change the <code>PITCHH</code>/<code>PITCHL</code> values (<code>$0203</code>/<code>$0002</code>) and rebuild — higher values raise the pitch. Find roughly where it stops sounding like a recognizable tone and starts aliasing badly; that’s a real limitation of this tiny hand-written waveform, not a mistake.</li>
+<li>Trigger the <code>KON</code> write (just that one <code>write_dsp</code> call) from inside <code>nmi_handler</code>, gated on a button press instead of running once at startup — this is the shape <a href="14-music-and-sound-effects.html">Lesson 14</a> builds on.</li>
+<li>Read the <a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a> source this lesson is based on, and identify which lines in its <code>manual_dsp.s</code> correspond to each row of the table above — a good way to confirm you actually understand what each <code>write_dsp</code> call is doing rather than pattern-matching the table.</li>
+</ol>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="12-collision-detection.html">Lesson 12 — Collision detection</a> Next: <a href="14-music-and-sound-effects.html">Lesson 14 — Music &amp; sound effects</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

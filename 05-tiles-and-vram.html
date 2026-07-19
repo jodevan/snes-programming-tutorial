@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lesson 5: Tiles &amp; VRAM</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <span>SNES Tutorial</span>
+  <a href="index.html">&larr; Home</a>
+</div>
+<header id="title-block-header">
+<h1 class="title">Lesson 5: Tiles &amp; VRAM</h1>
+</header>
+<h1 id="lesson-5-tiles-vram">Lesson 5: Tiles &amp; VRAM</h1>
+<p><strong>Goal:</strong> understand how pixel graphics are actually encoded in VRAM, and load your first tile. Nothing will look different on screen yet — like Lesson 4, this lesson builds a piece that only pays off once <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a> puts it on screen.</p>
+<h2 id="tiles-are-bitplanes-not-pixels">Tiles are bitplanes, not pixels</h2>
+<p>A SNES “tile” is always an 8×8 grid of pixels, but the data isn’t stored as one byte per pixel the way you might picture a bitmap. It’s stored as <strong>bitplanes</strong>: separate 8×8 1-bit images that get combined to produce each pixel’s color <em>index</em> (not its color — the index then looks up a real color in the CGRAM palette you built in <a href="04-palettes-and-cgram.html">Lesson 4</a>).</p>
+<p>The number of bitplanes determines how many colors a tile can use:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Format</th>
+<th>Bitplanes</th>
+<th>Colors per tile</th>
+<th>Bytes per tile</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2bpp</td>
+<td>2</td>
+<td>4</td>
+<td>16</td>
+</tr>
+<tr class="even">
+<td>4bpp</td>
+<td>4</td>
+<td>16</td>
+<td>32</td>
+</tr>
+<tr class="odd">
+<td>8bpp</td>
+<td>8</td>
+<td>256</td>
+<td>64</td>
+</tr>
+</tbody>
+</table>
+<p>This tutorial starts with <strong>2bpp</strong>, the simplest format and the one used by <code>BG3</code> in graphics mode 1 (the mode <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a> uses) — the smallest amount of new information to absorb before something shows up on screen.</p>
+<h3 id="how-the-bytes-are-laid-out">How the bytes are laid out</h3>
+<p>Per the <a href="https://wiki.superfamicom.org/backgrounds#tile-maps--character-maps">register reference’s tile character data section</a>: each row of a tile is one byte per bitplane, and for 2bpp, bitplane 0 and bitplane 1 of a row are stored as the low and high byte of one 16-bit word. Eight rows means eight words means 16 bytes, in this exact order:</p>
+<pre><code>row 0: bitplane0, bitplane1
+row 1: bitplane0, bitplane1
+row 2: bitplane0, bitplane1
+...
+row 7: bitplane0, bitplane1</code></pre>
+<p>Within a byte, bit 7 is the <em>leftmost</em> pixel of that row. A pixel’s final color index is built by stacking the corresponding bit from each bitplane: for 2bpp, <code>index = (bitplane1_bit &lt;&lt; 1) | bitplane0_bit</code>. So index 1 needs bitplane0=1, bitplane1=0; index 2 needs bitplane0=0, bitplane1=1; index 3 needs both bits set.</p>
+<h3 id="a-worked-example-a-two-color-striped-tile">A worked example: a two-color striped tile</h3>
+<p>Let’s build a tile that’s solid palette-index-1 (red, from Lesson 4’s table) on its top half and solid palette-index-2 (green) on its bottom half — simple enough to hand-encode, and it visibly proves bitplane combination is working once you see it rendered.</p>
+<p>Index 1 needs bitplane0 = all 1s, bitplane1 = all 0s, for those rows. Index 2 needs the opposite. So:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">tile_stripe:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="co">; Rows 0-3: color index 1 (red) -&gt; bitplane0=$FF, bitplane1=$00</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    .<span class="dt">byte</span> <span class="dv">$</span>FF<span class="bn">, $00</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    <span class="co">; Rows 4-7: color index 2 (green) -&gt; bitplane0=$00, bitplane1=$FF</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="fu">tile_stripe_end:</span></span></code></pre></div>
+<h2 id="vmain-vmadd-and-vmdata">VMAIN, VMADD, and VMDATA</h2>
+<p>VRAM is addressed as 32K <em>words</em> (64 KB total), and the write path is the same “address register, then data register” pattern from <a href="03-memory-map-and-registers.html#vram-cgram-and-oam-three-porthole-devices">Lesson 3</a>:</p>
+<pre><code>$2115  VMAIN   i---mmii   i = increment after high ($2119) or low ($2118) byte write
+$2116  VMADDL  low byte of the word address
+$2117  VMADDH  high byte of the word address
+$2118  VMDATAL low byte of the word to write
+$2119  VMDATAH high byte of the word to write</code></pre>
+<p>Since we’re writing 16-bit words (and our tile data is already laid out as byte-pairs matching VRAM’s word layout), set <code>VMAIN</code> so the address advances <em>after the high byte</em> — that way a <code>VMDATAL</code>/<code>VMDATAH</code> pair advances the address exactly once, keeping the two writes atomic from the address register’s point of view:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    lda #<span class="bn">$80        </span><span class="co">; i=1 (increment after $2119), ii=00 (+1), mm=00 (no remap)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    sta<span class="bn"> $2115</span></span></code></pre></div>
+<h2 id="extending-your-rom">Extending your ROM</h2>
+<p>Add the tile data (shown above) somewhere in your <code>CODE</code> segment, then add a loading loop to <code>reset:</code>, after the palette loop from Lesson 4:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    <span class="co">; --- Load tile_stripe into VRAM at word address 0. ---</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>    lda #<span class="bn">$80</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    sta<span class="bn"> $2115           </span><span class="co">; VMAIN: increment after high byte</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    stz<span class="bn"> $2116           </span><span class="co">; VMADDL: word address 0, low byte</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    stz<span class="bn"> $2117           </span><span class="co">; VMADDH: word address 0, high byte</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    ldx #<span class="dv">0</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="fu">@tile_loop:</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    lda tile_stripe,x    <span class="co">; bitplane0 byte</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    sta<span class="bn"> $2118            </span><span class="co">; VMDATAL</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    inx</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>    lda tile_stripe,x    <span class="co">; bitplane1 byte</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>    sta<span class="bn"> $2119            </span><span class="co">; VMDATAH</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>    inx</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>    cpx #(tile_stripe_end - tile_stripe)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>    bne @tile_loop</span></code></pre></div>
+<p>Notice the shape: set an address register once, then loop two bytes at a time into two data registers, watching a computed byte count. This is the <em>third</em> time you’ve written almost this exact loop — CGRAM in Lesson 4, and now VRAM. That repetition is the point: once you can spot “porthole register loading loop” as a pattern, you can read almost any beginner SNES tutorial’s graphics code at a glance, including code that isn’t part of this tutorial.</p>
+<h2 id="build-and-run">Build and run</h2>
+<p>Assemble and run exactly as before. The screen will look unchanged (still whatever backdrop color Lesson 4 left palette index 0 as) — you’ve written a tile into VRAM, but nothing has told the PPU to <em>display</em> it yet. That’s the entire subject of <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a>: a tilemap that references this tile, and the registers that turn a background layer on.</p>
+<p>If you want to confirm the tile data actually landed in VRAM rather than taking it on faith, <a href="07-debugging-with-mesen.html">Lesson 7</a> shows you how to open Mesen’s VRAM/tile viewer and look at it directly — a good habit to build before you’re debugging something more complicated than a two-color stripe.</p>
+<h2 id="exercises">Exercises</h2>
+<ol type="1">
+<li>Hand-encode a checkerboard 2bpp tile (alternating index 1 and index 2 in a 2×2-pixel-block pattern, not a stripe) by working out the bitplane bytes row by row. This is tedious by hand on purpose — it’s exactly the tedium real SNES projects solve with graphics conversion tools that turn a PNG into this byte format automatically, which is worth knowing exists even though this tutorial encodes tiles by hand for teaching purposes.</li>
+<li>What would change in <code>tile_stripe</code> if you wanted a solid single-color tile using index 3 instead of a two-color stripe?</li>
+<li>Calculate how many 2bpp tiles fit in the SNES’s 64 KB of VRAM. Then do the same for 4bpp. Why do you think Lesson 6 defaults to the smaller format for the first background layer we turn on?</li>
+</ol>
+<hr />
+<p>Root: <a href="README.md">README.md</a> Previous: <a href="04-palettes-and-cgram.html">Lesson 4 — Palettes &amp; CGRAM</a> Next: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a></p>
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>
