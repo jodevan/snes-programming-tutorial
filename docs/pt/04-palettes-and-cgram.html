@@ -169,7 +169,7 @@ $2122  ww+++-
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    .<span class="dt">word</span><span class="bn"> $7C00     </span><span class="co">; index 3: blue</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a><span class="fu">palette_table_end:</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>.define PALETTE_COUNT ((palette_table_end - palette_table) / <span class="dv">2</span>)</span></code></pre></div>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>PALETTE_COUNT = (palette_table_end - palette_table) / <span class="dv">2</span></span></code></pre></div>
 <p>E dentro de <code>reset:</code>, substitua as linhas antigas de escrita em CGRAM por:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    <span class="co">; --- Load our 4-color palette into CGRAM, starting at index 0. ---</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    stz<span class="bn"> $2121</span></span>

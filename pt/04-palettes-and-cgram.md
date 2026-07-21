@@ -105,7 +105,7 @@ palette_table:
     .word $7C00     ; index 3: blue
 palette_table_end:
 
-.define PALETTE_COUNT ((palette_table_end - palette_table) / 2)
+PALETTE_COUNT = (palette_table_end - palette_table) / 2
 ```
 
 E dentro de `reset:`, substitua as linhas antigas de escrita em CGRAM por:
