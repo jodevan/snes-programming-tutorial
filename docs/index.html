@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Building a Game for the SNES — A Step-by-Step Tutorial</title>
 <link rel="stylesheet" href="style.css" />
+<script>
+(function() {
+  var stored = localStorage.getItem('theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+function toggleTheme() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+}
+</script>
 </head>
 <body>
 
@@ -14,6 +26,7 @@
     <a href="#lessons">Lessons</a>
     <a href="#resources">Resources</a>
     <a href="pt/index.html" class="lang-pill">Português</a>
+    <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"><span class="to-dark">Dark</span><span class="to-light">Light</span></button>
   </div>
 </nav>
 

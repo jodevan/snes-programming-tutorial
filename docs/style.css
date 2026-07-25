@@ -10,9 +10,22 @@
   --table-stripe: #f5f4f2;
 }
 
+/* --accent stays the same in dark mode -- it's mostly used as a background
+   under white text (th, .hero, badges), which doesn't need to change.
+   --accent-dark is used as readable text/links on the page background, so
+   it needs to get lighter, not stay dark. */
+:root[data-theme="dark"] {
+  --accent-dark: #b9adf0;
+  --ink: #e7e6ea;
+  --muted: #9a9ba6;
+  --bg: #17181c;
+  --border: #34363c;
+  --table-stripe: #232429;
+}
+
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; background: var(--bg); }
 
 body {
   margin: 0;
@@ -468,3 +481,89 @@ a.lesson-card:hover {
 .exercise-answer .answer-body > :last-child {
   margin-bottom: 0;
 }
+
+/* Overrides pandoc's per-page embedded <style> (String: #bf0303) at equal
+   specificity -- this file loads after that block in every page's <head>,
+   so it wins on source order. Applies in both light and dark mode. */
+code span.st {
+  color: darkturquoise;
+}
+
+/* ============================================================
+   Dark mode: theme toggle button + the few spots that hardcode
+   a light-mode color instead of using a variable.
+   ============================================================ */
+
+.theme-toggle {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  background: transparent;
+  color: var(--muted);
+}
+
+/* .top-nav-right spaces its children via flex gap, but .site-nav .links
+   only puts margin-left on <a> tags -- the button needs it spelled out. */
+.site-nav .links .theme-toggle {
+  margin-left: 1.5rem;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.theme-toggle .to-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .to-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .to-light {
+  display: inline;
+}
+
+:root[data-theme="dark"] .top-nav a.lang-link:hover,
+:root[data-theme="dark"] .site-nav .links a.lang-pill:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+:root[data-theme="dark"] .lesson-card {
+  background: #1d1e23;
+}
+
+:root[data-theme="dark"] .part-heading .part-label {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* The syntax-highlighted lesson code blocks (div.sourceCode) get their
+   colors from a per-page pandoc-generated <style> block hardcoded for a
+   light background. These overrides mirror the same per-token color
+   scheme (comment grey, builtin/function purple, string turquoise, etc.)
+   at higher specificity, so they win without editing pandoc's output --
+   only for the token classes actually used in this tutorial's code. */
+:root[data-theme="dark"] div.sourceCode {
+  background-color: var(--code-bg);
+}
+
+:root[data-theme="dark"] code span {
+  color: var(--code-ink);
+}
+
+:root[data-theme="dark"] code span.co { color: #8b91a3; }    /* Comment */
+:root[data-theme="dark"] code span.bn { color: #e0a64c; }    /* BaseN (hex/binary literals) */
+:root[data-theme="dark"] code span.dv { color: #e0a64c; }    /* DecVal */
+:root[data-theme="dark"] code span.dt { color: #6fb3ff; }    /* DataType */
+:root[data-theme="dark"] code span.bu { color: var(--accent-dark); }  /* BuiltIn (instructions) */
+:root[data-theme="dark"] code span.fu { color: var(--accent-dark); }  /* Function (labels) */
+:root[data-theme="dark"] code span.st { color: darkturquoise; }  /* String -- needs restating here: the
+   catch-all "code span" rule above is (0,1,3) specificity, which already beats the plain
+   "code span.st" rule's (0,1,2), so without this it falls back to --code-ink instead of turquoise. */
+:root[data-theme="dark"] code span.ex { color: #4fc3f7; }    /* Extension */
+:root[data-theme="dark"] code span.pp { color: #6bcf8f; }    /* Preprocessor */
