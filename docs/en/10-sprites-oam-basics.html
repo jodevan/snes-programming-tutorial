@@ -184,9 +184,63 @@ High table, 2 bits per sprite:
 <p>You should now see a solid yellow 8×8 square sitting at a fixed position, on top of the scrolling striped background from Lesson 9. It doesn’t move yet — <a href="11-controller-input-and-animation.html">Lesson 11</a> reads the controller and gives you control of it.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Change <code>OBSEL</code>’s <code>sss</code> bits to <code>011</code> (16x16 and 32x32) and set the OAM attribute/high-table size bit for sprite 0 to select the larger of the two. You’ll need a bigger tile (or four 8x8 tiles arranged as one 16x16 block — see the <a href="https://wiki.superfamicom.org/sprites#character-table-in-vram">character table wrapping rules</a>) to fill it correctly.</li>
-<li>Add a second visible sprite using a different palette (<code>ppp=1</code>, colors 144-159) elsewhere on screen, without disturbing the off-screen loop for the remaining 126 sprites.</li>
-<li>Using <a href="07-debugging-with-mesen.html">Lesson 7</a>’s PPU Viewers, open the sprite viewer and confirm sprites 1-127 really do show <code>Y = -16</code> and are excluded from the visible list — a good way to build trust in code like the hide-loop above before you need to debug a sprite that mysteriously won’t disappear.</li>
+<li>Change <code>OBSEL</code>’s <code>sss</code> bits to <code>011</code> (16x16 and 32x32) and set the OAM attribute/high-table size bit for sprite 0 to select the larger of the two. You’ll need a bigger tile (or four 8x8 tiles arranged as one 16x16 block — see the <a href="https://wiki.superfamicom.org/sprites#character-table-in-vram">character table wrapping rules</a>) to fill it correctly.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p><code>OBSEL</code> becomes <code>%01100001</code> = <code>$61</code> — <code>sss=011</code>, with <code>nn</code>/<code>bbb</code> unchanged from the <code>$4000</code> base. Sprite 0’s size bit lives in bit 1 of the very first high-table byte (each byte packs 4 sprites’ x-msb/size pairs, sprite 0 in bits 1:0), so instead of zeroing all 32 high-table bytes uniformly, write <code>$02</code> for just the first one:</p>
+<pre><code>    lda #$02              ; bit1 = size flag for sprite 0
+    sta $2104
+    ldx #31
+@hightable_loop:
+    stz $2104
+    dex
+    bne @hightable_loop</code></pre>
+<p>For the tile data: the sprite character sheet is always treated as 16 tiles wide with wraparound, so a 16×16 sprite built from tile number 0 needs tiles 0 (top-left), 1 (top-right), 16 (bottom-left), and 17 (bottom-right) all filled. Reusing the same solid-color-1 <code>sprite_tile</code> bytes for all four — at VRAM word addresses <code>$2000</code>, <code>$2010</code>, <code>$2100</code>, and <code>$2110</code> (byte <code>$4000</code> base ÷ 2, offset by 32 bytes = 16 words per tile slot) — is the simplest version: four repeats of Lesson 5’s upload loop, one per address, producing a plain solid 16×16 yellow square, twice the size in each dimension but otherwise identical.</p>
+</div></details>
+</li>
+<li>Add a second visible sprite using a different palette (<code>ppp=1</code>, colors 144-159) elsewhere on screen, without disturbing the off-screen loop for the remaining 126 sprites.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Load a color into palette 1 (index 145, palette 1’s color index 1), write sprite 1’s 4-byte record right after sprite 0’s, and shrink the hide-loop to 126 iterations (sprites 2-127) so the total byte count still lands exactly on 544:</p>
+<pre><code>    lda #145
+    sta $2121
+    lda #$1F
+    sta $2122
+    stz $2122               ; color $001F (red) at palette 1, index 1
+
+    ; --- Sprite 0: unchanged ---
+    lda #120
+    sta $2104
+    lda #100
+    sta $2104
+    stz $2104
+    stz $2104
+
+    ; --- Sprite 1: second visible sprite, palette 1, elsewhere on screen ---
+    lda #180
+    sta $2104                ; X = 180
+    lda #140
+    sta $2104                 ; Y = 140
+    stz $2104                  ; tile number = 0 (reuse the same tile)
+    lda #%00000010
+    sta $2104                   ; attributes: ppp=001 (palette 1)
+
+    ; --- Sprites 2-127: push off-screen (126 sprites now, not 127) ---
+    ldx #126
+@hide_loop:
+    stz $2104
+    lda #$F0
+    sta $2104
+    stz $2104
+    stz $2104
+    dex
+    bne @hide_loop</code></pre>
+<p>4 + 4 + (126×4) + 32 = 544 bytes — the loop count is the one thing that has to change to keep the OAM address landing exactly at the high table afterward.</p>
+</div></details>
+</li>
+<li>Using <a href="07-debugging-with-mesen.html">Lesson 7</a>’s PPU Viewers, open the sprite viewer and confirm sprites 1-127 really do show <code>Y = -16</code> and are excluded from the visible list — a good way to build trust in code like the hide-loop above before you need to debug a sprite that mysteriously won’t disappear.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Yes — the sprite viewer’s per-sprite list shows sprites 1-127 with <code>Y = $F0</code>, which the viewer (and the PPU) interprets as signed, i.e. <code>-16</code>: 16 pixels above the top of the visible 224-line display. Since the SNES only renders sprites whose 8- or 16-pixel-tall bounding box overlaps the visible area, a sprite sitting entirely above scanline 0 never contributes a pixel, so the viewer’s “currently visible” list only shows sprite 0. That’s the expected, working result — exactly what the hide-loop was written to produce.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="09-background-scrolling.html">Lesson 9 — Background scrolling</a> Next: <a href="11-controller-input-and-animation.html">Lesson 11 — Controller input &amp; sprite animation</a></p>

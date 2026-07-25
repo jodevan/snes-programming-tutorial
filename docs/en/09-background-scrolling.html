@@ -137,9 +137,76 @@
 <p>Assemble and run it. The striped background should now scroll smoothly and continuously to one side, wrapping seamlessly — because your tilemap is a single 32×32-tile (256×256-pixel) block and, per the <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">background reference</a>, “the display can never fall outside the BG: it simply wraps around automatically.” You didn’t write any wrapping logic; the hardware did it for you.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Add a second counter for <code>BG3VOFS</code> and scroll diagonally.</li>
-<li>The <code>BG3SC</code> register’s low two bits (from <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs-byte-addresses">Lesson 6</a>) select 32×32, 64×32, 32×64, or 64×64 tile arrangements. Try <code>01</code> (64×32) and fill the second 32×32 block with a different tilemap pattern — confirm the scroll now reveals two distinct halves before wrapping, instead of one repeating block.</li>
-<li>Slow the scroll rate down to one pixel every 4 frames instead of every frame, without changing the frame loop’s structure — think about what condition should gate the <code>inc scroll_lo</code> line.</li>
+<li>Add a second counter for <code>BG3VOFS</code> and scroll diagonally.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Two more direct-page bytes for a second 16-bit counter, and a second increment-and-write block — but keep each scroll register’s low/high pair back-to-back, per this lesson’s shared-latch warning:</p>
+<pre><code>scroll_lo  := $00
+scroll_hi  := $01
+vscroll_lo := $02
+vscroll_hi := $03
+
+    inc scroll_lo
+    bne @no_carry_h
+    inc scroll_hi
+@no_carry_h:
+    lda scroll_lo
+    sta $2111        ; BG3HOFS low, then high -- nothing else in between
+    lda scroll_hi
+    sta $2111
+
+    inc vscroll_lo
+    bne @no_carry_v
+    inc vscroll_hi
+@no_carry_v:
+    lda vscroll_lo
+    sta $2112        ; BG3VOFS low, then high
+    lda vscroll_hi
+    sta $2112</code></pre>
+</div></details>
+</li>
+<li>The <code>BG3SC</code> register’s low two bits (from <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs-byte-addresses">Lesson 6</a>) select 32×32, 64×32, 32×64, or 64×64 tile arrangements. Try <code>01</code> (64×32) and fill the second 32×32 block with a different tilemap pattern — confirm the scroll now reveals two distinct halves before wrapping, instead of one repeating block.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p><code>BG3SC</code> becomes <code>$11</code> — the same base-address field as before (byte <code>$1000</code> &gt;&gt; 10 = 4, shifted into bits 7-2) with the low two bits now <code>01</code>. The second 32×32 block lives immediately after the first in VRAM, at word address <code>$0C00</code>; fill it with <code>$8000</code> (vertical flip, same tile and palette) instead of <code>$0000</code> so it’s visibly distinct:</p>
+<pre><code>lda #$11
+sta $2109             ; BG3SC: base $1000, 64x32
+
+; ... after the original $0800 fill loop, add a second one:
+lda #$0C
+sta $2117              ; VMADDH: word address $0C00 (second block)
+stz $2116
+
+ldx #0
+@map_loop2:
+    stz $2118            ; low byte = 0
+    lda #$80
+    sta $2119              ; high byte -&gt; entry $8000 (v flip)
+    inx
+    cpx #1024
+    bne @map_loop2</code></pre>
+<p>Scrolling horizontally now shows 32 tiles of the normal red-top/green-bottom stripe, then 32 tiles of the vertically-flipped green-top/red-bottom version, before the full 64-tile-wide map wraps.</p>
+</div></details>
+</li>
+<li>Slow the scroll rate down to one pixel every 4 frames instead of every frame, without changing the frame loop’s structure — think about what condition should gate the <code>inc scroll_lo</code> line.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Add a frame counter, and only run the scroll-increment-and-write block when its low 2 bits are zero — that’s true on exactly 1 out of every 4 frames:</p>
+<pre><code>frame_count := $04
+
+    inc frame_count
+    lda frame_count
+    and #$03
+    bne @skip_scroll
+    inc scroll_lo
+    bne @no_carry
+    inc scroll_hi
+@no_carry:
+    lda scroll_lo
+    sta $2111
+    lda scroll_hi
+    sta $2111
+@skip_scroll:</code></pre>
+<p>The frame loop still runs its wait-for-vblank/wait-for-vblank-end cycle exactly once per frame, unchanged — only whether the body inside does anything is now gated.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a> Next: <a href="10-sprites-oam-basics.html">Lesson 10 — Sprites (OAM) basics</a></p>

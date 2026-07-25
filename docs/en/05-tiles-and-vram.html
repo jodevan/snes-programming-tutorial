@@ -186,9 +186,43 @@ $2119  VMDATAH high byte of the word to write</code></pre>
 <p>If you want to confirm the tile data actually landed in VRAM rather than taking it on faith, <a href="07-debugging-with-mesen.html">Lesson 7</a> shows you how to open Mesen’s VRAM/tile viewer and look at it directly — a good habit to build before you’re debugging something more complicated than a two-color stripe.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Hand-encode a checkerboard 2bpp tile (alternating index 1 and index 2 in a 2×2-pixel-block pattern, not a stripe) by working out the bitplane bytes row by row. This is tedious by hand on purpose — it’s exactly the tedium real SNES projects solve with graphics conversion tools that turn a PNG into this byte format automatically, which is worth knowing exists even though this tutorial encodes tiles by hand for teaching purposes.</li>
-<li>What would change in <code>tile_stripe</code> if you wanted a solid single-color tile using index 3 instead of a two-color stripe?</li>
-<li>Calculate how many 2bpp tiles fit in the SNES’s 64 KB of VRAM. Then do the same for 4bpp. Why do you think Lesson 6 defaults to the smaller format for the first background layer we turn on?</li>
+<li>Hand-encode a checkerboard 2bpp tile (alternating index 1 and index 2 in a 2×2-pixel-block pattern, not a stripe) by working out the bitplane bytes row by row. This is tedious by hand on purpose — it’s exactly the tedium real SNES projects solve with graphics conversion tools that turn a PNG into this byte format automatically, which is worth knowing exists even though this tutorial encodes tiles by hand for teaching purposes.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Split the 8×8 tile into a 4×4 grid of 2×2 blocks, coloring block <code>(bc,bc)</code> index 1 when <code>bc+br</code> is even and index 2 when it’s odd. That gives two distinct row patterns (rows 0-1 &amp; 4-5 share one pattern, rows 2-3 &amp; 6-7 share the other), so pixel columns 0-7 read:</p>
+<p>Rows 0,1,4,5: <code>1,1,2,2,1,1,2,2</code> → bitplane0 (bit7=col0) = <code>11001100</code> = <code>$CC</code>, bitplane1 = <code>00110011</code> = <code>$33</code>.<br/>
+Rows 2,3,6,7: <code>2,2,1,1,2,2,1,1</code> → bitplane0 = <code>00110011</code> = <code>$33</code>, bitplane1 = <code>11001100</code> = <code>$CC</code>.</p>
+<pre><code>tile_checker:
+    .byte $CC, $33   ; row 0
+    .byte $CC, $33   ; row 1
+    .byte $33, $CC   ; row 2
+    .byte $33, $CC   ; row 3
+    .byte $CC, $33   ; row 4
+    .byte $CC, $33   ; row 5
+    .byte $33, $CC   ; row 6
+    .byte $33, $CC   ; row 7
+tile_checker_end:</code></pre>
+</div></details>
+</li>
+<li>What would change in <code>tile_stripe</code> if you wanted a solid single-color tile using index 3 instead of a two-color stripe?
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Index 3 needs both bitplane bits set on every pixel, so both bitplane bytes become <code>$FF</code> on every row — no more alternating <code>$FF,$00</code>/<code>$00,$FF</code> pairs:</p>
+<pre><code>tile_solid3:
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+tile_solid3_end:</code></pre>
+</div></details>
+</li>
+<li>Calculate how many 2bpp tiles fit in the SNES’s 64 KB of VRAM. Then do the same for 4bpp. Why do you think Lesson 6 defaults to the smaller format for the first background layer we turn on?
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>65536 bytes ÷ 16 bytes/tile = <strong>4096</strong> 2bpp tiles. 65536 ÷ 32 bytes/tile = <strong>2048</strong> 4bpp tiles. Two reasons Lesson 6 reaches for 2bpp first: it’s what BG3 is hardware-fixed to use in graphics mode 1 (the mode this tutorial builds on), so turning BG3 on means working in 2bpp regardless; and independent of that constraint, 2bpp is simply less to encode and reason about while you’re still learning the bitplane format — half the bytes per tile, and only two bitplanes to combine instead of four.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="04-palettes-and-cgram.html">Lesson 4 — Palettes &amp; CGRAM</a> Next: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a></p>

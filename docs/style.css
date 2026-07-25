@@ -418,3 +418,53 @@ a.lesson-card:hover {
   .resources-list { grid-template-columns: 1fr; }
   .hero h1 { font-size: 1.9rem; }
 }
+
+.exercise-answer {
+  display: inline;
+}
+
+.exercise-answer > summary {
+  display: inline;
+  cursor: pointer;
+  color: var(--accent-dark);
+  font-weight: 600;
+  list-style: none;
+  margin-left: 0.35em;
+  white-space: nowrap;
+}
+
+.exercise-answer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.exercise-answer > summary:hover {
+  text-decoration: underline;
+}
+
+.exercise-answer .hide-label {
+  display: none;
+}
+
+.exercise-answer[open] > summary .show-label {
+  display: none;
+}
+
+.exercise-answer[open] > summary .hide-label {
+  display: inline;
+}
+
+.exercise-answer .answer-body {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--table-stripe);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+}
+
+.exercise-answer .answer-body > :first-child {
+  margin-top: 0;
+}
+
+.exercise-answer .answer-body > :last-child {
+  margin-bottom: 0;
+}

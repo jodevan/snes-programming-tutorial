@@ -188,10 +188,10 @@
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    <span class="bu">clc</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    <span class="bu">adc</span> #<span class="dv">1</span>                   <span class="co">; proposed new X</span></span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    pha                        <span class="co">; save it</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    sta temp</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    sta temp2                  <span class="co">; stash proposed x (temp2 is safe scratch here)</span></span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    lda sprite_y</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    sta temp2</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    lda temp</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    sta temp                    <span class="co">; temp = y, per get_cell's contract (A=x, temp=y)</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    lda temp2                    <span class="co">; reload proposed x into A</span></span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>    <span class="bu">js</span>r get_cell               <span class="co">; check the cell at the PROPOSED position</span></span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>    bne @blocked                <span class="co">; nonzero = solid, reject the move</span></span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>    pla</span>
@@ -205,9 +205,112 @@
 <p>With both pieces in place, the player sprite now stops at the edges of the 32-pixel border instead of scrolling off the visible play area, and touching the stationary wall sprite is something your code can detect (even if nothing visibly reacts to it yet — that’s what <a href="16-capstone.html">Lesson 16</a> adds).</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Finish the Left/Up/Down cases of the movement-gating pattern above.</li>
-<li>Make <code>check_collision</code> react to something observable — for example, changing the wall sprite’s own tile number when it’s touched, so you get visible confirmation without waiting for the capstone.</li>
-<li>The collision map here is hand-written. Real games generate collision data from the same source as their visual tilemap (often by tagging certain tile numbers as solid when the level is built). Sketch — in comments, not full code — how you’d turn Lesson 6’s tilemap into a collision map automatically, given a rule like “tile numbers 16 and above are solid.”</li>
+<li>Finish the Left/Up/Down cases of the movement-gating pattern above.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Up/Down are the simpler two: the axis that isn’t changing (<code>sprite_x</code>) can go straight into <code>A</code> right before the call, with no need to touch <code>temp</code>/<code>temp2</code> beyond setting <code>temp</code> to the proposed <code>y</code>:</p>
+<pre><code>    ; --- Up ---
+    lda buttons
+    and #%00001000            ; Up held?
+    beq @not_up
+    lda sprite_y
+    sec
+    sbc #1                     ; proposed new Y
+    pha
+    sta temp                    ; temp = proposed y, matches get_cell's contract
+    lda sprite_x
+    jsr get_cell                 ; A = x (unchanged), temp = proposed y
+    bne @blocked_up
+    pla
+    sta sprite_y
+    bra @not_up
+@blocked_up:
+    pla
+@not_up:
+
+    ; --- Down ---
+    lda buttons
+    and #%00000100             ; Down held?
+    beq @not_down
+    lda sprite_y
+    clc
+    adc #1                      ; proposed new Y
+    pha
+    sta temp
+    lda sprite_x
+    jsr get_cell
+    bne @blocked_down
+    pla
+    sta sprite_y
+    bra @not_down
+@blocked_down:
+    pla
+@not_down:</code></pre>
+<p>Left needs the same shape as the lesson’s Right example, stashing the proposed axis in <code>temp2</code> while <code>temp</code> holds the unchanged <code>y</code>, then reloading the proposed value into <code>A</code> right before the call:</p>
+<pre><code>    ; --- Left ---
+    lda buttons
+    and #%00000010              ; Left held?
+    beq @not_left
+    lda sprite_x
+    sec
+    sbc #1                       ; proposed new X
+    pha
+    sta temp2                     ; stash proposed x (temp2 is safe scratch here)
+    lda sprite_y
+    sta temp                       ; temp = y, per get_cell's contract
+    lda temp2                       ; reload proposed x into A
+    jsr get_cell
+    bne @blocked_left
+    pla
+    sta sprite_x
+    bra @not_left
+@blocked_left:
+    pla
+@not_left:</code></pre>
+<p>All four directions now follow the same shape as <code>check_collision</code>: compute a candidate value, check it against a table, only commit if it passes.</p>
+</div></details>
+</li>
+<li>Make <code>check_collision</code> react to something observable — for example, changing the wall sprite’s own tile number when it’s touched, so you get visible confirmation without waiting for the capstone.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Call <code>check_collision</code> once per frame in <code>nmi_handler</code>, turn the resulting carry flag into a tile number, and use that tile number when you write the wall sprite’s own OAM record (reusing Lesson 11’s second sprite tile as the “touched” look costs nothing new):</p>
+<pre><code>    jsr check_collision
+    lda #0
+    bcc @not_touching
+    lda #1              ; touching: swap to the outline tile from Lesson 11
+@not_touching:
+    sta wall_tile
+
+    ; ... when writing the wall sprite's own 4-byte OAM record each frame:
+    lda wall_x
+    sta $2104
+    lda wall_y
+    sta $2104
+    lda wall_tile
+    sta $2104
+    stz $2104</code></pre>
+<p>The wall sprite now visibly swaps its look every frame the player’s bounding box overlaps it, and reverts the instant it doesn’t — real-time confirmation that <code>check_collision</code> is doing what it claims, no capstone required.</p>
+</div></details>
+</li>
+<li>The collision map here is hand-written. Real games generate collision data from the same source as their visual tilemap (often by tagging certain tile numbers as solid when the level is built). Sketch — in comments, not full code — how you’d turn Lesson 6’s tilemap into a collision map automatically, given a rule like “tile numbers 16 and above are solid.”
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<pre><code>; For each of the 1024 tilemap entries (32x32 grid, Lesson 6's format):
+;   1. Read the entry's tile-number field -- mask off the v/h/o/ppp bits,
+;      keep only the low 10 bits (cccccccccc).
+;   2. collision_bit = (tile_number &gt;= 16) ? 1 : 0
+;   3. Write collision_bit into a collision map at the tilemap's own
+;      resolution (one entry per 8x8 tile, not this lesson's coarser
+;      32x32-pixel cells).
+;
+; Two ways to reconcile that resolution mismatch with get_cell as written:
+;   (a) generate collision data at the tilemap's native 8x8-tile granularity
+;       and change get_cell's shift amount from &gt;&gt;5 to &gt;&gt;3, or
+;   (b) downsample: mark one of this lesson's coarse 32x32 cells solid if
+;       ANY of the 4x4 tilemap entries inside it is solid.
+;
+; Either way this only needs to run once -- at build time (a small offline
+; tool reading the same tilemap data) or once at level-load time on real
+; hardware -- never per frame. It's data preprocessing, not gameplay logic.</code></pre>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="11-controller-input-and-animation.html">Lesson 11 — Controller input &amp; sprite animation</a> Next: <a href="13-spc700-and-audio-basics.html">Lesson 13 — The SPC700 &amp; audio basics</a></p>

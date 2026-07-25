@@ -91,9 +91,21 @@
 <p>Esse fluxo de trabalho — restringir <em>em qual</em> estágio está o problema usando os viewers, depois identificar exatamente <em>por quê</em> usando breakpoints — é o padrão geral que você vai usar pelo resto deste tutorial, e para qualquer projeto de SNES depois dele.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Configure um breakpoint que dispare só quando <code>X</code> for igual a um valor específico dentro do loop de preenchimento de tilemap da Lição 6, usando uma expressão de condição em vez de percorrer manualmente as 1024 iterações.</li>
-<li>Abra o Event Viewer na sua ROM da Lição 6 funcionando (sem o bug) e confirme por si mesmo que toda escrita de registrador da PPU acontece antes da escrita de brilho no <code>INIDISP</code> — ou seja, inteiramente dentro do forced blank.</li>
-<li>Desfaça o bug de prática acima, depois introduza um diferente de propósito (por exemplo, carregue a paleta da Lição 4 no índice 4 da CGRAM em vez do índice 0) e use o Palette Viewer para confirmar sua previsão do que vai dar errado antes de corrigir.</li>
+<li>Configure um breakpoint que dispare só quando <code>X</code> for igual a um valor específico dentro do loop de preenchimento de tilemap da Lição 6, usando uma expressão de condição em vez de percorrer manualmente as 1024 iterações.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Configure um breakpoint de execução no rótulo <code>@map_loop</code> (ou um breakpoint de escrita em <code>$2118</code>, já que é atingido uma vez por iteração de qualquer forma) e dê a ele uma expressão de condição como <code>X == $0200</code> — isso é hexadecimal <code>$0200</code> = 512, o ponto médio do loop de 1024 entradas. O Mesen só para quando a condição avalia como verdadeira, então você chega exatamente na iteração 512 sem percorrer passo a passo as outras 1023.</p>
+</div></details>
+</li>
+<li>Abra o Event Viewer na sua ROM da Lição 6 funcionando (sem o bug) e confirme por si mesmo que toda escrita de registrador da PPU acontece antes da escrita de brilho no <code>INIDISP</code> — ou seja, inteiramente dentro do forced blank.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Sim — todo ponto na linha do tempo (<code>CGADD</code>/<code>CGDATA</code>, as escritas de <code>VMAIN</code>/<code>VMADD</code>/<code>VMDATA</code> dos loops de tile e tilemap, <code>BG34NBA</code>, <code>BG3SC</code>, <code>BGMODE</code>, <code>TM</code>) se agrupa logo no início, antes do <code>sta $2100</code> final que ajusta o brilho para <code>$0F</code>. Isso é garantido pela estrutura do código, não sorte: <code>reset:</code> executa essas escritas estritamente na ordem do código-fonte, e a escrita de brilho é deliberadamente a última coisa antes de <code>forever:</code>, então nada mais adiante na rotina pode aparecer depois dela na linha do tempo.</p>
+</div></details>
+</li>
+<li>Desfaça o bug de prática acima, depois introduza um diferente de propósito (por exemplo, carregue a paleta da Lição 4 no índice 4 da CGRAM em vez do índice 0) e use o Palette Viewer para confirmar sua previsão do que vai dar errado antes de corrigir.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>As entradas do tilemap são todas <code>$0000</code> — campo de paleta <code>ppp = 000</code> — então o tile sempre busca as cores nos índices 0-3 da CGRAM, não importa onde você de fato carregou os dados da paleta. Mover o carregamento para começar no índice 4 significa que os índices 0-3 nunca são escritos; eles ficam com o que quer que a CGRAM tivesse antes. Nada no código de reset desta ROM limpa a CGRAM (o loop de limpeza de registradores da Lição 1 só toca <code>$2100</code>-<code>$2133</code>/<code>$4200</code>-<code>$421F</code>, não a CGRAM, que é memória separada alcançada só via <code>CGADD</code>/<code>CGDATA</code>). No Mesen especificamente, memória não escrita costuma ser inicializada em zero para determinismo, então a previsão é: o Palette Viewer vai mostrar as cores reais preto/vermelho/verde/azul nos índices 4-7 em vez de 0-3, e a tela — já que o tile só lê os índices 0-3 — vai renderizar preto sólido em vez das listras vermelho/verde, porque os índices 0-3 continuam todos zerados.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="06-backgrounds-and-tilemaps.html">Lição 6 — Backgrounds &amp; tilemaps</a> Next: <a href="08-dma-and-hdma.html">Lição 8 — Mergulho profundo em DMA &amp; HDMA</a></p>

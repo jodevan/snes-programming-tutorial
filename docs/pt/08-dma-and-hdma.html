@@ -285,9 +285,64 @@
 <p>O timing exato, scanline por scanline, de quando o dado de uma entrada da tabela é (re-)transferido em relação à recarga do contador de linhas tem alguns casos extremos genuinamente sutis — até a <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">referência oficial de registradores</a> é cautelosa em parte da letra miúda aqui. A receita de gradiente em faixas acima é um padrão bem estabelecido e confiável; se você começar a construir efeitos com precisão por scanline (em vez de por faixa), reserve tempo para testar contra o comportamento real do hardware no Mesen em vez de confiar só em um modelo mental — e revisite o Event Viewer da <a href="07-debugging-with-mesen.html">Lição 7</a>, que é a ferramenta certa para observar exatamente quando cada escrita de HDMA de fato acontece.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Mude a tabela de gradiente para esmaecer na direção <em>oposta</em> (escuro em cima, claro embaixo), invertendo a sequência de bytes.</li>
-<li><code>DASxL</code>/<code>DASxH</code> para um canal de <em>DMA</em> contam regressivamente enquanto a transferência roda, terminando em 0. O que esses mesmos registradores significam para um canal de HDMA <em>indireto</em> em vez disso? (Veja a <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">entrada do registrador DASx</a> — este tutorial só usa HDMA direto, mas vale saber que o modo indireto existe.)</li>
-<li>Usando o truque de preenchimento por DMA, escreva uma rotina que zere todos os 544 bytes da OAM (memória de sprites) em uma única chamada de DMA, em preparação para a <a href="10-sprites-oam-basics.html">Lição 10</a>.</li>
+<li>Mude a tabela de gradiente para esmaecer na direção <em>oposta</em> (escuro em cima, claro embaixo), invertendo a sequência de bytes.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<pre><code>hdma_gradient:
+    .byte 14, $00
+    .byte 14, $01
+    .byte 14, $02
+    .byte 14, $03
+    .byte 14, $04
+    .byte 14, $05
+    .byte 14, $06
+    .byte 14, $07
+    .byte 14, $08
+    .byte 14, $09
+    .byte 14, $0A
+    .byte 14, $0B
+    .byte 14, $0C
+    .byte 14, $0D
+    .byte 14, $0E
+    .byte 14, $0F
+    .byte 0             ; terminador</code></pre>
+<p>Só os valores de brilho de cada par são invertidos — as contagens de linha (14) e todo o resto da configuração do canal continuam idênticos, já que o HDMA não se importa com o que os valores de dado significam, só com para onde eles vão.</p>
+</div></details>
+</li>
+<li><code>DASxL</code>/<code>DASxH</code> para um canal de <em>DMA</em> contam regressivamente enquanto a transferência roda, terminando em 0. O que esses mesmos registradores significam para um canal de HDMA <em>indireto</em> em vez disso? (Veja a <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">entrada do registrador DASx</a> — este tutorial só usa HDMA direto, mas vale saber que o modo indireto existe.)
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>O próprio nome deles na referência de registradores já entrega: “DMA size / HDMA indirect address”. No HDMA direto (o que esta lição usa), cada entrada da tabela carrega seu dado embutido logo depois do byte de contagem de linhas, então <code>DASxL</code>/<code>DASxH</code> ficam livres para significar “contagem de bytes restantes”, igual ao DMA comum. No modo <em>indireto</em>, as entradas da tabela carregam em vez disso um ponteiro de 2 bytes para onde os dados reais de cada scanline realmente ficam, e <code>DASxL</code>/<code>DASxH</code> deixam de ser uma contagem regressiva — eles viram os bytes baixo/alto desse endereço indireto atual, que o hardware avança automaticamente conforme percorre a tabela, em vez de um valor que conta até zero.</p>
+</div></details>
+</li>
+<li>Usando o truque de preenchimento por DMA, escreva uma rotina que zere todos os 544 bytes da OAM (memória de sprites) em uma única chamada de DMA, em preparação para a <a href="10-sprites-oam-basics.html">Lição 10</a>.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Mesmo formato do preenchimento do tilemap, só que mirando em <code>OAMDATA</code> (<code>$2104</code>) em vez de <code>VMDATAL</code>/<code>VMDATAH</code>, e modo <code>000</code> já que <code>$2104</code> é um único registrador em vez de um par — a própria lógica de endereço da OAM cuida da divisão entre tabela baixa/alta internamente conforme os bytes consecutivos chegam, exatamente como se a CPU tivesse escrito <code>sta $2104</code> 544 vezes seguidas:</p>
+<pre><code>oam_zero_byte:
+    .byte 0
+
+clear_oam:
+    stz $2102             ; OAMADDL: endereço OAM = 0
+    stz $2103              ; OAMADDH
+
+    lda #&lt;oam_zero_byte
+    sta $4302
+    lda #&gt;oam_zero_byte
+    sta $4303
+    lda #^oam_zero_byte
+    sta $4304
+    lda #&lt;544              ; tabela baixa de 512 bytes + tabela alta de 32 bytes
+    sta $4305
+    lda #&gt;544
+    sta $4306
+
+    lda #%00010000           ; DMAP0: origem fixa (bit 4), modo 000
+    sta $4300
+    lda #$04                  ; BBAD0: destino $2104 (OAMDATA)
+    sta $4301
+
+    lda #$01
+    sta $420B</code></pre>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="07-debugging-with-mesen.html">Lição 7 — Depurando com o Mesen</a> Next: <a href="09-background-scrolling.html">Lição 9 — Rolagem de background</a></p>

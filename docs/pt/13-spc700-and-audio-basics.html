@@ -247,9 +247,28 @@ $00F4-$00F7  (SPC700 side, same four ports, different addresses)</code></pre>
 <p>Cada uma dessas é uma chamada a <code>write_dsp</code> com aquele valor. Compile, execute, e você deve ouvir um tom contínuo começando no momento em que a última chamada a <code>write_dsp</code> executa.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Mude os valores de <code>PITCHH</code>/<code>PITCHL</code> (<code>$0203</code>/<code>$0002</code>) e recompile — valores mais altos elevam o pitch. Encontre mais ou menos onde ele para de soar como um tom reconhecível e começa a distorcer feio; isso é uma limitação real dessa forma de onda pequena escrita à mão, não um erro.</li>
-<li>Dispare a escrita de <code>KON</code> (só essa chamada a <code>write_dsp</code>) de dentro do <code>nmi_handler</code>, condicionada a um botão pressionado em vez de rodar uma vez no início — essa é a forma sobre a qual a <a href="14-music-and-sound-effects.html">Lição 14</a> se constrói.</li>
-<li>Leia a fonte <a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a> na qual esta lição se baseia, e identifique quais linhas do <code>manual_dsp.s</code> dela correspondem a cada linha da tabela acima — uma boa forma de confirmar que você de fato entende o que cada chamada a <code>write_dsp</code> está fazendo, em vez de só reconhecer o padrão da tabela.</li>
+<li>Mude os valores de <code>PITCHH</code>/<code>PITCHL</code> (<code>$0203</code>/<code>$0002</code>) e recompile — valores mais altos elevam o pitch. Encontre mais ou menos onde ele para de soar como um tom reconhecível e começa a distorcer feio; isso é uma limitação real dessa forma de onda pequena escrita à mão, não um erro.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p><code>PITCH</code> é um valor de 14 bits dividido entre <code>PITCHL</code> (8 bits inteiros) e os 6 bits baixos de <code>PITCHH</code>. <code>$1000</code> toca a amostra na taxa originalmente gravada; valores mais altos tocam mais rápido (e mais agudo), valores mais baixos mais devagar. O <code>$0203</code> = 515 decimal da lição está bem abaixo de <code>$1000</code>, então já é um tom baixo e lento em relação à taxa nativa da amostra — subir na direção de <code>$1000</code> e depois <code>$2000</code> (exatamente o dobro = uma oitava acima) é onde você vai ouvir as mudanças de pitch mais claras. Essa forma de onda em particular é só dois blocos BRR de 8 amostras — 16 amostras de áudio por loop — então ela tem pouquíssimos harmônicos para começar; espere que a distorção/zumbido apareça bem antes do máximo do registrador, <code>$3FFF</code>. Onde exatamente é algo que vale a pena descobrir de ouvido no Mesen, em vez de confiar em um número aqui, já que depende de como seu ouvido interpreta uma forma de onda genuinamente esparsa.</p>
+</div></details>
+</li>
+<li>Dispare a escrita de <code>KON</code> (só essa chamada a <code>write_dsp</code>) de dentro do <code>nmi_handler</code>, condicionada a um botão pressionado em vez de rodar uma vez no início — essa é a forma sobre a qual a <a href="14-music-and-sound-effects.html">Lição 14</a> se constrói.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<pre><code>    ; --- dentro de nmi_handler, depois de ler os botões ---
+    lda buttons
+    and #%00000001        ; ex.: Direita
+    beq @no_sound
+    ldx #$014C             ; KON: liga a voz 0
+    jsr write_dsp
+@no_sound:</code></pre>
+<p>Teste e você vai notar que segurar o botão não causa gagueira, mesmo escrevendo <code>KON</code> a cada frame em que ele fica pressionado: segundo a <a href="14-music-and-sound-effects.html">Lição 14</a>, escrever <code>KON</code> numa voz que já está tocando simplesmente é ignorado — não reinicia o envelope. Então isso toca a nota uma vez quando pressionado pela primeira vez e a deixa continuar, não importa quanto tempo o botão fique pressionado. Se você quiser que cada novo toque reinicie o som de fato, precisa do par key-off-depois-key-on da Lição 14 (<code>write_dsp</code> com <code>KOFF</code>, depois <code>KON</code>), não apenas uma escrita de <code>KON</code> sozinha — é essa a forma que este exercício está preparando.</p>
+</div></details>
+</li>
+<li>Leia a fonte <a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a> na qual esta lição se baseia, e identifique quais linhas do <code>manual_dsp.s</code> dela correspondem a cada linha da tabela acima — uma boa forma de confirmar que você de fato entende o que cada chamada a <code>write_dsp</code> está fazendo, em vez de só reconhecer o padrão da tabela.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>O <code>manual_dsp.s</code> da fonte é quase uma correspondência direta: os mesmos nomes de rotina <code>spc_wait_boot</code>/<code>spc_begin_upload</code>/<code>spc_upload_byte</code>/<code>write_dsp</code>, os mesmos bytes de <code>sample</code>, e um bloco “Do DSP writes to start playing tone” que é uma sequência de chamadas <code>ldx #$xxYY / jsr write_dsp</code> exatamente na mesma ordem da tabela desta lição. A correspondência é posicional: a primeira chamada ali, <code>ldx #$206C</code>, é a mesma escrita de <code>FLG</code> que aparece primeiro na tabela desta lição, e a segunda, <code>ldx #$004C</code>, é a mesma escrita de silêncio via <code>KON</code> que aparece em segundo aqui — confirme esse pareamento, e cada chamada seguinte a <code>write_dsp</code> na fonte se alinha uma a uma com a próxima linha da tabela desta lição, em ordem. Esse pareamento posicional, não decorar números de registrador, é o que o exercício realmente está testando.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="12-collision-detection.html">Lição 12 — Detecção de colisão</a> Next: <a href="14-music-and-sound-effects.html">Lição 14 — Música &amp; efeitos sonoros</a></p>

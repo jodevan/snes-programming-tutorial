@@ -186,9 +186,46 @@ $2122  ww+++-
 <p>Compile e execute exatamente como na Lição 1. <strong>A tela ainda vai parecer idêntica</strong> — preto sólido agora, já que o índice 0 da paleta é preto nesta tabela, e nada ainda exibe os índices 1-3. Isso é esperado e vale a pena parar um segundo para digerir: você construiu infraestrutura de verdade (um carregador de paleta reutilizável, guiado por tabela) que não produz <em>nenhuma mudança visível</em>, porque nada ainda está pedindo para usar as cores 1-3. A <a href="05-tiles-and-vram.html">Lição 5</a> cria um tile, e a <a href="06-backgrounds-and-tilemaps.html">Lição 6</a> é onde essas outras três cores finalmente aparecem na tela. Programar hardware gráfico costuma funcionar assim — você instala os canos antes da água passar por eles.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Mude <code>palette_table</code> para usar índice 0 = azul em vez de preto, recompile, e confirme que a cor de fundo muda — essa é a única parte do trabalho desta lição que você <em>consegue</em> ver imediatamente.</li>
-<li><code>load_palette</code> acima escreve de forma fixa a partir do índice 0 da CGRAM. Modifique-a (ou escreva uma segunda chamada) para carregar uma <em>segunda</em> paleta de 4 cores começando no índice 4 da CGRAM, sem duplicar o loop inteiro — pense no que precisaria virar um parâmetro.</li>
-<li>As <a href="https://wiki.superfamicom.org/registers#cgwsel-color-addition-select-588">entradas CGWSEL/CGADSUB/COLDATA da página de Registradores</a> descrevem “color math” — misturar duas cores por hardware. Dê uma olhada rápida, só o suficiente para responder: color math muda o que está armazenado na CGRAM, ou muda o que é calculado no momento da renderização? Este tutorial não implementa color math, mas saber a resposta vai poupar confusão se você vir isso no código de outras pessoas.</li>
+<li>Mude <code>palette_table</code> para usar índice 0 = azul em vez de preto, recompile, e confirme que a cor de fundo muda — essa é a única parte do trabalho desta lição que você <em>consegue</em> ver imediatamente.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<pre><code>palette_table:
+    .word $7C00     ; índice 0: azul (cor de fundo)
+    .word $001F     ; índice 1: vermelho
+    .word $03E0     ; índice 2: verde
+    .word $7C00     ; índice 3: azul
+palette_table_end:</code></pre>
+<p>Só a primeira entrada precisa mudar. Recompile e recarregue, e a cor de fundo fica azul — igual ao exercício da Lição 1, só que chegando lá através do carregador table-driven em vez de duas escritas fixas em <code>sta $2122</code>.</p>
+</div></details>
+</li>
+<li><code>load_palette</code> acima escreve de forma fixa a partir do índice 0 da CGRAM. Modifique-a (ou escreva uma segunda chamada) para carregar uma <em>segunda</em> paleta de 4 cores começando no índice 4 da CGRAM, sem duplicar o loop inteiro — pense no que precisaria virar um parâmetro.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Três coisas estão fixas como literais em tempo de montagem e precisam virar entradas: o índice inicial na CGRAM, o endereço da tabela de origem, e a contagem. O índice inicial é fácil — passe em <code>A</code> antes de chamar, em vez de um <code>lda #start_index</code> fixo. O endereço da tabela é o ponto interessante: <code>lda table,x</code> só funciona porque <code>table</code> é um rótulo fixo em tempo de montagem, então para reusar o loop com outra tabela é preciso um ponteiro em tempo de execução e endereçamento indireto:</p>
+<pre><code>.a8
+.i16
+pal_ptr:    .res 2      ; ponteiro para a tabela de origem
+pal_count:  .res 1      ; número de BYTES a escrever (cores * 2)
+
+load_palette:
+    sta $2121            ; quem chama passa o índice inicial em A
+    ldy #0
+@loop:
+    lda (pal_ptr),y
+    sta $2122
+    iny
+    lda (pal_ptr),y
+    sta $2122
+    iny
+    cpy pal_count
+    bne @loop
+    rts</code></pre>
+<p>Chamar duas vezes fica assim: configure <code>pal_ptr</code>/<code>pal_count</code> e <code>A</code> para a primeira paleta, <code>jsr load_palette</code>, depois repita com o endereço da segunda tabela, contagem 8 (4 cores × 2 bytes), e <code>A = 4</code>.</p>
+</div></details>
+</li>
+<li>As <a href="https://wiki.superfamicom.org/registers#cgwsel-color-addition-select-588">entradas CGWSEL/CGADSUB/COLDATA da página de Registradores</a> descrevem “color math” — misturar duas cores por hardware. Dê uma olhada rápida, só o suficiente para responder: color math muda o que está armazenado na CGRAM, ou muda o que é calculado no momento da renderização? Este tutorial não implementa color math, mas saber a resposta vai poupar confusão se você vir isso no código de outras pessoas.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>No momento da renderização. Color math é uma mistura por pixel que a PPU faz ao compor as telas principal e secundária para exibição a cada frame — ela nunca escreve de volta na CGRAM. As cores que você carregou via <code>CGADD</code>/<code>CGDATA</code> continuam exatamente como foram escritas; color math só muda o que aparece na tela para os pixels onde está habilitado, quadro a quadro.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="03-memory-map-and-registers.html">Lição 3 — Mapa de memória do SNES &amp; registradores de hardware</a> Next: <a href="05-tiles-and-vram.html">Lição 5 — Tiles &amp; VRAM</a></p>

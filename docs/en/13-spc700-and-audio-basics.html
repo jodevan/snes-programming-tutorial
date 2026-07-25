@@ -247,9 +247,28 @@ $00F4-$00F7  (SPC700 side, same four ports, different addresses)</code></pre>
 <p>Every one of those is a call to <code>write_dsp</code> with that value. Build, run, and you should hear a continuous tone starting the moment the last <code>write_dsp</code> call executes.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Change the <code>PITCHH</code>/<code>PITCHL</code> values (<code>$0203</code>/<code>$0002</code>) and rebuild — higher values raise the pitch. Find roughly where it stops sounding like a recognizable tone and starts aliasing badly; that’s a real limitation of this tiny hand-written waveform, not a mistake.</li>
-<li>Trigger the <code>KON</code> write (just that one <code>write_dsp</code> call) from inside <code>nmi_handler</code>, gated on a button press instead of running once at startup — this is the shape <a href="14-music-and-sound-effects.html">Lesson 14</a> builds on.</li>
-<li>Read the <a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a> source this lesson is based on, and identify which lines in its <code>manual_dsp.s</code> correspond to each row of the table above — a good way to confirm you actually understand what each <code>write_dsp</code> call is doing rather than pattern-matching the table.</li>
+<li>Change the <code>PITCHH</code>/<code>PITCHL</code> values (<code>$0203</code>/<code>$0002</code>) and rebuild — higher values raise the pitch. Find roughly where it stops sounding like a recognizable tone and starts aliasing badly; that’s a real limitation of this tiny hand-written waveform, not a mistake.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p><code>PITCH</code> is a 14-bit value split across <code>PITCHL</code> (all 8 bits) and the low 6 bits of <code>PITCHH</code>. <code>$1000</code> plays the sample at its originally-recorded rate; higher values play it faster (and higher-pitched), lower values slower. The lesson’s <code>$0203</code> = 515 decimal is well below <code>$1000</code>, so it’s already a low, slow tone relative to the sample’s native rate — raising it toward and past <code>$1000</code>, then <code>$2000</code> (exactly double = one octave up), is where you’ll hear the clearest pitch changes. This particular waveform is only two 8-sample BRR blocks — 16 audio samples per loop — so it has very few harmonics to begin with; expect the aliasing/buzz to show up well before the register’s <code>$3FFF</code> maximum. Exactly where is worth finding by ear in Mesen rather than trusting a number here, since it depends on how your ear parses a genuinely sparse waveform.</p>
+</div></details>
+</li>
+<li>Trigger the <code>KON</code> write (just that one <code>write_dsp</code> call) from inside <code>nmi_handler</code>, gated on a button press instead of running once at startup — this is the shape <a href="14-music-and-sound-effects.html">Lesson 14</a> builds on.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<pre><code>    ; --- inside nmi_handler, after reading buttons ---
+    lda buttons
+    and #%00000001        ; e.g. Right
+    beq @no_sound
+    ldx #$014C             ; KON: key on voice 0
+    jsr write_dsp
+@no_sound:</code></pre>
+<p>Try it and you’ll notice holding the button doesn’t cause a stutter, even though this writes <code>KON</code> every single frame it’s held: per <a href="14-music-and-sound-effects.html">Lesson 14</a>, writing <code>KON</code> to a voice that’s already playing is simply ignored — it doesn’t restart the envelope. So this plays the note once when first pressed and lets it continue regardless of how long the button stays down. If you want each new press to properly restart the sound instead, you need Lesson 14’s key-off-then-key-on pair (<code>write_dsp</code> with <code>KOFF</code>, then <code>KON</code>) rather than a <code>KON</code> write alone — that’s the shape this exercise is setting up.</p>
+</div></details>
+</li>
+<li>Read the <a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a> source this lesson is based on, and identify which lines in its <code>manual_dsp.s</code> correspond to each row of the table above — a good way to confirm you actually understand what each <code>write_dsp</code> call is doing rather than pattern-matching the table.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>The source’s <code>manual_dsp.s</code> is close to a direct match: same <code>spc_wait_boot</code>/<code>spc_begin_upload</code>/<code>spc_upload_byte</code>/<code>write_dsp</code> routine names, the identical <code>sample</code> bytes, and a “Do DSP writes to start playing tone” block that’s a sequence of <code>ldx #$xxYY / jsr write_dsp</code> calls in exactly the same order as this lesson’s table. The correspondence is positional: the first call there, <code>ldx #$206C</code>, is the same <code>FLG</code> write that’s first in this lesson’s table, and the second, <code>ldx #$004C</code>, is the same <code>KON</code>-silence-first write that’s second here — confirm that pairing, and each subsequent <code>write_dsp</code> call in the source lines up one-for-one with the next row down in this lesson’s table, in order. That positional matching, not memorizing register numbers, is really what the exercise is testing.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="12-collision-detection.html">Lesson 12 — Collision detection</a> Next: <a href="14-music-and-sound-effects.html">Lesson 14 — Music &amp; sound effects</a></p>

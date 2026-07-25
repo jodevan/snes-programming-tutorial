@@ -306,9 +306,27 @@ SEGMENTS {
 <p>Uma ROM com um cabeçalho correto, um vetor de reset que o hardware consegue de fato encontrar, uma troca de modo de CPU, estado de hardware limpo, e um efeito colateral visível. Esse é o esqueleto sobre o qual toda lição posterior se apoia — da Lição 3 em diante vamos substituir a etapa “cor sólida” por backgrounds e sprites de verdade, mas o código de configuração acima muda muito pouco.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Mude a cor de fundo para outra usando a tabela BGR nos comentários acima. Remonte, recarregue no Mesen, confirme que mudou.</li>
-<li>Tente configurar o brilho de <code>$2100</code> para <code>$00</code> em vez de <code>$0F</code> — confirme que a tela fica escura mesmo com a cor ainda configurada na CGRAM. Isso é um prévia de por que o “forced blank” existe: ele permite atualizar VRAM/CGRAM/OAM com segurança, sem que a PPU as leia no meio de uma atualização — o que importa muito quando gráficos de verdade entram em cena.</li>
-<li>Quebre alguma coisa de propósito — comente a linha <code>xce</code> e tente remontar/executar. Observe o que acontece (ou não acontece), para você ter uma noção de como é uma falha de “preso em modo de emulação” antes que isso aconteça sem querer mais adiante.</li>
+<li>Mude a cor de fundo para outra usando a tabela BGR nos comentários acima. Remonte, recarregue no Mesen, confirme que mudou.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Para deixar vermelho puro em vez de azul, troque as duas escritas em <code>CGDATA</code> para <code>$001F</code>:</p>
+<pre><code>stz $2121       ; CGADD: entrada 0
+lda #$1F        ; byte baixo de $001F (vermelho): gggrrrrr = 00011111
+sta $2122
+lda #$00        ; byte alto: -bbbbbgg = 00000000
+sta $2122</code></pre>
+<p>Verde puro seria <code>$03E0</code> (<code>lda #$E0</code> e depois <code>lda #$03</code>). Só os dois valores imediatos mudam — a sequência de escrita (endereço, depois byte baixo, depois byte alto) continua idêntica.</p>
+</div></details>
+</li>
+<li>Tente configurar o brilho de <code>$2100</code> para <code>$00</code> em vez de <code>$0F</code> — confirme que a tela fica escura mesmo com a cor ainda configurada na CGRAM. Isso é um prévia de por que o “forced blank” existe: ele permite atualizar VRAM/CGRAM/OAM com segurança, sem que a PPU as leia no meio de uma atualização — o que importa muito quando gráficos de verdade entram em cena.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Sim — a tela fica preta mesmo com a entrada 0 da CGRAM ainda azul. O nibble baixo de <code>$2100</code> é um multiplicador de brilho aplicado a tudo que a PPU renderiza; em <code>$00</code> esse multiplicador é zero, então toda cor sai preta na tela mesmo permanecendo inalterada na CGRAM. O bit 7 (forced blank) é uma questão separada: ele impede a PPU de sequer ler VRAM/CGRAM/OAM, e é isso que torna seguro escrever nelas no meio de um frame. Brilho escurece a imagem; forced blank interrompe as leituras de memória da PPU. Esta lição só usou forced-blank desligado com brilho máximo, então os dois nunca precisaram ser distinguidos até agora.</p>
+</div></details>
+</li>
+<li>Quebre alguma coisa de propósito — comente a linha <code>xce</code> e tente remontar/executar. Observe o que acontece (ou não acontece), para você ter uma noção de como é uma falha de “preso em modo de emulação” antes que isso aconteça sem querer mais adiante.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Ainda monta sem erro — o <code>ca65</code> só conhece as diretivas <code>.a8</code>/<code>.i16</code>, não o modo real da CPU, então nada detecta isso em tempo de montagem. O problema aparece em tempo de execução: sem <code>xce</code>, a CPU permanece em modo de emulação compatível com 6502, onde A/X/Y são sempre de 8 bits, não importa o que <code>rep #$10</code>/<code>sep #$20</code> ou as diretivas <code>.a8</code>/<code>.i16</code> digam. <code>ldx #$1FFF</code> foi montado como uma instrução de 3 bytes (opcode + operando de 16 bits) porque o montador acreditou na diretiva <code>.i16</code>. Em modo de emulação a CPU lê isso como uma carga de 8 bits: ela pega só o primeiro byte do operando (<code>$FF</code>) para X, e depois trata o segundo byte do operando (<code>$1F</code>) como o próximo opcode. Daí em diante o fluxo de instruções fica dessincronizado — a CPU decodifica o meio do que você escreveu como se fosse o início de uma instrução, e a execução vai para um comportamento efetivamente aleatório. No Mesen isso costuma aparecer como a tela ficando preta (a configuração nunca chega na linha <code>sta $2100</code>, ou chega com o estado dos registradores corrompido) em vez de qualquer erro claro — ficar “preso em modo de emulação” falha silenciosamente, não ruidosamente, e é exatamente por isso que vale a pena ver isso uma vez de propósito.</p>
+</div></details>
+</li>
 </ol>
 <h2 id="apêndice-a-a-mesma-rom-em-asar-para-comparação">Apêndice A: a mesma ROM em asar (para comparação)</h2>
 <p>Já que você também tem o asar instalado, aqui está o equivalente na sintaxe do asar — note que é um único arquivo, sem configuração de linker separada, porque o asar deduz o layout a partir de <code>lorom</code> e do posicionamento baseado em diretivas:</p>

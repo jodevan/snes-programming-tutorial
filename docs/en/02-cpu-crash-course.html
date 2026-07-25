@@ -311,9 +311,35 @@
 <p>This is intentionally a little inefficient — the point is to see indexed addressing, the stack, and a loop bounded by a 16-bit compare all doing real work together, not to write the fastest possible fill routine.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>In Lesson 1’s <code>reset:</code> routine, find every <code>REP</code>/<code>SEP</code> and confirm each one has a matching <code>.a8</code>/<code>.a16</code>/<code>.i8</code>/<code>.i16</code> directive right after it. There’s exactly one pair — but get in the habit of checking, because later lessons add more.</li>
-<li>Rewrite the register-clearing loop from Lesson 1 (<code>ldx #$33</code> / <code>stz $2100,x</code> / <code>stz $4200,x</code> / <code>dex</code> / <code>bpl</code>) using words instead: what would change if you wanted to clear 16-bit values two bytes at a time instead of one byte at a time? (You don’t need to actually implement this — reasoning through <em>what would have to change</em> — the STZ addressing mode, the loop bound, the step size — is the exercise.)</li>
-<li>Predict what goes wrong if you delete the <code>.i16</code> directive right after <code>rep #$10</code> in Lesson 1’s reset code, while leaving the actual <code>rep #$10</code> instruction in place. Then, once your toolchain is confirmed working from Lesson 1, actually try it and see if the assembled output matches your prediction (hint: compare the byte count of <code>ldx #$1FFF</code> before and after your change — you can check this with <code>ca65 -l</code> to produce a listing file, or by inspecting <code>lesson1.o</code> with a hex viewer).</li>
+<li>In Lesson 1’s <code>reset:</code> routine, find every <code>REP</code>/<code>SEP</code> and confirm each one has a matching <code>.a8</code>/<code>.a16</code>/<code>.i8</code>/<code>.i16</code> directive right after it. There’s exactly one pair — but get in the habit of checking, because later lessons add more.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>There’s exactly one <code>REP</code>/<code>SEP</code> pair in <code>reset:</code>, and it’s immediately followed by matching directives:</p>
+<pre><code>rep #$10        ; clears the X flag -&gt; X/Y become 16-bit
+sep #$20        ; sets the M flag   -&gt; A becomes 8-bit
+.a8
+.i16</code></pre>
+<p><code>.a8</code> matches what <code>sep #$20</code> just did to A, and <code>.i16</code> matches what <code>rep #$10</code> just did to X/Y. No other <code>REP</code>/<code>SEP</code> appears anywhere else in Lesson 1’s code.</p>
+</div></details>
+</li>
+<li>Rewrite the register-clearing loop from Lesson 1 (<code>ldx #$33</code> / <code>stz $2100,x</code> / <code>stz $4200,x</code> / <code>dex</code> / <code>bpl</code>) using words instead: what would change if you wanted to clear 16-bit values two bytes at a time instead of one byte at a time? (You don’t need to actually implement this — reasoning through <em>what would have to change</em> — the STZ addressing mode, the loop bound, the step size — is the exercise.)
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Three things change, though the addressing mode itself — absolute indexed — stays the same:</p>
+<ul>
+<li><strong>A must be 16-bit.</strong> <code>STZ</code> stores a value the width of the accumulator (governed by the M flag), so clearing two bytes per write needs <code>rep #$20</code> / <code>.a16</code> instead of the 8-bit A this loop currently runs under.</li>
+<li><strong>The step size becomes 2, not 1.</strong> Each <code>stz $2100,x</code> now covers two consecutive addresses, so <code>X</code> has to move by 2 between iterations instead of 1 — you’d need <code>dex</code> twice (or <code>dex</code>/<code>dex</code>) since there’s no single “decrement by 2” instruction.</li>
+<li><strong>The starting index shifts.</strong> The original loop starts at <code>X = $33</code>, covering 52 registers (<code>$00</code>-<code>$33</code>). Since 52 is even, word-sized stores tile it cleanly, but the starting offset must be <code>$32</code> instead of <code>$33</code> so pairs land on even boundaries and the last store still hits offset <code>$00</code>.</li>
+</ul>
+</div></details>
+</li>
+<li>Predict what goes wrong if you delete the <code>.i16</code> directive right after <code>rep #$10</code> in Lesson 1’s reset code, while leaving the actual <code>rep #$10</code> instruction in place. Then, once your toolchain is confirmed working from Lesson 1, actually try it and see if the assembled output matches your prediction (hint: compare the byte count of <code>ldx #$1FFF</code> before and after your change — you can check this with <code>ca65 -l</code> to produce a listing file, or by inspecting <code>lesson1.o</code> with a hex viewer).
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>The tempting prediction is “it breaks the same way as Exercise 3 in Lesson 1” — but it doesn’t. Look at the very top of <code>lesson1.asm</code>, before any segment even starts:</p>
+<pre><code>.p816
+.i16                    ; reminder: X/Y start out 16-bit after our init code
+.a8                     ; reminder: A will be 8-bit after our init code</code></pre>
+<p>That top-level <code>.i16</code> is already ca65’s standing assumption for the whole file, and nothing between there and <code>reset:</code> changes it. So the <code>.i16</code> that appears again right after <code>rep #$10</code> is redundant — it restates a width the assembler already believed. Deleting it doesn’t change what <code>ca65</code> assumes at the <code>ldx #$1FFF</code> line, so the byte count is identical before and after: still a 3-byte instruction. This is different from Lesson 1 Exercise 3 (deleting the real <code>xce</code> instruction), which changes actual CPU behavior at runtime — here you’re deleting a compile-time bookkeeping statement that happened to already be in effect. To actually trigger a mismatch this way, you’d have to change the <em>first</em> <code>.i16</code> at the top of the file (or insert an <code>.i8</code> somewhere before <code>reset:</code>).</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="01-toolchain-setup-and-first-rom.html">Lesson 1 — Toolchain setup &amp; your first ROM</a> Next: <a href="03-memory-map-and-registers.html">Lesson 3 — SNES memory map &amp; hardware registers</a></p>

@@ -147,10 +147,10 @@ direction — Right — the other three follow the same shape:
     clc
     adc #1                   ; proposed new X
     pha                        ; save it
-    sta temp
+    sta temp2                  ; stash proposed x (temp2 is safe scratch here)
     lda sprite_y
-    sta temp2
-    lda temp
+    sta temp                    ; temp = y, per get_cell's contract (A=x, temp=y)
+    lda temp2                    ; reload proposed x into A
     jsr get_cell               ; check the cell at the PROPOSED position
     bne @blocked                ; nonzero = solid, reject the move
     pla

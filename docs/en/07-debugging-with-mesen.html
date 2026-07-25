@@ -91,9 +91,21 @@
 <p>This workflow — narrow down <em>which</em> stage is wrong using the viewers, then pinpoint <em>why</em> using breakpoints — is the general pattern you’ll use for the rest of this tutorial, and for any SNES project after it.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Set a breakpoint that triggers only when <code>X</code> equals a specific value inside the tilemap-filling loop from Lesson 6, using a condition expression rather than stepping through all 1024 iterations by hand.</li>
-<li>Open the Event Viewer on your working (unbroken) Lesson 6 ROM and confirm for yourself that every PPU register write happens before the <code>INIDISP</code> brightness write — i.e., entirely within forced blank.</li>
-<li>Undo the practice bug above, then introduce a different one on purpose (for example, load Lesson 4’s palette into CGRAM index 4 instead of index 0) and use the Palette Viewer to confirm your prediction of what would go wrong before fixing it.</li>
+<li>Set a breakpoint that triggers only when <code>X</code> equals a specific value inside the tilemap-filling loop from Lesson 6, using a condition expression rather than stepping through all 1024 iterations by hand.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Set an execute breakpoint on the <code>@map_loop</code> label (or a write breakpoint on <code>$2118</code>, since it’s hit once per iteration either way) and give it a condition expression like <code>X == $0200</code> — that’s hex <code>$0200</code> = 512, the halfway point of the 1024-entry loop. Mesen only stops when the condition evaluates true, so you land exactly on iteration 512 without single-stepping through the other 1023.</p>
+</div></details>
+</li>
+<li>Open the Event Viewer on your working (unbroken) Lesson 6 ROM and confirm for yourself that every PPU register write happens before the <code>INIDISP</code> brightness write — i.e., entirely within forced blank.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Yes — every dot on the timeline (<code>CGADD</code>/<code>CGDATA</code>, the <code>VMAIN</code>/<code>VMADD</code>/<code>VMDATA</code> writes for both the tile and tilemap loops, <code>BG34NBA</code>, <code>BG3SC</code>, <code>BGMODE</code>, <code>TM</code>) clusters right at the start, before the final <code>sta $2100</code> that sets brightness to <code>$0F</code>. That’s guaranteed by the code’s structure, not luck: <code>reset:</code> executes these writes strictly in source order, and the brightness write is deliberately the last thing before <code>forever:</code>, so nothing later in the routine can appear after it on the timeline.</p>
+</div></details>
+</li>
+<li>Undo the practice bug above, then introduce a different one on purpose (for example, load Lesson 4’s palette into CGRAM index 4 instead of index 0) and use the Palette Viewer to confirm your prediction of what would go wrong before fixing it.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>The tile’s tilemap entries are all <code>$0000</code> — palette field <code>ppp = 000</code> — so the tile always looks up colors from CGRAM indices 0-3, regardless of where you actually loaded the palette data. Moving the load to start at index 4 means indices 0-3 never get written at all; they stay at whatever CGRAM held before. Nothing in this ROM’s reset code clears CGRAM (Lesson 1’s register-clearing loop only touches <code>$2100</code>-<code>$2133</code>/<code>$4200</code>-<code>$421F</code>, not CGRAM, which is separate memory reached only through <code>CGADD</code>/<code>CGDATA</code>). In Mesen specifically, unwritten memory is typically zero-initialized for determinism, so the prediction is: the Palette Viewer will show the real black/red/green/blue colors sitting at indices 4-7 instead of 0-3, and the screen — since the tile only ever reads indices 0-3 — will render solid black instead of red/green stripes, because indices 0-3 are still all zero.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="06-backgrounds-and-tilemaps.html">Lesson 6 — Backgrounds &amp; tilemaps</a> Next: <a href="08-dma-and-hdma.html">Lesson 8 — DMA &amp; HDMA deep dive</a></p>

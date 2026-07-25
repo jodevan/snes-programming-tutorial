@@ -155,9 +155,67 @@ SEGMENTS {
 <p>Esse é exatamente o erro que a <a href="02-cpu-crash-course.html#whats-actually-new">Lição 2</a> avisou de forma abstrata — misturar <code>JSR</code>/<code>RTS</code> com <code>JSL</code>/<code>RTL</code> — agora com um motivo concreto para acontecer: código e dados se espalham por bancos quando um projeto cresce além de 32 KB, e toda chamada entre bancos precisa da forma long.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Divida sua ROM de arquivo único atual em <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, e <code>gameplay.s</code>, conectados via <code>.include</code> a partir de um pequeno <code>main.s</code>. Confirme que ainda monta e roda de forma idêntica.</li>
-<li>Escreva uma macro para o padrão “configure OAMADD, depois escreva 4 bytes” de registro de sprite da <a href="10-sprites-oam-basics.html">Lição 10</a>, e use-a para encurtar o loop de esconder daquela lição.</li>
-<li>Usando a configuração de 4 bancos estendida acima, mova o <code>collision_map</code> da <a href="12-collision-detection.html">Lição 12</a> para o <code>BANK1</code>, e atualize o que quer que o leia para usar endereçamento long. Já que <code>collision_map</code> é só lido, não chamado como uma sub-rotina, pense se ele precisa de <code>JSL</code> ou se um simples endereço long (<code>lda $18xxxx,x</code>) é suficiente — esses não são o mesmo requisito.</li>
+<li>Divida sua ROM de arquivo único atual em <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, e <code>gameplay.s</code>, conectados via <code>.include</code> a partir de um pequeno <code>main.s</code>. Confirme que ainda monta e roda de forma idêntica.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Uma divisão natural por papel, seguindo como este tutorial apresentou cada peça: <code>regs.s</code> guarda constantes simbólicas para os registradores de hardware usados ao longo do tutorial (<code>INIDISP := $2100</code> e afins, se você optar por nomeá-los em vez de escrever endereços crus); <code>variables.s</code> guarda as reservas de página direta (<code>sprite_x := $02</code>, e assim por diante); <code>reset.s</code> guarda <code>reset:</code> e tudo que ele chama que só roda uma vez na inicialização (o código de configuração das Lições 1-10); <code>gameplay.s</code> guarda <code>nmi_handler:</code> e as sub-rotinas por frame (<code>check_collision</code>, <code>get_cell</code>, e afins a partir da Lição 12). <code>main.s</code> vira só a lista de <code>.include</code> mais o segmento <code>VECTORS</code> inalterado da Lição 1. Como <code>.include</code> é resolvido antes da montagem começar, rótulos em qualquer arquivo ficam visíveis para qualquer outro, independente da ordem dos includes — o único risco real é um erro de digitação num nome de arquivo ou um <code>.include</code> esquecido, ambos capturados imediatamente pelo <code>ca65</code> como erro de símbolo indefinido, não um bug silencioso. Remontar deve produzir uma saída byte-a-byte idêntica à versão de arquivo único, já que nada no código montado mudou, só em qual arquivo cada linha mora.</p>
+</div></details>
+</li>
+<li>Escreva uma macro para o padrão “configure OAMADD, depois escreva 4 bytes” de registro de sprite da <a href="10-sprites-oam-basics.html">Lição 10</a>, e use-a para encurtar o loop de esconder daquela lição.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Duas variantes, porque o loop de esconder e uma colocação avulsa como a do sprite 0 na verdade precisam de formatos ligeiramente diferentes. Uma macro completa que configura <code>OAMADD</code> explicitamente, para colocar um sprite num índice conhecido:</p>
+<pre><code>.macro oam_sprite index, x, y, tile, attr
+    lda #(index*4)
+    sta $2102
+    stz $2103
+    lda #x
+    sta $2104
+    lda #y
+    sta $2104
+    lda #tile
+    sta $2104
+    lda #attr
+    sta $2104
+.endmacro
+
+    oam_sprite 0, 120, 100, 0, 0     ; substitui o bloco escrito à mão do sprite 0</code></pre>
+<p>O loop de esconder não precisa da parte de configurar o endereço — <code>OAMADD</code> já auto-incrementa ao longo das suas 127 iterações, configurado uma vez antes do loop começar — então uma macro mais leve, só de escrita, é o que cabe ali:</p>
+<pre><code>.macro oam_hide
+    stz $2104
+    lda #$F0
+    sta $2104
+    stz $2104
+    stz $2104
+.endmacro
+
+    ldx #127
+@hide_loop:
+    oam_hide
+    dex
+    bne @hide_loop</code></pre>
+</div></details>
+</li>
+<li>Usando a configuração de 4 bancos estendida acima, mova o <code>collision_map</code> da <a href="12-collision-detection.html">Lição 12</a> para o <code>BANK1</code>, e atualize o que quer que o leia para usar endereçamento long. Já que <code>collision_map</code> é só lido, não chamado como uma sub-rotina, pense se ele precisa de <code>JSL</code> ou se um simples endereço long (<code>lda $18xxxx,x</code>) é suficiente — esses não são o mesmo requisito.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Não precisa de <code>JSL</code> — essa instrução existe especificamente para preservar e restaurar <code>PBR</code> ao redor de uma <em>chamada</em> de sub-rotina, para que um <code>RTL</code> correspondente consiga voltar ao banco certo. <code>collision_map</code> nunca é chamado, só lido, então nada no fluxo do programa cruza bancos; só o endereço do dado cruza. Uma leitura long (absoluta, 24 bits) simples já basta:</p>
+<pre><code>.segment "BANK1"
+collision_map:
+    .byte 1,1,1,1,1,1,1,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,1,1,1,1,1,1,1
+
+.segment "CODE"
+get_cell:
+    ; ... cálculo de coluna/linha inalterado ...
+    tax
+    lda f:collision_map,x     ; leitura long -- instrução de 4 bytes, banco explícito
+    rts</code></pre>
+<p><code>f:</code> é o modificador do ca65 para forçar o modo de endereçamento long/far independente do que seria inferido de outra forma, então essa instrução lê através dos bancos corretamente não importa o que <code>DBR</code> contenha no momento — enquanto <code>get_cell</code> em si continua sendo chamado com um <code>JSR</code>/<code>RTS</code> comum, já que o próprio código de <code>get_cell</code> nunca saiu do banco 0.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="14-music-and-sound-effects.html">Lição 14 — Música &amp; efeitos sonoros</a> Next: <a href="16-capstone.html">Lição 16 — Projeto final</a></p>

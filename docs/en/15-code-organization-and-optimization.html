@@ -155,9 +155,67 @@ SEGMENTS {
 <p>This is exactly the mistake <a href="02-cpu-crash-course.html#6502--65816-whats-actually-new">Lesson 2</a> warned about in the abstract — mixing <code>JSR</code>/<code>RTS</code> with <code>JSL</code>/<code>RTL</code> — now with a concrete reason it happens: code and data spread across banks as a project grows past 32 KB, and every cross-bank call needs the long form.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Split your current single-file ROM into <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, and <code>gameplay.s</code>, wired together with <code>.include</code> from a small <code>main.s</code>. Confirm it still assembles and runs identically.</li>
-<li>Write a macro for the “set OAMADD, then write 4 bytes” sprite-record pattern from <a href="10-sprites-oam-basics.html">Lesson 10</a>, and use it to shorten the hide-loop from that lesson.</li>
-<li>Using the extended 4-bank config above, move <code>collision_map</code> from <a href="12-collision-detection.html">Lesson 12</a> into <code>BANK1</code>, and update whatever reads it to use long addressing. Since <code>collision_map</code> is only read, not called as a subroutine, think about whether it needs <code>JSL</code> or whether a plain long address (<code>lda $18xxxx,x</code>) is enough — these are not the same requirement.</li>
+<li>Split your current single-file ROM into <code>regs.s</code>, <code>variables.s</code>, <code>reset.s</code>, and <code>gameplay.s</code>, wired together with <code>.include</code> from a small <code>main.s</code>. Confirm it still assembles and runs identically.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>A natural split by role, matching how this tutorial introduced each piece: <code>regs.s</code> holds symbolic constants for the hardware registers used throughout (<code>INIDISP := $2100</code> and similar, if you choose to name them instead of writing raw addresses); <code>variables.s</code> holds the direct-page reservations (<code>sprite_x := $02</code>, and so on); <code>reset.s</code> holds <code>reset:</code> and everything it calls that only runs once at startup (Lessons 1-10’s setup code); <code>gameplay.s</code> holds <code>nmi_handler:</code> and the per-frame subroutines (<code>check_collision</code>, <code>get_cell</code>, and friends from Lesson 12 onward). <code>main.s</code> becomes just the <code>.include</code> list plus the unchanged <code>VECTORS</code> segment from Lesson 1. Since <code>.include</code> is resolved before assembly starts, labels in any file are visible to any other, regardless of include order — the only real risk is a typo in a filename or a forgotten <code>.include</code>, both of which <code>ca65</code> catches immediately as an undefined-symbol error, not a silent bug. Rebuilding should produce byte-identical output to the single-file version, since nothing about the assembled code changed, only which file each line lives in.</p>
+</div></details>
+</li>
+<li>Write a macro for the “set OAMADD, then write 4 bytes” sprite-record pattern from <a href="10-sprites-oam-basics.html">Lesson 10</a>, and use it to shorten the hide-loop from that lesson.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Two variants, because the hide-loop and a one-off placement like sprite 0 actually need slightly different shapes. A full macro that sets <code>OAMADD</code> explicitly, for placing one sprite at a known index:</p>
+<pre><code>.macro oam_sprite index, x, y, tile, attr
+    lda #(index*4)
+    sta $2102
+    stz $2103
+    lda #x
+    sta $2104
+    lda #y
+    sta $2104
+    lda #tile
+    sta $2104
+    lda #attr
+    sta $2104
+.endmacro
+
+    oam_sprite 0, 120, 100, 0, 0     ; replaces sprite 0's hand-written block</code></pre>
+<p>The hide-loop doesn’t need the address-setting part at all — <code>OAMADD</code> already auto-increments across its 127 iterations, set once before the loop starts — so a lighter, write-only macro is the right fit there:</p>
+<pre><code>.macro oam_hide
+    stz $2104
+    lda #$F0
+    sta $2104
+    stz $2104
+    stz $2104
+.endmacro
+
+    ldx #127
+@hide_loop:
+    oam_hide
+    dex
+    bne @hide_loop</code></pre>
+</div></details>
+</li>
+<li>Using the extended 4-bank config above, move <code>collision_map</code> from <a href="12-collision-detection.html">Lesson 12</a> into <code>BANK1</code>, and update whatever reads it to use long addressing. Since <code>collision_map</code> is only read, not called as a subroutine, think about whether it needs <code>JSL</code> or whether a plain long address (<code>lda $18xxxx,x</code>) is enough — these are not the same requirement.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>No <code>JSL</code> needed — that instruction exists specifically to preserve and restore <code>PBR</code> around a subroutine <em>call</em>, so a matching <code>RTL</code> can return to the right bank. <code>collision_map</code> is never called, only read, so nothing about program flow crosses banks; only the data address does. A plain long (absolute, 24-bit) read is enough:</p>
+<pre><code>.segment "BANK1"
+collision_map:
+    .byte 1,1,1,1,1,1,1,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,0,0,0,0,0,0,1
+    .byte 1,1,1,1,1,1,1,1
+
+.segment "CODE"
+get_cell:
+    ; ... unchanged column/row math ...
+    tax
+    lda f:collision_map,x     ; long read -- 4-byte instruction, explicit bank
+    rts</code></pre>
+<p><code>f:</code> is ca65’s override to force the long/far addressing form regardless of what mode it would otherwise infer, so this one instruction reads across banks correctly no matter what <code>DBR</code> currently holds — while <code>get_cell</code> itself keeps being called with an ordinary <code>JSR</code>/<code>RTS</code>, since <code>get_cell</code>’s own code never left bank 0.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="14-music-and-sound-effects.html">Lesson 14 — Music &amp; sound effects</a> Next: <a href="16-capstone.html">Lesson 16 — Capstone project</a></p>

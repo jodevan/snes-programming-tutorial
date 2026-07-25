@@ -121,9 +121,50 @@
 <p>All three solve the same underlying problem this lesson introduced by hand — getting a compact song representation into ARAM and having the SPC700 play it back continuously — with a real sequencer instead of a fixed one-shot tone. Picking one and working through its own integration guide is the natural next step after this tutorial, and is intentionally left as that: a next step, not part of the core curriculum here.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Implement the voice-1 button-triggered blip described above, distinct from the voice-0 collision sound, and confirm both can be heard independently (including overlapping, if you trigger them close together).</li>
-<li>Read through <a href="https://github.com/undisbeliever/terrific-audio-driver">Terrific Audio Driver’s documentation</a> (or whichever of the three options interests you most) far enough to answer: how does it expect song data to be included in your ROM — as a separate assembled file, a linker segment, or something else? You don’t need to integrate it, just locate the answer.</li>
-<li>Look back at <a href="13-spc700-and-audio-basics.html">Lesson 13</a>’s <code>ADSR1</code>/<code>ADSR2</code> values (<code>$C3</code>/<code>$2F</code>) for voice 0. The <a href="https://wiki.superfamicom.org/spc700-reference">SPC700 reference</a> documents the ADSR envelope bit layout — without necessarily working out exact timings, identify which of the two registers controls “attack” (how quickly the sound reaches full volume when key-on fires) versus “release.”</li>
+<li>Implement the voice-1 button-triggered blip described above, distinct from the voice-0 collision sound, and confirm both can be heard independently (including overlapping, if you trigger them close together).
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>One catch worth flagging: the <code>+$10</code>-per-voice rule only applies to the <em>per-voice</em> registers (<code>VOLL</code>/<code>VOLR</code>/<code>PITCHL</code>/<code>PITCHH</code>/<code>SRCN</code>/<code>ADSR1</code>/<code>ADSR2</code>, each living at <code>voice_number*$10 + offset</code>). <code>KON</code> (<code>$4C</code>) and <code>KOFF</code> (<code>$5C</code>) are different — they’re shared, one-bit-per-voice registers, always at the same address, where voice <em>N</em> is bit <em>N</em>. Voice 1 is bit 1, not address <code>$1C</code> (that’s actually <code>MVOLR</code>, a completely different register). One-time voice 1 setup, alongside voice 0’s in Lesson 13:</p>
+<pre><code>    ldx #$107F              ; VOLL (voice 1) = max
+    jsr write_dsp
+    ldx #$117F               ; VOLR (voice 1) = max
+    jsr write_dsp
+    ldx #$1200                ; PITCHL (voice 1) = 0
+    jsr write_dsp
+    ldx #$1320                 ; PITCHH (voice 1) = $20 -&gt; pitch $2000, an octave up
+    jsr write_dsp
+    ldx #$1400                  ; SRCN (voice 1) = 0, same uploaded sample
+    jsr write_dsp
+    ldx #$15C3                   ; ADSR1 (voice 1), same envelope as voice 0
+    jsr write_dsp
+    ldx #$162F                    ; ADSR2 (voice 1)
+    jsr write_dsp</code></pre>
+<p>Then the trigger, using bit 1 of <code>KON</code>/<code>KOFF</code> instead of voice 0’s bit 0:</p>
+<pre><code>play_blip_sfx:
+    ldx #$025C        ; KOFF: key off voice 1 only (bit 1)
+    jsr write_dsp
+    ldx #$024C         ; KON: key on voice 1 only (bit 1)
+    jsr write_dsp
+    rts
+
+    ; --- inside nmi_handler ---
+    lda $4218
+    and #%10000000     ; A button
+    beq @no_blip
+    jsr play_blip_sfx
+@no_blip:</code></pre>
+<p>Because voice 0’s collision sound only ever touches bit 0 of <code>KON</code>/<code>KOFF</code> and voice 1’s blip only ever touches bit 1, triggering both close together doesn’t interfere — you should hear them overlap cleanly.</p>
+</div></details>
+</li>
+<li>Read through <a href="https://github.com/undisbeliever/terrific-audio-driver">Terrific Audio Driver’s documentation</a> (or whichever of the three options interests you most) far enough to answer: how does it expect song data to be included in your ROM — as a separate assembled file, a linker segment, or something else? You don’t need to integrate it, just locate the answer.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Neither a plain <code>.incbin</code> nor a hand-written linker segment: Terrific Audio Driver compiles your MML songs and sound effects with its own <code>tad-compiler</code> tool, and the resulting audio data is loaded through a <code>LoadAudioData</code> callback you provide — the driver’s ca65 API generates that callback for you rather than expecting you to wire up the binary data yourself. So the integration point is a callback function, not a segment or an included file, which is a genuinely different shape than every VRAM/CGRAM/OAM loading pattern used elsewhere in this tutorial.</p>
+</div></details>
+</li>
+<li>Look back at <a href="13-spc700-and-audio-basics.html">Lesson 13</a>’s <code>ADSR1</code>/<code>ADSR2</code> values (<code>$C3</code>/<code>$2F</code>) for voice 0. The <a href="https://wiki.superfamicom.org/spc700-reference">SPC700 reference</a> documents the ADSR envelope bit layout — without necessarily working out exact timings, identify which of the two registers controls “attack” (how quickly the sound reaches full volume when key-on fires) versus “release.”
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p><code>ADSR1</code> is bit 7 = ADSR-enable, bits 6-4 = Decay Rate, bits 3-0 = <strong>Attack Rate</strong> — attack lives entirely in <code>ADSR1</code>’s low nibble. <code>ADSR2</code> is bits 7-5 = Sustain Level, bits 4-0 = Sustain Rate, and it’s that Sustain Rate field that governs how fast the envelope falls toward silence after key-off — the closest thing the DSP has to a “release” control, even though the register reference calls it “sustain rate” rather than “release” by name. So: attack is in <code>ADSR1</code> (low 4 bits), release-like behavior is in <code>ADSR2</code> (low 5 bits).</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="13-spc700-and-audio-basics.html">Lesson 13 — The SPC700 &amp; audio basics</a> Next: <a href="15-code-organization-and-optimization.html">Lesson 15 — Code organization &amp; optimization</a></p>

@@ -186,9 +186,43 @@ $2119  VMDATAH high byte of the word to write</code></pre>
 <p>Se você quiser confirmar que os dados do tile de fato chegaram na VRAM em vez de simplesmente confiar, a <a href="07-debugging-with-mesen.html">Lição 7</a> mostra como abrir o visualizador de VRAM/tiles do Mesen e olhar diretamente — um bom hábito para construir antes de você estar depurando algo mais complicado que uma listra de duas cores.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Codifique manualmente um tile 2bpp em xadrez (alternando índice 1 e índice 2 em um padrão de blocos de 2×2 pixels, não uma listra), trabalhando os bytes de bitplane linha por linha. Isso é tedioso à mão de propósito — é exatamente o tédio que projetos reais de SNES resolvem com ferramentas de conversão gráfica que transformam um PNG nesse formato de byte automaticamente, o que vale a pena saber que existe mesmo que este tutorial codifique tiles à mão para fins didáticos.</li>
-<li>O que mudaria em <code>tile_stripe</code> se você quisesse um tile sólido de uma única cor usando o índice 3, em vez de uma listra de duas cores?</li>
-<li>Calcule quantos tiles 2bpp cabem nos 64 KB de VRAM do SNES. Depois faça o mesmo para 4bpp. Por que você acha que a Lição 6 usa por padrão o formato menor para a primeira camada de background que ligamos?</li>
+<li>Codifique manualmente um tile 2bpp em xadrez (alternando índice 1 e índice 2 em um padrão de blocos de 2×2 pixels, não uma listra), trabalhando os bytes de bitplane linha por linha. Isso é tedioso à mão de propósito — é exatamente o tédio que projetos reais de SNES resolvem com ferramentas de conversão gráfica que transformam um PNG nesse formato de byte automaticamente, o que vale a pena saber que existe mesmo que este tutorial codifique tiles à mão para fins didáticos.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Divida o tile 8×8 em uma grade 4×4 de blocos 2×2, colorindo o bloco <code>(bc,br)</code> com índice 1 quando <code>bc+br</code> é par e índice 2 quando é ímpar. Isso dá dois padrões de linha distintos (linhas 0-1 e 4-5 compartilham um padrão, linhas 2-3 e 6-7 compartilham outro), então as colunas de pixel 0-7 ficam:</p>
+<p>Linhas 0,1,4,5: <code>1,1,2,2,1,1,2,2</code> → bitplane0 (bit7=col0) = <code>11001100</code> = <code>$CC</code>, bitplane1 = <code>00110011</code> = <code>$33</code>.<br/>
+Linhas 2,3,6,7: <code>2,2,1,1,2,2,1,1</code> → bitplane0 = <code>00110011</code> = <code>$33</code>, bitplane1 = <code>11001100</code> = <code>$CC</code>.</p>
+<pre><code>tile_checker:
+    .byte $CC, $33   ; linha 0
+    .byte $CC, $33   ; linha 1
+    .byte $33, $CC   ; linha 2
+    .byte $33, $CC   ; linha 3
+    .byte $CC, $33   ; linha 4
+    .byte $CC, $33   ; linha 5
+    .byte $33, $CC   ; linha 6
+    .byte $33, $CC   ; linha 7
+tile_checker_end:</code></pre>
+</div></details>
+</li>
+<li>O que mudaria em <code>tile_stripe</code> se você quisesse um tile sólido de uma única cor usando o índice 3, em vez de uma listra de duas cores?
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>O índice 3 exige os dois bits de bitplane ligados em cada pixel, então os dois bytes de bitplane viram <code>$FF</code> em toda linha — sem mais os pares alternados <code>$FF,$00</code>/<code>$00,$FF</code>:</p>
+<pre><code>tile_solid3:
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+    .byte $FF, $FF
+tile_solid3_end:</code></pre>
+</div></details>
+</li>
+<li>Calcule quantos tiles 2bpp cabem nos 64 KB de VRAM do SNES. Depois faça o mesmo para 4bpp. Por que você acha que a Lição 6 usa por padrão o formato menor para a primeira camada de background que ligamos?
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>65536 bytes ÷ 16 bytes/tile = <strong>4096</strong> tiles 2bpp. 65536 ÷ 32 bytes/tile = <strong>2048</strong> tiles 4bpp. Duas razões pelas quais a Lição 6 recorre ao 2bpp primeiro: é o que a BG3 é obrigada por hardware a usar no modo gráfico 1 (o modo sobre o qual este tutorial constrói), então ligar a BG3 significa trabalhar em 2bpp de qualquer forma; e independente dessa restrição, 2bpp é simplesmente menos para codificar e raciocinar enquanto você ainda está aprendendo o formato de bitplane — metade dos bytes por tile, e só dois bitplanes para combinar em vez de quatro.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="04-palettes-and-cgram.html">Lição 4 — Paletas &amp; CGRAM</a> Next: <a href="06-backgrounds-and-tilemaps.html">Lição 6 — Backgrounds &amp; tilemaps</a></p>

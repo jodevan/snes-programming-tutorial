@@ -186,9 +186,46 @@ $2122  ww+++-
 <p>Build and run it exactly like Lesson 1. <strong>The screen will still look identical</strong> — solid black now, since palette index 0 is black in this table, and nothing yet displays indices 1-3. That’s expected and worth sitting with for a second: you’ve built real infrastructure (a reusable, table-driven palette loader) that produces <em>no visible change</em>, because nothing is asking to use colors 1-3 yet. <a href="05-tiles-and-vram.html">Lesson 5</a> creates a tile, and <a href="06-backgrounds-and-tilemaps.html">Lesson 6</a> is where those other three colors finally show up on screen. Programming graphics hardware often works this way — you lay pipes before water flows through them.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Change <code>palette_table</code> to use index 0 = blue instead of black, rebuild, and confirm the backdrop color changes — this is the one part of this lesson’s work you <em>can</em> see immediately.</li>
-<li><code>load_palette</code> above hardcodes writing to CGRAM index 0. Modify it (or write a second call) to load a <em>second</em> 4-color palette starting at CGRAM index 4, without duplicating the whole loop — think about what would need to become a parameter.</li>
-<li>The <a href="https://wiki.superfamicom.org/registers#cgwsel-color-addition-select-588">Registers page’s CGWSEL/CGADSUB/COLDATA entries</a> describe “color math” — blending two colors together in hardware. Skim just enough to answer: does color math change what’s stored in CGRAM, or does it change what’s computed at render time? This tutorial doesn’t implement color math, but knowing the answer will save you confusion if you see it in other people’s code.</li>
+<li>Change <code>palette_table</code> to use index 0 = blue instead of black, rebuild, and confirm the backdrop color changes — this is the one part of this lesson’s work you <em>can</em> see immediately.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<pre><code>palette_table:
+    .word $7C00     ; index 0: blue (backdrop)
+    .word $001F     ; index 1: red
+    .word $03E0     ; index 2: green
+    .word $7C00     ; index 3: blue
+palette_table_end:</code></pre>
+<p>Only the first entry needs to change. Rebuild and reload, and the backdrop goes blue — same as Lesson 1’s exercise, just arriving there through the table-driven loader instead of two hardcoded <code>sta $2122</code> writes.</p>
+</div></details>
+</li>
+<li><code>load_palette</code> above hardcodes writing to CGRAM index 0. Modify it (or write a second call) to load a <em>second</em> 4-color palette starting at CGRAM index 4, without duplicating the whole loop — think about what would need to become a parameter.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Three things are currently baked in as fixed literals and need to become inputs instead: the CGRAM start index, the source table’s address, and the count. The start index is easy — pass it in <code>A</code> before calling, instead of a hardcoded <code>lda #start_index</code>. The table address is the interesting one: <code>lda table,x</code> only works because <code>table</code> is a compile-time-fixed label, so to reuse the loop against a different table you need a runtime pointer and indirect addressing instead:</p>
+<pre><code>.a8
+.i16
+pal_ptr:    .res 2      ; zero-page pointer to the source table
+pal_count:  .res 1      ; number of BYTES to write (colors * 2)
+
+load_palette:
+    sta $2121            ; caller passes the start index in A
+    ldy #0
+@loop:
+    lda (pal_ptr),y
+    sta $2122
+    iny
+    lda (pal_ptr),y
+    sta $2122
+    iny
+    cpy pal_count
+    bne @loop
+    rts</code></pre>
+<p>Calling it twice then looks like: set <code>pal_ptr</code>/<code>pal_count</code> and <code>A</code> for the first palette, <code>jsr load_palette</code>, then repeat with the second table’s address, a count of 8 (4 colors × 2 bytes), and <code>A = 4</code>.</p>
+</div></details>
+</li>
+<li>The <a href="https://wiki.superfamicom.org/registers#cgwsel-color-addition-select-588">Registers page’s CGWSEL/CGADSUB/COLDATA entries</a> describe “color math” — blending two colors together in hardware. Skim just enough to answer: does color math change what’s stored in CGRAM, or does it change what’s computed at render time? This tutorial doesn’t implement color math, but knowing the answer will save you confusion if you see it in other people’s code.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Render time. Color math is a per-pixel blend the PPU performs while compositing the main and sub screens for display each frame — it never writes back into CGRAM. Whatever colors you loaded via <code>CGADD</code>/<code>CGDATA</code> stay exactly as written; color math just changes what ends up on screen for pixels where it’s enabled, frame by frame.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="03-memory-map-and-registers.html">Lesson 3 — SNES memory map &amp; hardware registers</a> Next: <a href="05-tiles-and-vram.html">Lesson 5 — Tiles &amp; VRAM</a></p>

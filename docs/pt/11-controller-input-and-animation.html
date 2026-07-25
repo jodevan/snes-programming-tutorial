@@ -246,9 +246,33 @@ $4218 (low byte):  axlr0000   A / X / L / R / (unused)</code></pre>
 <p>Segure o D-pad. O sprite se move, e alterna entre um quadrado sólido e um contorno vazado a cada 16 frames enquanto se move — um substituto para uma animação de caminhada de verdade, demonstrando o mecanismo (trocar o número de tile da OAM ao longo do tempo) sem precisar de arte de personagem de verdade. O background continua rolando por baixo, agora acionado pela mesma interrupção em vez de um loop de polling separado.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (de <code>JOY1L</code>) para disparar algo distinto de movimento — por exemplo, resetar instantaneamente <code>sprite_x</code>/<code>sprite_y</code> para a posição inicial.</li>
-<li>O contador de animação incrementa a cada frame em que uma direção é segurada, e alterna frames baseado no bit 4 (a cada 16 frames). Mude para alternar a cada 8 frames, depois a cada 4 — note quão rápido é “rápido demais” para uma animação convincente usando só dois frames.</li>
-<li>Movimento diagonal atualmente deixa Cima+Direita (por exemplo) mover o sprite mais rápido do que uma única direção, já que os dois pares <code>inc</code>/<code>dec</code> se aplicam independentemente. Isso é um bug que vale a pena corrigir para os propósitos deste tutorial? Pense no que um jogo de verdade faria diferente, mesmo que você não implemente isso.</li>
+<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (de <code>JOY1L</code>) para disparar algo distinto de movimento — por exemplo, resetar instantaneamente <code>sprite_x</code>/<code>sprite_y</code> para a posição inicial.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p><code>JOY1L</code> (<code>$4218</code>) tem o layout <code>axlr0000</code>, então o botão A é o bit 7. Leia-o junto com <code>JOY1H</code> e condicione um reset a ele, em qualquer ponto de <code>nmi_handler</code>:</p>
+<pre><code>    lda $4218
+    and #%10000000        ; botão A
+    beq @not_reset
+    lda #120
+    sta sprite_x
+    lda #100
+    sta sprite_y
+@not_reset:</code></pre>
+</div></details>
+</li>
+<li>O contador de animação incrementa a cada frame em que uma direção é segurada, e alterna frames baseado no bit 4 (a cada 16 frames). Mude para alternar a cada 8 frames, depois a cada 4 — note quão rápido é “rápido demais” para uma animação convincente usando só dois frames.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Basta mudar qual bit de <code>anim_ctr</code> é testado — o bit <em>N</em> de um contador binário troca de valor a cada 2<sup>N</sup> incrementos, então o bit 4 (a cada 16 frames) vira bit 3 para a cada 8, bit 2 para a cada 4:</p>
+<pre><code>    lda anim_ctr
+    and #$08        ; a cada 8 frames em vez de $10 (a cada 16)
+    beq @frame0</code></pre>
+<p>A cada 8 frames (~7,5 alternâncias/segundo a 60fps) o ciclo de caminhada já soa perceptivelmente rápido. A cada 4 frames (~15 alternâncias/segundo) uma animação de dois frames deixa de parecer passos alternados e passa a parecer um zumbido ou vibração — não existe um terceiro frame “intermediário” para vender o movimento, então alternar mais rápido só expõe o truque em vez de torná-lo mais convincente.</p>
+</div></details>
+</li>
+<li>Movimento diagonal atualmente deixa Cima+Direita (por exemplo) mover o sprite mais rápido do que uma única direção, já que os dois pares <code>inc</code>/<code>dec</code> se aplicam independentemente. Isso é um bug que vale a pena corrigir para os propósitos deste tutorial? Pense no que um jogo de verdade faria diferente, mesmo que você não implemente isso.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Não vale a pena corrigir aqui — o objetivo desta lição é demonstrar que o estado dos botões consegue de fato controlar a posição do sprite, e o bug não atrapalha isso. Mas ele é real: mover 1px para a direita e 1px para baixo no mesmo frame cobre √2 ≈ 1,41 pixels de distância real, contra 1 pixel de uma direção cardeal, então o movimento diagonal é genuinamente ~41% mais rápido. Um jogo de verdade normalmente corrige isso de duas formas: escalar o movimento diagonal por uma constante de ponto fixo pré-calculada (aproximadamente 0,7071, por exemplo <code>$00B5</code> em ponto fixo 8.8) sempre que uma entrada X e uma entrada Y estiverem seguradas ao mesmo tempo, ou aplicar as duas atualizações de eixo em frames alternados em vez de em todo frame (uma aproximação mais barata, só com inteiros). Qualquer uma das duas exige a maquinaria de ponto fixo ou de alternância de frames que este tutorial ainda não construiu — razoável adiar aqui, não razoável lançar silenciosamente em um jogo de verdade onde a sensação do movimento importa.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="10-sprites-oam-basics.html">Lição 10 — Fundamentos de sprites (OAM)</a> Next: <a href="12-collision-detection.html">Lição 12 — Detecção de colisão</a></p>

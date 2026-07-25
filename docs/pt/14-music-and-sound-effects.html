@@ -121,9 +121,50 @@
 <p>Todas as três resolvem o mesmo problema subjacente que esta lição introduziu à mão — colocar uma representação compacta de música na ARAM e fazer o SPC700 tocá-la continuamente — com um sequenciador de verdade em vez de um tom único e fixo. Escolher uma e seguir seu próprio guia de integração é o próximo passo natural depois deste tutorial, e é deixado intencionalmente assim: um próximo passo, não parte do currículo principal aqui.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Implemente o bipe da voz 1, disparado por botão, descrito acima, distinto do som de colisão da voz 0, e confirme que os dois conseguem ser ouvidos independentemente (inclusive sobrepostos, se você os disparar próximos um do outro).</li>
-<li>Leia a <a href="https://github.com/undisbeliever/terrific-audio-driver">documentação do Terrific Audio Driver</a> (ou qualquer uma das três opções que mais te interessar) o suficiente para responder: como ele espera que os dados de música sejam incluídos na sua ROM — como um arquivo montado separado, um segmento de linker, ou outra coisa? Você não precisa integrá-lo, só localizar a resposta.</li>
-<li>Olhe de novo para os valores de <code>ADSR1</code>/<code>ADSR2</code> (<code>$C3</code>/<code>$2F</code>) da voz 0 na <a href="13-spc700-and-audio-basics.html">Lição 13</a>. A <a href="https://wiki.superfamicom.org/spc700-reference">referência do SPC700</a> documenta o layout de bits do envelope ADSR — sem necessariamente calcular os tempos exatos, identifique qual dos dois registradores controla o “ataque” (quão rápido o som atinge o volume máximo quando o key-on dispara) versus o “release”.</li>
+<li>Implemente o bipe da voz 1, disparado por botão, descrito acima, distinto do som de colisão da voz 0, e confirme que os dois conseguem ser ouvidos independentemente (inclusive sobrepostos, se você os disparar próximos um do outro).
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Uma pegadinha que vale destacar: a regra de <code>+$10</code> por voz só vale para os registradores <em>por voz</em> (<code>VOLL</code>/<code>VOLR</code>/<code>PITCHL</code>/<code>PITCHH</code>/<code>SRCN</code>/<code>ADSR1</code>/<code>ADSR2</code>, cada um em <code>número_da_voz*$10 + offset</code>). <code>KON</code> (<code>$4C</code>) e <code>KOFF</code> (<code>$5C</code>) são diferentes — são registradores compartilhados, um bit por voz, sempre no mesmo endereço, onde a voz <em>N</em> é o bit <em>N</em>. A voz 1 é o bit 1, não o endereço <code>$1C</code> (que na verdade é <code>MVOLR</code>, um registrador completamente diferente). Configuração única da voz 1, junto com a da voz 0 na Lição 13:</p>
+<pre><code>    ldx #$107F              ; VOLL (voz 1) = máximo
+    jsr write_dsp
+    ldx #$117F               ; VOLR (voz 1) = máximo
+    jsr write_dsp
+    ldx #$1200                ; PITCHL (voz 1) = 0
+    jsr write_dsp
+    ldx #$1320                 ; PITCHH (voz 1) = $20 -&gt; pitch $2000, uma oitava acima
+    jsr write_dsp
+    ldx #$1400                  ; SRCN (voz 1) = 0, mesma amostra carregada
+    jsr write_dsp
+    ldx #$15C3                   ; ADSR1 (voz 1), mesmo envelope da voz 0
+    jsr write_dsp
+    ldx #$162F                    ; ADSR2 (voz 1)
+    jsr write_dsp</code></pre>
+<p>Depois o disparo, usando o bit 1 de <code>KON</code>/<code>KOFF</code> em vez do bit 0 da voz 0:</p>
+<pre><code>play_blip_sfx:
+    ldx #$025C        ; KOFF: desliga só a voz 1 (bit 1)
+    jsr write_dsp
+    ldx #$024C         ; KON: liga só a voz 1 (bit 1)
+    jsr write_dsp
+    rts
+
+    ; --- dentro de nmi_handler ---
+    lda $4218
+    and #%10000000     ; botão A
+    beq @no_blip
+    jsr play_blip_sfx
+@no_blip:</code></pre>
+<p>Como o som de colisão da voz 0 só mexe no bit 0 de <code>KON</code>/<code>KOFF</code> e o bipe da voz 1 só mexe no bit 1, disparar os dois próximos um do outro não interfere — você deve ouvi-los se sobrepondo de forma limpa.</p>
+</div></details>
+</li>
+<li>Leia a <a href="https://github.com/undisbeliever/terrific-audio-driver">documentação do Terrific Audio Driver</a> (ou qualquer uma das três opções que mais te interessar) o suficiente para responder: como ele espera que os dados de música sejam incluídos na sua ROM — como um arquivo montado separado, um segmento de linker, ou outra coisa? Você não precisa integrá-lo, só localizar a resposta.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Nem um <code>.incbin</code> simples nem um segmento de linker escrito à mão: o Terrific Audio Driver compila suas músicas e efeitos MML com sua própria ferramenta <code>tad-compiler</code>, e os dados de áudio resultantes são carregados através de um callback <code>LoadAudioData</code> que você fornece — a API ca65 do driver gera esse callback para você em vez de esperar que você conecte os dados binários manualmente. Então o ponto de integração é uma função de callback, não um segmento ou um arquivo incluído, o que é uma forma genuinamente diferente de todo padrão de carregamento de VRAM/CGRAM/OAM usado no resto deste tutorial.</p>
+</div></details>
+</li>
+<li>Olhe de novo para os valores de <code>ADSR1</code>/<code>ADSR2</code> (<code>$C3</code>/<code>$2F</code>) da voz 0 na <a href="13-spc700-and-audio-basics.html">Lição 13</a>. A <a href="https://wiki.superfamicom.org/spc700-reference">referência do SPC700</a> documenta o layout de bits do envelope ADSR — sem necessariamente calcular os tempos exatos, identifique qual dos dois registradores controla o “ataque” (quão rápido o som atinge o volume máximo quando o key-on dispara) versus o “release”.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p><code>ADSR1</code> é bit 7 = habilita ADSR, bits 6-4 = Decay Rate, bits 3-0 = <strong>Attack Rate</strong> — o ataque mora inteiro no nibble baixo de <code>ADSR1</code>. <code>ADSR2</code> é bits 7-5 = Sustain Level, bits 4-0 = Sustain Rate, e é esse campo de Sustain Rate que governa quão rápido o envelope cai em direção ao silêncio depois do key-off — o mais próximo que o DSP tem de um controle de “release”, mesmo que a referência de registradores o chame de “sustain rate”, não de “release”. Então: ataque está em <code>ADSR1</code> (4 bits baixos), o comportamento tipo-release está em <code>ADSR2</code> (5 bits baixos).</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="13-spc700-and-audio-basics.html">Lição 13 — O SPC700 &amp; fundamentos de áudio</a> Next: <a href="15-code-organization-and-optimization.html">Lição 15 — Organização de código &amp; otimização</a></p>

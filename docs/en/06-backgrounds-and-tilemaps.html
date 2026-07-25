@@ -156,9 +156,37 @@ BG3SC:    aaaaaa = BG3 tilemap base, as (byte address) &gt;&gt; 10</code></pre>
 <p>Assemble and run it. This time the screen changes: instead of a flat backdrop color, you should see the entire visible area filled with horizontal red and green stripes — the Lesson 5 tile, repeated across a 32×32 tilemap, rendered through the Lesson 4 palette. This is the first lesson where every earlier piece of the tutorial visibly comes together.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Change <code>BG3SC</code> to place the tilemap at a different (still non-overlapping) VRAM location, recomputing both the byte-address shift for <code>BG3SC</code> and the word address for the <code>VMADDL</code>/<code>VMADDH</code> write. Confirm the display is unchanged — the exact address doesn’t matter as long as it’s consistent and doesn’t collide with the tile data.</li>
-<li>Write a <em>different</em> tilemap value for just one entry (say, tilemap index 5) that sets the priority bit or flips the tile, and figure out which one 8×8 square on screen changed as a result. (Hint: tilemap entries fill in row-major order — entry 0 is the top-left cell, entry 1 is the cell to its right.)</li>
-<li><code>TM</code> (<code>$212C</code>) enables layers on the <em>main</em> screen; <code>TS</code> (<code>$212D</code>) is the identical register for the <em>sub</em>screen, used for color-math effects this tutorial doesn’t cover. Skim its entry in the <a href="https://wiki.superfamicom.org/registers#tm-main-screen-designation-567">register reference</a> just enough to confirm it uses the exact same bit layout as <code>TM</code>.</li>
+<li>Change <code>BG3SC</code> to place the tilemap at a different (still non-overlapping) VRAM location, recomputing both the byte-address shift for <code>BG3SC</code> and the word address for the <code>VMADDL</code>/<code>VMADDH</code> write. Confirm the display is unchanged — the exact address doesn’t matter as long as it’s consistent and doesn’t collide with the tile data.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Byte address <code>$2000</code> works fine — well clear of both the tile (<code>$0000</code>-<code>$000F</code>) and the original tilemap (<code>$1000</code>-<code>$17FF</code>). Word address for <code>VMADDL</code>/<code>VMADDH</code> is byte÷2 = <code>$1000</code>; <code>BG3SC</code>’s field is byte-address&gt;&gt;10 (with map-size bits below it, both 0 for 32×32), which for a byte address that’s already a multiple of <code>$400</code> simplifies to byte&gt;&gt;8:</p>
+<pre><code>lda #$10
+sta $2117           ; VMADDH: word address $1000, high byte
+stz $2116           ; VMADDL: word address $1000, low byte
+...
+lda #$20
+sta $2109            ; BG3SC: byte $2000 &gt;&gt; 8 = $20, 32x32</code></pre>
+<p>Same red/green stripes as before — the tilemap just lives somewhere else in VRAM now, which the PPU doesn’t care about as long as <code>BG3SC</code> and the actual write address agree.</p>
+</div></details>
+</li>
+<li>Write a <em>different</em> tilemap value for just one entry (say, tilemap index 5) that sets the priority bit or flips the tile, and figure out which one 8×8 square on screen changed as a result. (Hint: tilemap entries fill in row-major order — entry 0 is the top-left cell, entry 1 is the cell to its right.)
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>The <em>horizontal</em> flip bit (<code>h</code>) won’t show anything on this particular tile — its stripes run horizontally, so every pixel in a row already matches its mirror. The <em>vertical</em> flip bit (<code>v</code>, bit 15, entry value <code>$8000</code>) does: it swaps the red top half and green bottom half for just that one cell. Poke it after the fill loop, at tilemap word address <code>$0800 + 5</code> (base + entry index):</p>
+<pre><code>lda #$08
+sta $2117
+lda #$05
+sta $2116            ; word address $0805 = tilemap entry 5
+lda #$00
+sta $2118             ; low byte
+lda #$80
+sta $2119              ; high byte -&gt; entry = $8000 (v flip, tile 0, palette 0)</code></pre>
+<p>Entry 5 is the 6th cell in row-major order with a 32-wide map, so it lands in row 0 (the top row of the screen), column 5 — the 6th 8×8 square from the left along the very top edge. That one square shows green-on-top/red-on-bottom while every other square around it stays red-on-top/green-on-bottom.</p>
+</div></details>
+</li>
+<li><code>TM</code> (<code>$212C</code>) enables layers on the <em>main</em> screen; <code>TS</code> (<code>$212D</code>) is the identical register for the <em>sub</em>screen, used for color-math effects this tutorial doesn’t cover. Skim its entry in the <a href="https://wiki.superfamicom.org/registers#tm-main-screen-designation-567">register reference</a> just enough to confirm it uses the exact same bit layout as <code>TM</code>.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Same five low bits, same meaning, just aimed at the subscreen instead of the main screen: bit 0 = BG1, bit 1 = BG2, bit 2 = BG3, bit 3 = BG4, bit 4 = OBJ (sprites), bits 5-7 unused. So <code>lda #$04 / sta $212D</code> would put BG3 on the subscreen the same way this lesson’s <code>sta $212C</code> put it on the main screen — the register reference lists <code>TS</code> right under <code>TM</code> with an identical bit diagram for exactly this reason.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="05-tiles-and-vram.html">Lesson 5 — Tiles &amp; VRAM</a> Next: <a href="07-debugging-with-mesen.html">Lesson 7 — Debugging with Mesen</a></p>

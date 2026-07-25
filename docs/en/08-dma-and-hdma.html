@@ -280,9 +280,64 @@
 <p>The exact scanline-by-scanline timing of when a table entry’s data is (re-)transferred relative to the line-counter reload has some genuinely subtle edge cases — even the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">authoritative register reference</a> hedges some of the fine print here. The banded-gradient recipe above is a long-established, reliable pattern; if you start building effects with per-scanline (rather than per-band) precision, budget time to test against real hardware behavior in Mesen rather than trusting a mental model alone — and revisit <a href="07-debugging-with-mesen.html">Lesson 7</a>’s Event Viewer, which is the right tool for watching exactly when each HDMA write actually lands.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Change the gradient table to fade in the <em>opposite</em> direction (dark at top, bright at bottom) by reversing the byte sequence.</li>
-<li><code>DASxL</code>/<code>DASxH</code> for a <em>DMA</em> channel count down as the transfer runs, ending at 0. What do those same registers mean for an <em>indirect</em> HDMA channel instead? (See the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">DASx register entry</a> — this tutorial only uses direct HDMA, but it’s worth knowing indirect mode exists.)</li>
-<li>Using the DMA fill trick, write a routine that clears all 544 bytes of OAM (sprite memory) to zero in one DMA call, in preparation for <a href="10-sprites-oam-basics.html">Lesson 10</a>.</li>
+<li>Change the gradient table to fade in the <em>opposite</em> direction (dark at top, bright at bottom) by reversing the byte sequence.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<pre><code>hdma_gradient:
+    .byte 14, $00
+    .byte 14, $01
+    .byte 14, $02
+    .byte 14, $03
+    .byte 14, $04
+    .byte 14, $05
+    .byte 14, $06
+    .byte 14, $07
+    .byte 14, $08
+    .byte 14, $09
+    .byte 14, $0A
+    .byte 14, $0B
+    .byte 14, $0C
+    .byte 14, $0D
+    .byte 14, $0E
+    .byte 14, $0F
+    .byte 0             ; terminator</code></pre>
+<p>Just the brightness values in each pair get reversed — the line counts (14) and everything about the channel setup stay identical, since HDMA doesn’t care what the data values mean, only where they go.</p>
+</div></details>
+</li>
+<li><code>DASxL</code>/<code>DASxH</code> for a <em>DMA</em> channel count down as the transfer runs, ending at 0. What do those same registers mean for an <em>indirect</em> HDMA channel instead? (See the <a href="https://wiki.superfamicom.org/registers#dasxl-dma-sizehdma-indirect-address-low-byte-x0-7-1101">DASx register entry</a> — this tutorial only uses direct HDMA, but it’s worth knowing indirect mode exists.)
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>The register reference’s own name for them gives it away: “DMA size / HDMA indirect address.” In direct HDMA (what this lesson uses), each table entry carries its data inline right after the line-count byte, so <code>DASxL</code>/<code>DASxH</code> are free to mean “remaining byte count,” same as plain DMA. In <em>indirect</em> mode, table entries instead carry a 2-byte pointer to where the real per-scanline data lives elsewhere, and <code>DASxL</code>/<code>DASxH</code> stop being a countdown — they become the low/high bytes of that current indirect address, which the hardware automatically advances as it walks the table, rather than a value that counts down to zero.</p>
+</div></details>
+</li>
+<li>Using the DMA fill trick, write a routine that clears all 544 bytes of OAM (sprite memory) to zero in one DMA call, in preparation for <a href="10-sprites-oam-basics.html">Lesson 10</a>.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Same shape as the tilemap fill, just aimed at <code>OAMDATA</code> (<code>$2104</code>) instead of <code>VMDATAL</code>/<code>VMDATAH</code>, and mode <code>000</code> since <code>$2104</code> is a single register rather than a pair — OAM’s own address logic handles the low-table/high-table split internally as consecutive bytes land, exactly as if the CPU had written <code>sta $2104</code> 544 times in a row:</p>
+<pre><code>oam_zero_byte:
+    .byte 0
+
+clear_oam:
+    stz $2102             ; OAMADDL: OAM address = 0
+    stz $2103              ; OAMADDH
+
+    lda #&lt;oam_zero_byte
+    sta $4302
+    lda #&gt;oam_zero_byte
+    sta $4303
+    lda #^oam_zero_byte
+    sta $4304
+    lda #&lt;544              ; 512-byte low table + 32-byte high table
+    sta $4305
+    lda #&gt;544
+    sta $4306
+
+    lda #%00010000           ; DMAP0: fixed source (bit 4), mode 000
+    sta $4300
+    lda #$04                  ; BBAD0: target $2104 (OAMDATA)
+    sta $4301
+
+    lda #$01
+    sta $420B</code></pre>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="07-debugging-with-mesen.html">Lesson 7 — Debugging with Mesen</a> Next: <a href="09-background-scrolling.html">Lesson 9 — Background scrolling</a></p>

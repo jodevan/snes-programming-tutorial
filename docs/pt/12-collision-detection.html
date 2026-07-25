@@ -188,10 +188,10 @@
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    <span class="bu">clc</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    <span class="bu">adc</span> #<span class="dv">1</span>                   <span class="co">; proposed new X</span></span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    pha                        <span class="co">; save it</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    sta temp</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    sta temp2                  <span class="co">; guarda o x proposto (temp2 é scratch seguro aqui)</span></span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    lda sprite_y</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    sta temp2</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    lda temp</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    sta temp                    <span class="co">; temp = y, conforme o contrato de get_cell (A=x, temp=y)</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>    lda temp2                    <span class="co">; recarrega o x proposto em A</span></span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>    <span class="bu">js</span>r get_cell               <span class="co">; check the cell at the PROPOSED position</span></span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>    bne @blocked                <span class="co">; nonzero = solid, reject the move</span></span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>    pla</span>
@@ -205,9 +205,115 @@
 <p>Com as duas peças no lugar, o sprite do jogador agora para nas bordas do limite de 32 pixels em vez de rolar para fora da área de jogo visível, e tocar o sprite de parede parado é algo que seu código consegue detectar (mesmo que nada reaja visivelmente a isso ainda — é isso que a <a href="16-capstone.html">Lição 16</a> adiciona).</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Termine os casos de Esquerda/Cima/Baixo do padrão de controle de movimento acima.</li>
-<li>Faça <code>check_collision</code> reagir a algo observável — por exemplo, mudando o número de tile do próprio sprite de parede quando ele é tocado, para você ter confirmação visual sem esperar pelo projeto final.</li>
-<li>O mapa de colisão aqui é escrito à mão. Jogos de verdade geram dados de colisão a partir da mesma fonte que seu tilemap visual (geralmente marcando certos números de tile como sólidos quando o nível é construído). Esboce — em comentários, não código completo — como você transformaria o tilemap da Lição 6 em um mapa de colisão automaticamente, dada uma regra como “números de tile 16 e acima são sólidos”.</li>
+<li>Termine os casos de Esquerda/Cima/Baixo do padrão de controle de movimento acima.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Cima/Baixo são os dois mais simples: o eixo que não muda (<code>sprite_x</code>) pode ir direto para <code>A</code> logo antes da chamada, sem precisar tocar em <code>temp</code>/<code>temp2</code> além de configurar <code>temp</code> com o <code>y</code> proposto:</p>
+<pre><code>    ; --- Cima ---
+    lda buttons
+    and #%00001000            ; Cima segurado?
+    beq @not_up
+    lda sprite_y
+    sec
+    sbc #1                     ; novo Y proposto
+    pha
+    sta temp                    ; temp = y proposto, bate com o contrato de get_cell
+    lda sprite_x
+    jsr get_cell                 ; A = x (inalterado), temp = y proposto
+    bne @blocked_up
+    pla
+    sta sprite_y
+    bra @not_up
+@blocked_up:
+    pla
+@not_up:
+
+    ; --- Baixo ---
+    lda buttons
+    and #%00000100             ; Baixo segurado?
+    beq @not_down
+    lda sprite_y
+    clc
+    adc #1                      ; novo Y proposto
+    pha
+    sta temp
+    lda sprite_x
+    jsr get_cell
+    bne @blocked_down
+    pla
+    sta sprite_y
+    bra @not_down
+@blocked_down:
+    pla
+@not_down:</code></pre>
+<p>Esquerda precisa do mesmo formato do exemplo de Direita da lição, guardando o eixo proposto em <code>temp2</code> enquanto <code>temp</code> segura o <code>y</code> inalterado, e depois recarregando o valor proposto em <code>A</code> logo antes da chamada:</p>
+<pre><code>    ; --- Esquerda ---
+    lda buttons
+    and #%00000010              ; Esquerda segurado?
+    beq @not_left
+    lda sprite_x
+    sec
+    sbc #1                       ; novo X proposto
+    pha
+    sta temp2                     ; guarda o x proposto (temp2 é scratch seguro aqui)
+    lda sprite_y
+    sta temp                       ; temp = y, conforme o contrato de get_cell
+    lda temp2                       ; recarrega o x proposto em A
+    jsr get_cell
+    bne @blocked_left
+    pla
+    sta sprite_x
+    bra @not_left
+@blocked_left:
+    pla
+@not_left:</code></pre>
+<p>As quatro direções agora seguem o mesmo formato de <code>check_collision</code>: calcular um valor candidato, checá-lo contra uma tabela, só efetivar se ele passar.</p>
+</div></details>
+</li>
+<li>Faça <code>check_collision</code> reagir a algo observável — por exemplo, mudando o número de tile do próprio sprite de parede quando ele é tocado, para você ter confirmação visual sem esperar pelo projeto final.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Chame <code>check_collision</code> uma vez por frame em <code>nmi_handler</code>, transforme a flag de carry resultante em um número de tile, e use esse número ao escrever o próprio registro OAM de 4 bytes do sprite de parede (reaproveitar o segundo tile de sprite da Lição 11 como o visual de “tocado” não custa nada novo):</p>
+<pre><code>    jsr check_collision
+    lda #0
+    bcc @not_touching
+    lda #1              ; tocando: troca para o tile de contorno da Lição 11
+@not_touching:
+    sta wall_tile
+
+    ; ... ao escrever o registro OAM de 4 bytes do sprite de parede a cada frame:
+    lda wall_x
+    sta $2104
+    lda wall_y
+    sta $2104
+    lda wall_tile
+    sta $2104
+    stz $2104</code></pre>
+<p>O sprite de parede agora troca visivelmente de aparência em todo frame em que a caixa delimitadora do jogador o sobrepõe, e volta ao normal no instante em que não sobrepõe mais — confirmação em tempo real de que <code>check_collision</code> está fazendo o que promete, sem precisar do projeto final.</p>
+</div></details>
+</li>
+<li>O mapa de colisão aqui é escrito à mão. Jogos de verdade geram dados de colisão a partir da mesma fonte que seu tilemap visual (geralmente marcando certos números de tile como sólidos quando o nível é construído). Esboce — em comentários, não código completo — como você transformaria o tilemap da Lição 6 em um mapa de colisão automaticamente, dada uma regra como “números de tile 16 e acima são sólidos”.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<pre><code>; Para cada uma das 1024 entradas do tilemap (grade 32x32, formato da Lição 6):
+;   1. Leia o campo de número de tile da entrada -- remova os bits v/h/o/ppp,
+;      mantendo só os 10 bits baixos (cccccccccc).
+;   2. collision_bit = (número_do_tile &gt;= 16) ? 1 : 0
+;   3. Escreva collision_bit em um mapa de colisão na mesma resolução do
+;      tilemap (uma entrada por tile 8x8, não as células mais grosseiras
+;      de 32x32 pixels desta lição).
+;
+; Duas formas de reconciliar essa diferença de resolução com o get_cell
+; como está escrito:
+;   (a) gerar os dados de colisão na granularidade nativa de tile 8x8 do
+;       tilemap e mudar o deslocamento de get_cell de &gt;&gt;5 para &gt;&gt;3, ou
+;   (b) reduzir a resolução: marcar uma das células grosseiras 32x32 desta
+;       lição como sólida se QUALQUER uma das 4x4 entradas do tilemap
+;       dentro dela for sólida.
+;
+; De qualquer forma isso só precisa rodar uma vez -- em tempo de build (uma
+; pequena ferramenta offline lendo os mesmos dados de tilemap) ou uma vez
+; ao carregar o nível em hardware real -- nunca por frame. É pré-
+; processamento de dados, não lógica de jogo.</code></pre>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="11-controller-input-and-animation.html">Lição 11 — Entrada do controle &amp; animação de sprite</a> Next: <a href="13-spc700-and-audio-basics.html">Lição 13 — O SPC700 &amp; fundamentos de áudio</a></p>

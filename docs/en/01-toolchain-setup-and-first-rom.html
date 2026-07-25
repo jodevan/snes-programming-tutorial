@@ -306,9 +306,27 @@ SEGMENTS {
 <p>A ROM with a correct header, a reset vector the hardware can actually find, a CPU mode switch, cleared hardware state, and one visible side effect. That’s the skeleton every later lesson builds on — Lesson 3 onward will replace the “solid color” step with real backgrounds and sprites, but the setup code above barely changes.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Change the background color to something else using the BGR table in the comments above. Re-assemble, reload in Mesen, confirm it changed.</li>
-<li>Try setting <code>$2100</code> brightness to <code>$00</code> instead of <code>$0F</code> — confirm the screen goes dark even though the color is still set in CGRAM. This previews why “forced blank” exists: it lets you update VRAM/CGRAM/OAM safely without the PPU reading them mid-update, which matters a lot once real graphics are involved.</li>
-<li>Deliberately break something — comment out the <code>xce</code> line and try to re-assemble/run. Note what happens (or doesn’t) so you have a feel for what a “stuck in emulation mode” failure looks like before it happens by accident later.</li>
+<li>Change the background color to something else using the BGR table in the comments above. Re-assemble, reload in Mesen, confirm it changed.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>To make it pure red instead of blue, swap the two <code>CGDATA</code> writes to <code>$001F</code>:</p>
+<pre><code>stz $2121       ; CGADD: entry 0
+lda #$1F        ; low byte of $001F (red): gggrrrrr = 00011111
+sta $2122
+lda #$00        ; high byte: -bbbbbgg = 00000000
+sta $2122</code></pre>
+<p>Pure green would be <code>$03E0</code> (<code>lda #$E0</code> then <code>lda #$03</code>). Only the two immediate values change — the write sequence (address, then low byte, then high byte) stays identical.</p>
+</div></details>
+</li>
+<li>Try setting <code>$2100</code> brightness to <code>$00</code> instead of <code>$0F</code> — confirm the screen goes dark even though the color is still set in CGRAM. This previews why “forced blank” exists: it lets you update VRAM/CGRAM/OAM safely without the PPU reading them mid-update, which matters a lot once real graphics are involved.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Yes — the screen goes black even though CGRAM entry 0 is still blue. <code>$2100</code>’s low nibble is a brightness multiplier applied to whatever the PPU renders; at <code>$00</code> that multiplier is zero, so every color comes out black on screen while staying unchanged in CGRAM. Bit 7 (forced blank) is a separate concern: it stops the PPU from reading VRAM/CGRAM/OAM at all, which is what makes it safe to write to them mid-frame. Brightness dims the picture; forced blank halts PPU memory reads. This lesson only ever used forced-blank-off, full-brightness, so the two never had to be told apart until now.</p>
+</div></details>
+</li>
+<li>Deliberately break something — comment out the <code>xce</code> line and try to re-assemble/run. Note what happens (or doesn’t) so you have a feel for what a “stuck in emulation mode” failure looks like before it happens by accident later.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>It still assembles fine — <code>ca65</code> only knows about the <code>.a8</code>/<code>.i16</code> directives, not the actual CPU mode, so nothing catches this at build time. The problem shows up at runtime: without <code>xce</code>, the CPU stays in 6502-compatible emulation mode, where A/X/Y are always 8-bit no matter what <code>rep #$10</code>/<code>sep #$20</code> or the <code>.a8</code>/<code>.i16</code> directives say. <code>ldx #$1FFF</code> was assembled as a 3-byte instruction (opcode + 16-bit operand) because the assembler believed <code>.i16</code>. In emulation mode the CPU reads that as an 8-bit load: it takes only the first operand byte (<code>$FF</code>) into X, then treats the second operand byte (<code>$1F</code>) as the next opcode. From that point the instruction stream is desynced — the CPU is decoding the middle of what you wrote as if it were the start of an instruction, and execution goes off into effectively random behavior. In Mesen this typically shows up as the screen staying black (setup never reaches the <code>sta $2100</code> line, or reaches it with garbage register state) rather than any clean error — “stuck in emulation mode” fails silently, not loudly, which is exactly why it’s worth seeing once on purpose.</p>
+</div></details>
+</li>
 </ol>
 <h2 id="appendix-a-the-same-rom-in-asar-for-comparison">Appendix A: the same ROM in asar (for comparison)</h2>
 <p>Since you have asar installed too, here’s the equivalent in asar’s syntax — note it’s a single file, no separate linker config, because asar infers the layout from <code>lorom</code> and directive-based placement:</p>

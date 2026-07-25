@@ -156,9 +156,37 @@ BG3SC:    aaaaaa = BG3 tilemap base, as (byte address) &gt;&gt; 10</code></pre>
 <p>Monte e execute. Desta vez a tela muda: em vez de uma cor de fundo plana, você deve ver toda a área visível preenchida com listras horizontais vermelhas e verdes — o tile da Lição 5, repetido em um tilemap 32×32, renderizado através da paleta da Lição 4. Esta é a primeira lição em que cada peça anterior do tutorial visivelmente se junta.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Mude <code>BG3SC</code> para colocar o tilemap em uma localização diferente (ainda sem sobreposição) na VRAM, recalculando tanto o deslocamento de endereço de byte para <code>BG3SC</code> quanto o endereço de word para a escrita em <code>VMADDL</code>/<code>VMADDH</code>. Confirme que a exibição não muda — o endereço exato não importa, contanto que seja consistente e não colida com os dados do tile.</li>
-<li>Escreva um valor de tilemap <em>diferente</em> para apenas uma entrada (digamos, o índice 5 do tilemap) que ative o bit de prioridade ou espelhe o tile, e descubra qual quadrado 8×8 na tela mudou como resultado. (Dica: as entradas do tilemap preenchem em ordem row-major — a entrada 0 é a célula superior esquerda, a entrada 1 é a célula à direita dela.)</li>
-<li><code>TM</code> (<code>$212C</code>) habilita camadas na tela <em>principal</em>; <code>TS</code> (<code>$212D</code>) é o registrador idêntico para a <em>subtela</em>, usado em efeitos de color-math que este tutorial não cobre. Dê uma olhada rápida na entrada dele na <a href="https://wiki.superfamicom.org/registers#tm-main-screen-designation-567">referência de registradores</a>, só o suficiente para confirmar que ele usa exatamente o mesmo layout de bits que o <code>TM</code>.</li>
+<li>Mude <code>BG3SC</code> para colocar o tilemap em uma localização diferente (ainda sem sobreposição) na VRAM, recalculando tanto o deslocamento de endereço de byte para <code>BG3SC</code> quanto o endereço de word para a escrita em <code>VMADDL</code>/<code>VMADDH</code>. Confirme que a exibição não muda — o endereço exato não importa, contanto que seja consistente e não colida com os dados do tile.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>O endereço de byte <code>$2000</code> funciona bem — bem longe tanto do tile (<code>$0000</code>-<code>$000F</code>) quanto do tilemap original (<code>$1000</code>-<code>$17FF</code>). O endereço de word para <code>VMADDL</code>/<code>VMADDH</code> é byte÷2 = <code>$1000</code>; o campo de <code>BG3SC</code> é endereço-de-byte&gt;&gt;10 (com os bits de tamanho do mapa abaixo dele, ambos 0 para 32×32), que para um endereço de byte já múltiplo de <code>$400</code> simplifica para byte&gt;&gt;8:</p>
+<pre><code>lda #$10
+sta $2117           ; VMADDH: endereço de word $1000, byte alto
+stz $2116           ; VMADDL: endereço de word $1000, byte baixo
+...
+lda #$20
+sta $2109            ; BG3SC: byte $2000 &gt;&gt; 8 = $20, 32x32</code></pre>
+<p>As mesmas listras vermelhas/verdes de antes — o tilemap só está em outro lugar da VRAM agora, o que não faz diferença para a PPU contanto que <code>BG3SC</code> e o endereço real de escrita concordem entre si.</p>
+</div></details>
+</li>
+<li>Escreva um valor de tilemap <em>diferente</em> para apenas uma entrada (digamos, o índice 5 do tilemap) que ative o bit de prioridade ou espelhe o tile, e descubra qual quadrado 8×8 na tela mudou como resultado. (Dica: as entradas do tilemap preenchem em ordem row-major — a entrada 0 é a célula superior esquerda, a entrada 1 é a célula à direita dela.)
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>O bit de espelhamento <em>horizontal</em> (<code>h</code>) não muda nada visível nesse tile específico — suas listras são horizontais, então todo pixel de uma linha já é igual ao seu espelho. O bit de espelhamento <em>vertical</em> (<code>v</code>, bit 15, valor de entrada <code>$8000</code>) muda: ele troca a metade superior vermelha pela metade inferior verde só naquela célula. Escreva isso depois do loop de preenchimento, no endereço de word <code>$0800 + 5</code> do tilemap (base + índice da entrada):</p>
+<pre><code>lda #$08
+sta $2117
+lda #$05
+sta $2116            ; endereço de word $0805 = entrada 5 do tilemap
+lda #$00
+sta $2118             ; byte baixo
+lda #$80
+sta $2119              ; byte alto -&gt; entrada = $8000 (v flip, tile 0, paleta 0)</code></pre>
+<p>A entrada 5 é a 6ª célula em ordem row-major num mapa de largura 32, então ela cai na linha 0 (a linha do topo da tela), coluna 5 — o 6º quadrado 8×8 a partir da esquerda ao longo da borda superior. Só esse quadrado mostra verde-em-cima/vermelho-embaixo enquanto todos os outros ao redor continuam vermelho-em-cima/verde-embaixo.</p>
+</div></details>
+</li>
+<li><code>TM</code> (<code>$212C</code>) habilita camadas na tela <em>principal</em>; <code>TS</code> (<code>$212D</code>) é o registrador idêntico para a <em>subtela</em>, usado em efeitos de color-math que este tutorial não cobre. Dê uma olhada rápida na entrada dele na <a href="https://wiki.superfamicom.org/registers#tm-main-screen-designation-567">referência de registradores</a>, só o suficiente para confirmar que ele usa exatamente o mesmo layout de bits que o <code>TM</code>.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Os mesmos cinco bits baixos, o mesmo significado, só que apontando para a subtela em vez da tela principal: bit 0 = BG1, bit 1 = BG2, bit 2 = BG3, bit 3 = BG4, bit 4 = OBJ (sprites), bits 5-7 não usados. Então <code>lda #$04 / sta $212D</code> colocaria a BG3 na subtela do mesmo jeito que o <code>sta $212C</code> desta lição a colocou na tela principal — a referência de registradores lista <code>TS</code> logo abaixo de <code>TM</code> com um diagrama de bits idêntico exatamente por isso.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="05-tiles-and-vram.html">Lição 5 — Tiles &amp; VRAM</a> Next: <a href="07-debugging-with-mesen.html">Lição 7 — Depurando com o Mesen</a></p>

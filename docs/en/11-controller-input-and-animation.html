@@ -246,9 +246,33 @@ $4218 (low byte):  axlr0000   A / X / L / R / (unused)</code></pre>
 <p>Hold the D-pad. The sprite moves, and toggles between a solid square and a hollow outline every 16 frames while moving — a stand-in for a real walk animation, demonstrating the mechanism (swap the OAM tile number over time) without needing real character art. The background keeps scrolling underneath, now driven by the same interrupt instead of a separate polling loop.</p>
 <h2 id="exercises">Exercises</h2>
 <ol type="1">
-<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (from <code>JOY1L</code>) to trigger something distinct from movement — for example, instantly reset <code>sprite_x</code>/<code>sprite_y</code> to the starting position.</li>
-<li>The animation counter increments every frame a direction is held, and toggles frames based on bit 4 (every 16 frames). Change it to toggle every 8 frames instead, then every 4 — notice how fast is “too fast” for a convincing animation using only two frames.</li>
-<li>Diagonal movement currently lets Up+Right (for instance) move the sprite faster than a single direction, since both <code>inc</code>/<code>dec</code> pairs apply independently. Is this a bug worth fixing for this tutorial’s purposes? Think about what a real game would do differently, even if you don’t implement it.</li>
+<li>Use <code>A</code>/<code>X</code>/<code>L</code>/<code>R</code> (from <code>JOY1L</code>) to trigger something distinct from movement — for example, instantly reset <code>sprite_x</code>/<code>sprite_y</code> to the starting position.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p><code>JOY1L</code> (<code>$4218</code>) is laid out <code>axlr0000</code>, so the A button is bit 7. Read it alongside <code>JOY1H</code> and gate a reset on it, anywhere in <code>nmi_handler</code>:</p>
+<pre><code>    lda $4218
+    and #%10000000        ; A button
+    beq @not_reset
+    lda #120
+    sta sprite_x
+    lda #100
+    sta sprite_y
+@not_reset:</code></pre>
+</div></details>
+</li>
+<li>The animation counter increments every frame a direction is held, and toggles frames based on bit 4 (every 16 frames). Change it to toggle every 8 frames instead, then every 4 — notice how fast is “too fast” for a convincing animation using only two frames.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Just change which bit of <code>anim_ctr</code> gets tested — bit <em>N</em> of a binary counter flips its value every 2<sup>N</sup> increments, so bit 4 (every 16 frames) becomes bit 3 for every 8, bit 2 for every 4:</p>
+<pre><code>    lda anim_ctr
+    and #$08        ; every 8 frames instead of $10 (every 16)
+    beq @frame0</code></pre>
+<p>At every 8 frames (~7.5 toggles/second at 60fps) the walk cycle already reads as noticeably brisk. At every 4 frames (~15 toggles/second) a two-frame animation stops looking like alternating footsteps and starts looking like buzzing or vibrating — there’s no third “in-between” frame to sell the motion, so faster toggling just exposes the trick instead of making it more convincing.</p>
+</div></details>
+</li>
+<li>Diagonal movement currently lets Up+Right (for instance) move the sprite faster than a single direction, since both <code>inc</code>/<code>dec</code> pairs apply independently. Is this a bug worth fixing for this tutorial’s purposes? Think about what a real game would do differently, even if you don’t implement it.
+<details class="exercise-answer"><summary><span class="show-label">Show answer</span><span class="hide-label">Hide answer</span></summary><div class="answer-body">
+<p>Not worth fixing here — the point of this lesson is demonstrating that button state can drive sprite position at all, and the bug doesn’t interfere with that. It’s real, though: moving 1px right and 1px down in the same frame covers √2 ≈ 1.41 pixels of actual distance, versus 1 pixel for a cardinal direction, so diagonal movement is genuinely ~41% faster. A real game usually fixes this one of two ways: scale diagonal movement by a precomputed fixed-point constant (roughly 0.7071, e.g. <code>$00B5</code> in 8.8 fixed point) whenever both an X and a Y input are held simultaneously, or apply the two axis updates on alternating frames instead of both every frame (a cheaper, integer-only approximation). Either requires the fixed-point or frame-alternation machinery this tutorial hasn’t built yet — reasonable to defer, not reasonable to ship silently in a real game where movement feel matters.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="../index.html">Home</a> | Previous: <a href="10-sprites-oam-basics.html">Lesson 10 — Sprites (OAM) basics</a> Next: <a href="12-collision-detection.html">Lesson 12 — Collision detection</a></p>

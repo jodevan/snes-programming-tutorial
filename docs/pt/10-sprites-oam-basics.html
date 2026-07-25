@@ -184,9 +184,63 @@ High table, 2 bits per sprite:
 <p>Agora você deve ver um quadrado 8×8 amarelo sólido, parado em uma posição fixa, por cima do background listrado com rolagem da Lição 9. Ele ainda não se move — a <a href="11-controller-input-and-animation.html">Lição 11</a> lê o controle e te dá controle sobre ele.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Mude os bits <code>sss</code> do <code>OBSEL</code> para <code>011</code> (16x16 e 32x32) e configure o bit de tamanho de atributo/tabela-alta da OAM do sprite 0 para selecionar o maior dos dois. Você vai precisar de um tile maior (ou quatro tiles 8x8 arranjados como um bloco 16x16 — veja as <a href="https://wiki.superfamicom.org/sprites#character-table-in-vram">regras de wrapping da tabela de caracteres</a>) para preenchê-lo corretamente.</li>
-<li>Adicione um segundo sprite visível usando uma paleta diferente (<code>ppp=1</code>, cores 144-159) em outro lugar da tela, sem atrapalhar o loop de fora-da-tela dos 126 sprites restantes.</li>
-<li>Usando os PPU Viewers da <a href="07-debugging-with-mesen.html">Lição 7</a>, abra o visualizador de sprites e confirme que os sprites 1-127 de fato mostram <code>Y = -16</code> e são excluídos da lista visível — uma boa forma de construir confiança em código como o loop de esconder acima, antes de você precisar depurar um sprite que misteriosamente não desaparece.</li>
+<li>Mude os bits <code>sss</code> do <code>OBSEL</code> para <code>011</code> (16x16 e 32x32) e configure o bit de tamanho de atributo/tabela-alta da OAM do sprite 0 para selecionar o maior dos dois. Você vai precisar de um tile maior (ou quatro tiles 8x8 arranjados como um bloco 16x16 — veja as <a href="https://wiki.superfamicom.org/sprites#character-table-in-vram">regras de wrapping da tabela de caracteres</a>) para preenchê-lo corretamente.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p><code>OBSEL</code> vira <code>%01100001</code> = <code>$61</code> — <code>sss=011</code>, com <code>nn</code>/<code>bbb</code> inalterados a partir da base <code>$4000</code>. O bit de tamanho do sprite 0 fica no bit 1 do primeiro byte da tabela alta (cada byte empacota os pares x-msb/tamanho de 4 sprites, o sprite 0 nos bits 1:0), então em vez de zerar os 32 bytes da tabela alta uniformemente, escreva <code>$02</code> só no primeiro:</p>
+<pre><code>    lda #$02              ; bit1 = flag de tamanho do sprite 0
+    sta $2104
+    ldx #31
+@hightable_loop:
+    stz $2104
+    dex
+    bne @hightable_loop</code></pre>
+<p>Quanto aos dados do tile: a folha de caracteres de sprites é sempre tratada como 16 tiles de largura, com wraparound, então um sprite 16×16 construído a partir do tile número 0 precisa dos tiles 0 (superior-esquerdo), 1 (superior-direito), 16 (inferior-esquerdo) e 17 (inferior-direito), todos preenchidos. Reutilizar os mesmos bytes do <code>sprite_tile</code> de cor sólida 1 para os quatro — nos endereços de word da VRAM <code>$2000</code>, <code>$2010</code>, <code>$2100</code> e <code>$2110</code> (base <code>$4000</code> em bytes ÷ 2, deslocados de 32 bytes = 16 words por posição de tile) — é a versão mais simples: quatro repetições do loop de upload da Lição 5, uma por endereço, produzindo um quadrado 16×16 amarelo sólido, com o dobro do tamanho em cada dimensão mas idêntico fora isso.</p>
+</div></details>
+</li>
+<li>Adicione um segundo sprite visível usando uma paleta diferente (<code>ppp=1</code>, cores 144-159) em outro lugar da tela, sem atrapalhar o loop de fora-da-tela dos 126 sprites restantes.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Carregue uma cor na paleta 1 (índice 145, índice de cor 1 da paleta 1), escreva o registro de 4 bytes do sprite 1 logo depois do sprite 0, e reduza o loop de esconder para 126 iterações (sprites 2-127) para que a contagem total de bytes ainda caia exatamente em 544:</p>
+<pre><code>    lda #145
+    sta $2121
+    lda #$1F
+    sta $2122
+    stz $2122               ; cor $001F (vermelho) na paleta 1, índice 1
+
+    ; --- Sprite 0: inalterado ---
+    lda #120
+    sta $2104
+    lda #100
+    sta $2104
+    stz $2104
+    stz $2104
+
+    ; --- Sprite 1: segundo sprite visível, paleta 1, em outro lugar da tela ---
+    lda #180
+    sta $2104                ; X = 180
+    lda #140
+    sta $2104                 ; Y = 140
+    stz $2104                  ; número do tile = 0 (reusa o mesmo tile)
+    lda #%00000010
+    sta $2104                   ; atributos: ppp=001 (paleta 1)
+
+    ; --- Sprites 2-127: empurrados para fora da tela (126 sprites agora, não 127) ---
+    ldx #126
+@hide_loop:
+    stz $2104
+    lda #$F0
+    sta $2104
+    stz $2104
+    stz $2104
+    dex
+    bne @hide_loop</code></pre>
+<p>4 + 4 + (126×4) + 32 = 544 bytes — a contagem do loop é a única coisa que precisa mudar para o endereço da OAM continuar caindo exatamente na tabela alta depois.</p>
+</div></details>
+</li>
+<li>Usando os PPU Viewers da <a href="07-debugging-with-mesen.html">Lição 7</a>, abra o visualizador de sprites e confirme que os sprites 1-127 de fato mostram <code>Y = -16</code> e são excluídos da lista visível — uma boa forma de construir confiança em código como o loop de esconder acima, antes de você precisar depurar um sprite que misteriosamente não desaparece.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Sim — a lista por sprite do visualizador mostra os sprites 1-127 com <code>Y = $F0</code>, que o visualizador (e a PPU) interpreta como valor com sinal, ou seja, <code>-16</code>: 16 pixels acima do topo da área visível de 224 linhas. Como o SNES só renderiza sprites cuja caixa delimitadora de 8 ou 16 pixels de altura sobrepõe a área visível, um sprite inteiramente acima da linha 0 nunca contribui com nenhum pixel, então a lista de “visíveis no momento” do visualizador só mostra o sprite 0. Esse é o resultado esperado e correto — exatamente o que o loop de esconder foi escrito para produzir.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="09-background-scrolling.html">Lição 9 — Rolagem de background</a> Next: <a href="11-controller-input-and-animation.html">Lição 11 — Entrada do controle &amp; animação de sprite</a></p>

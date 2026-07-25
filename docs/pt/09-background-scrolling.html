@@ -137,9 +137,76 @@
 <p>Monte e execute. O background listrado agora deve rolar suave e continuamente para um dos lados, dando a volta sem emendas — porque seu tilemap é um único bloco de 32×32 tiles (256×256 pixels) e, segundo a <a href="https://wiki.superfamicom.org/backgrounds#bg-scrolling">referência de backgrounds</a>, “a exibição nunca pode cair para fora do BG: ela simplesmente dá a volta automaticamente.” Você não escreveu nenhuma lógica de wrap-around; o hardware fez isso por você.</p>
 <h2 id="exercícios">Exercícios</h2>
 <ol type="1">
-<li>Adicione um segundo contador para <code>BG3VOFS</code> e role na diagonal.</li>
-<li>Os dois bits mais baixos do registrador <code>BG3SC</code> (da <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs.-byte-addresses">Lição 6</a>) selecionam arranjos de tiles 32×32, 64×32, 32×64, ou 64×64. Tente <code>01</code> (64×32) e preencha o segundo bloco 32×32 com um padrão de tilemap diferente — confirme que a rolagem agora revela duas metades distintas antes de dar a volta, em vez de um bloco que se repete.</li>
-<li>Diminua a velocidade da rolagem para um pixel a cada 4 frames em vez de a cada frame, sem mudar a estrutura do loop de frame — pense em qual condição deveria controlar a linha <code>inc scroll_lo</code>.</li>
+<li>Adicione um segundo contador para <code>BG3VOFS</code> e role na diagonal.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Mais dois bytes de página direta para um segundo contador de 16 bits, e um segundo bloco de incremento-e-escrita — mas mantenha o par baixo/alto de cada registrador de scroll colado, seguindo o aviso do latch compartilhado desta lição:</p>
+<pre><code>scroll_lo  := $00
+scroll_hi  := $01
+vscroll_lo := $02
+vscroll_hi := $03
+
+    inc scroll_lo
+    bne @no_carry_h
+    inc scroll_hi
+@no_carry_h:
+    lda scroll_lo
+    sta $2111        ; BG3HOFS baixo, depois alto -- nada mais no meio
+    lda scroll_hi
+    sta $2111
+
+    inc vscroll_lo
+    bne @no_carry_v
+    inc vscroll_hi
+@no_carry_v:
+    lda vscroll_lo
+    sta $2112        ; BG3VOFS baixo, depois alto
+    lda vscroll_hi
+    sta $2112</code></pre>
+</div></details>
+</li>
+<li>Os dois bits mais baixos do registrador <code>BG3SC</code> (da <a href="06-backgrounds-and-tilemaps.html#a-crucial-gotcha-word-addresses-vs.-byte-addresses">Lição 6</a>) selecionam arranjos de tiles 32×32, 64×32, 32×64, ou 64×64. Tente <code>01</code> (64×32) e preencha o segundo bloco 32×32 com um padrão de tilemap diferente — confirme que a rolagem agora revela duas metades distintas antes de dar a volta, em vez de um bloco que se repete.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p><code>BG3SC</code> vira <code>$11</code> — o mesmo campo de endereço-base de antes (byte <code>$1000</code> &gt;&gt; 10 = 4, deslocado para os bits 7-2) com os dois bits mais baixos agora <code>01</code>. O segundo bloco 32×32 fica logo depois do primeiro na VRAM, no endereço de word <code>$0C00</code>; preencha-o com <code>$8000</code> (espelhamento vertical, mesmo tile e paleta) em vez de <code>$0000</code> para que fique visivelmente diferente:</p>
+<pre><code>lda #$11
+sta $2109             ; BG3SC: base $1000, 64x32
+
+; ... depois do loop de preenchimento original em $0800, adicione um segundo:
+lda #$0C
+sta $2117              ; VMADDH: endereço de word $0C00 (segundo bloco)
+stz $2116
+
+ldx #0
+@map_loop2:
+    stz $2118            ; byte baixo = 0
+    lda #$80
+    sta $2119              ; byte alto -&gt; entrada $8000 (v flip)
+    inx
+    cpx #1024
+    bne @map_loop2</code></pre>
+<p>Rolar horizontalmente agora mostra 32 tiles da listra normal vermelho-em-cima/verde-embaixo, depois 32 tiles da versão espelhada verticalmente verde-em-cima/vermelho-embaixo, antes que o mapa inteiro de 64 tiles de largura dê a volta.</p>
+</div></details>
+</li>
+<li>Diminua a velocidade da rolagem para um pixel a cada 4 frames em vez de a cada frame, sem mudar a estrutura do loop de frame — pense em qual condição deveria controlar a linha <code>inc scroll_lo</code>.
+<details class="exercise-answer"><summary><span class="show-label">Mostrar resposta</span><span class="hide-label">Ocultar resposta</span></summary><div class="answer-body">
+<p>Adicione um contador de frames, e só execute o bloco de incremento-e-escrita do scroll quando seus 2 bits mais baixos forem zero — isso é verdade exatamente em 1 a cada 4 frames:</p>
+<pre><code>frame_count := $04
+
+    inc frame_count
+    lda frame_count
+    and #$03
+    bne @skip_scroll
+    inc scroll_lo
+    bne @no_carry
+    inc scroll_hi
+@no_carry:
+    lda scroll_lo
+    sta $2111
+    lda scroll_hi
+    sta $2111
+@skip_scroll:</code></pre>
+<p>O loop de frame continua executando seu ciclo de espera-pelo-vblank/espera-pelo-fim-do-vblank exatamente uma vez por frame, sem mudança — só se o corpo dentro dele faz alguma coisa é que agora fica condicionado.</p>
+</div></details>
+</li>
 </ol>
 <hr />
 <p><a href="index.html">Home</a> | Previous: <a href="08-dma-and-hdma.html">Lição 8 — Mergulho profundo em DMA &amp; HDMA</a> Next: <a href="10-sprites-oam-basics.html">Lição 10 — Fundamentos de sprites (OAM)</a></p>
