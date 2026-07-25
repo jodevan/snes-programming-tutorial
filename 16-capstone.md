@@ -123,3 +123,4 @@ question back, and the relevant lesson gets corrected or extended based on it.
 
 [Home](docs/index.html) |
 Previous: [Lesson 15 — Code organization & optimization](15-code-organization-and-optimization.md)
+Next: [Appendix — SNES Address & Register Map](17-appendix-address-reference.md)

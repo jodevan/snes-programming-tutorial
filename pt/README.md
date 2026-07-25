@@ -67,6 +67,9 @@ depuração para descobrir o porquê.
 15. [Organização de código & otimização](15-code-organization-and-optimization.md) — projetos com múltiplos arquivos, macros, o orçamento de tempo do V-Blank, bancos de ROM.
 16. [Projeto final](16-capstone.md) — um pequeno jogo jogável combinando tudo: background com rolagem, sprite de jogador animado/colidível, um colecionável, e som.
 
+### Apêndice
+- [Apêndice: Mapa de Endereços & Registradores do SNES](17-appendix-address-reference.md) — todo endereço de hardware que o curso usa, em uma página, organizado por assunto.
+
 ## Recursos de referência
 
 - [Referência do 65816](https://wiki.superfamicom.org/65816-reference) — conjunto completo de instruções da CPU.
@@ -75,9 +78,3 @@ depuração para descobrir o porquê.
 - [Mapeamento de memória](https://wiki.superfamicom.org/memory-mapping) — detalhes do layout LoROM/HiROM.
 - [Série de tutoriais de SNES do nesdoug](https://nesdoug.com/2020/03/19/snes-projects/) — um segundo estilo de explicação para os mesmos temas, também baseado em ca65.
 - [SNESdev Wiki](https://snes.nesdev.org/wiki/SNESdev_Wiki) — as referências de handshake de boot e depuração nas quais este tutorial se apoia.
-
-## Status
-
-As 16 lições estão escritas. Perguntas e correções de quem realmente está
-construindo isso realimentam as lições — este é um documento vivo, não uma
-foto fixa.

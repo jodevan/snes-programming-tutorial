@@ -30,8 +30,8 @@ Este tutorial padroniza o uso do **ca65** (do cc65), não do asar. Motivos:
   em vez de escondê-lo atrás de mágica.
 
 O asar não é uma escolha ruim (ROMs em arquivo único, sintaxe mais suave), e você
-já o tem instalado caso queira comparar algum dia. O Apêndice A mostra brevemente
-a mesma ROM da Lição 1 em asar como referência. Todo o resto deste tutorial usa
+já o tem instalado caso queira comparar algum dia. Uma seção bônus na Lição 1
+mostra brevemente a mesma ROM em asar como referência. Todo o resto deste tutorial usa
 apenas ca65.
 
 ## Como funciona cada lição
@@ -73,6 +73,9 @@ tutorial é corrigido e expandido com base nessas perguntas.
 - [Lição 15: Organização de código & otimização](15-code-organization-and-optimization.md) — projetos com múltiplos arquivos, macros, o orçamento de tempo do V-Blank, bancos de ROM.
 - [Lição 16: Projeto final](16-capstone.md) — um pequeno jogo jogável combinando tudo: background com rolagem, sprite de jogador animado/colidível, um colecionável, e som.
 
+### Apêndice
+- [Apêndice: Mapa de Endereços & Registradores do SNES](17-appendix-address-reference.md) — todo endereço de hardware que o curso usa, em uma página, organizado por assunto.
+
 ## Recursos de referência
 
 - [Referência do 65816](https://wiki.superfamicom.org/65816-reference) — conjunto completo de instruções.
@@ -81,8 +84,3 @@ tutorial é corrigido e expandido com base nessas perguntas.
 - [Mapeamento de memória](https://wiki.superfamicom.org/memory-mapping) — detalhes do layout LoROM/HiROM.
 - [Série de tutoriais de SNES do nesdoug](https://nesdoug.com/2020/03/19/snes-projects/) — um segundo estilo de explicação para os mesmos temas, também baseado em ca65.
 - [Código de exemplo de SNES do nesdoug](https://github.com/nesdoug) — repositórios complementares por lição.
-
-## Status
-
-As 16 lições estão escritas. Veja a [página inicial](../docs/pt/index.html) para o
-índice completo do curso.

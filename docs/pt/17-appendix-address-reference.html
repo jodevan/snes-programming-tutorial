@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Apêndice: Mapa de Endereços &amp; Registradores do SNES</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+<script>
+(function() {
+  var stored = localStorage.getItem('theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+function toggleTheme() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+}
+</script>
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <div class="top-nav-left">
+    <a href="index.html">&larr; Início</a>
+    <span>SNES Tutorial</span>
+  </div>
+  <div class="top-nav-right">
+    <a class="lang-link" href="../index.html">English</a>
+  <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"><span class="to-dark">Dark</span><span class="to-light">Light</span></button>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Apêndice: Mapa de Endereços &amp; Registradores do SNES</h1>
+</header>
+<h1 id="apêndice-mapa-de-endereços-registradores-do-snes">Apêndice: Mapa de Endereços &amp; Registradores do SNES</h1>
+<p>Uma referência de página única para todo endereço de hardware que este curso realmente usa, organizada na ordem em que as lições apresentaram cada um, não despejada em ordem alfabética. Conferida contra o mesmo código mostrado em cada lição, não transcrita de memória — se algum valor aqui algum dia discordar do código de uma lição, o código da lição está correto e esta página tem um bug que vale a pena reportar.</p>
+<h2 id="três-espaços-de-endereço-não-um">Três espaços de endereço, não um</h2>
+<p>É fácil supor que “o espaço de endereços” é uma coisa só. Este curso na verdade trabalha em três espaços separados, e confundi-los é uma fonte real de confusão:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Espaço</th>
+<th>Quem lê/escreve nele</th>
+<th>Coberto em</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Espaço da CPU 65816</strong></td>
+<td>A CPU principal — tudo até a <a href="12-collision-detection.html">Lição 12</a></td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+<tr class="even">
+<td><strong>Espaço SPC700 / ARAM</strong></td>
+<td>Os próprios 64 KB de RAM do coprocessador de som, alcançáveis só através de 4 bytes de caixa de correio</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="odd">
+<td><strong>Espaço de registradores do DSP</strong></td>
+<td>Os 128 registradores de um byte do chip de áudio, alcançáveis só através do truque <code>$00F2</code> da ROM de boot do SPC700</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+</tbody>
+</table>
+<p>Toda tabela abaixo é do espaço da CPU 65816, a menos que o título diga o contrário.</p>
+<h2 id="cabeçalho-da-rom-vetores-00ffc000ffff">Cabeçalho da ROM &amp; vetores — <code>$00:FFC0</code>–<code>$00:FFFF</code></h2>
+<p>O layout exato de bytes que o <code>lesson1.asm</code> da <a href="01-toolchain-setup-and-first-rom.html">Lição 1</a> constrói, campo por campo:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Campo</th>
+<th>Bytes</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$FFC0</code>-<code>$FFD4</code></td>
+<td>Título da ROM</td>
+<td>21</td>
+<td>ASCII preenchido com espaços, puramente cosmético</td>
+</tr>
+<tr class="even">
+<td><code>$FFD5</code></td>
+<td>Modo de mapeamento</td>
+<td>1</td>
+<td>Bit de LoROM/HiROM + ROM rápida/lenta</td>
+</tr>
+<tr class="odd">
+<td><code>$FFD6</code></td>
+<td>Tipo de cartucho</td>
+<td>1</td>
+<td><code>$00</code> = só ROM, as ROMs deste curso</td>
+</tr>
+<tr class="even">
+<td><code>$FFD7</code></td>
+<td>Tamanho da ROM</td>
+<td>1</td>
+<td><code>2^n</code> KB</td>
+</tr>
+<tr class="odd">
+<td><code>$FFD8</code></td>
+<td>Tamanho da RAM</td>
+<td>1</td>
+<td><code>$00</code> aqui — nenhuma RAM de cartucho usada</td>
+</tr>
+<tr class="even">
+<td><code>$FFD9</code></td>
+<td>Código de região/destino</td>
+<td>1</td>
+<td>Cosmético num emulador</td>
+</tr>
+<tr class="odd">
+<td><code>$FFDA</code></td>
+<td>Byte fixo/licenciado</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFDB</code></td>
+<td>Versão da ROM</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFDC</code>-<code>$FFDD</code></td>
+<td>Complemento do checksum</td>
+<td>2</td>
+<td>Placeholder (<code>$0000</code>) durante todo o curso</td>
+</tr>
+<tr class="even">
+<td><code>$FFDE</code>-<code>$FFDF</code></td>
+<td>Checksum</td>
+<td>2</td>
+<td>Placeholder (<code>$0000</code>) durante todo o curso</td>
+</tr>
+<tr class="odd">
+<td><code>$FFE0</code>-<code>$FFE1</code></td>
+<td>não usado (nativo)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFE2</code>-<code>$FFE3</code></td>
+<td>não usado (nativo)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFE4</code>-<code>$FFE5</code></td>
+<td>Vetor COP (nativo)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFE6</code>-<code>$FFE7</code></td>
+<td>Vetor BRK (nativo)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFE8</code>-<code>$FFE9</code></td>
+<td>Vetor ABORT (nativo)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFEA</code>-<code>$FFEB</code></td>
+<td>Vetor NMI (nativo)</td>
+<td>2</td>
+<td>→ <code>trap</code> até a <a href="11-controller-input-and-animation.html">Lição 11</a> conectar <code>nmi_handler</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFEC</code>-<code>$FFED</code></td>
+<td>não usado (reservado)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFEE</code>-<code>$FFEF</code></td>
+<td>Vetor IRQ (nativo)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFF0</code>-<code>$FFF1</code></td>
+<td>não usado (emulação)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFF2</code>-<code>$FFF3</code></td>
+<td>não usado (emulação)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFF4</code>-<code>$FFF5</code></td>
+<td>Vetor COP (emulação)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFF6</code>-<code>$FFF7</code></td>
+<td>não usado (reservado)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFF8</code>-<code>$FFF9</code></td>
+<td>Vetor ABORT (emulação)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFFA</code>-<code>$FFFB</code></td>
+<td>Vetor NMI (emulação)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFFC</code>-<code>$FFFD</code></td>
+<td><strong>Vetor RESET (emulação)</strong></td>
+<td>2</td>
+<td>→ <code>reset</code> — o único vetor do qual toda ROM deste curso realmente depende ao ligar, e a localização real de hardware do vetor RESET do 65816</td>
+</tr>
+<tr class="even">
+<td><code>$FFFE</code>-<code>$FFFF</code></td>
+<td>Vetor IRQ/BRK (emulação)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="wram-ram-de-uso-geral">WRAM — RAM de uso geral</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$0000</code>-<code>$1FFF</code></td>
+<td>Primeiros 8 KB da WRAM, espelhados na página baixa de todo banco (<code>$00</code>-<code>$3F</code>, <code>$80</code>-<code>$BF</code>) — onde vivem as variáveis de página direta e a pilha</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+<tr class="even">
+<td><code>$7E0000</code>-<code>$7FFFFF</code></td>
+<td>O chip inteiro de 128 KB de WRAM, alcançável por endereço longo a partir de qualquer banco</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2180</code> <code>WMDATA</code></td>
+<td>Porta de dados indireta da WRAM — lê/escreve um byte no endereço abaixo, auto-incrementando</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+<tr class="even">
+<td><code>$2181</code>-<code>$2183</code> <code>WMADDL</code>/<code>WMADDM</code>/<code>WMADDH</code></td>
+<td>Endereço de WRAM de 17 bits para a porta acima</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="vram-dados-de-tile-tilemap-2115-2119">VRAM — dados de tile &amp; tilemap (<code>$2115</code>-<code>$2119</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2115</code></td>
+<td><code>VMAIN</code></td>
+<td>Modo de incremento de endereço (depois do byte baixo ou alto, tamanho do passo)</td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a></td>
+</tr>
+<tr class="even">
+<td><code>$2116</code></td>
+<td><code>VMADDL</code></td>
+<td>Endereço de word da VRAM, byte baixo</td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2117</code></td>
+<td><code>VMADDH</code></td>
+<td>Endereço de word da VRAM, byte alto</td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a></td>
+</tr>
+<tr class="even">
+<td><code>$2118</code></td>
+<td><code>VMDATAL</code></td>
+<td>Dado da VRAM, byte baixo — a escrita dispara a transferência no modo “baixo” de <code>VMAIN</code></td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2119</code></td>
+<td><code>VMDATAH</code></td>
+<td>Dado da VRAM, byte alto — a escrita dispara a transferência no modo “alto” padrão de <code>VMAIN</code></td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="cgram-a-paleta-de-cores-2121-2122">CGRAM — a paleta de cores (<code>$2121</code>-<code>$2122</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2121</code></td>
+<td><code>CGADD</code></td>
+<td>Índice de cor da CGRAM (0-255) a apontar</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lição 1</a>, <a href="04-palettes-and-cgram.html">Lição 4</a></td>
+</tr>
+<tr class="even">
+<td><code>$2122</code></td>
+<td><code>CGDATA</code></td>
+<td>Dado de cor — registrador de escrita dupla, byte baixo depois byte alto</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lição 1</a>, <a href="04-palettes-and-cgram.html">Lição 4</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="oam-atributos-de-sprite-2101-2104">OAM — atributos de sprite (<code>$2101</code>-<code>$2104</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2101</code></td>
+<td><code>OBSEL</code></td>
+<td>Seleção de tamanho de sprite + endereço base na VRAM dos tiles de sprite</td>
+<td><a href="10-sprites-oam-basics.html">Lição 10</a></td>
+</tr>
+<tr class="even">
+<td><code>$2102</code></td>
+<td><code>OAMADDL</code></td>
+<td>Endereço da OAM, byte baixo</td>
+<td><a href="10-sprites-oam-basics.html">Lição 10</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2103</code></td>
+<td><code>OAMADDH</code></td>
+<td>Bit alto do endereço da OAM + flag de rotação de prioridade</td>
+<td><a href="10-sprites-oam-basics.html">Lição 10</a></td>
+</tr>
+<tr class="even">
+<td><code>$2104</code></td>
+<td><code>OAMDATA</code></td>
+<td>Dado da OAM — auto-incrementa; tabela baixa e tabela alta se sucedem em um único fluxo de escrita</td>
+<td><a href="10-sprites-oam-basics.html">Lição 10</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="registradores-de-controle-da-ppu-realmente-usados-dentro-de-2100-2133">Registradores de controle da PPU realmente usados (dentro de <code>$2100</code>-<code>$2133</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2100</code></td>
+<td><code>INIDISP</code></td>
+<td>Forced blank (bit 7) + brilho da tela (nibble baixo)</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lição 1</a></td>
+</tr>
+<tr class="even">
+<td><code>$2105</code></td>
+<td><code>BGMODE</code></td>
+<td>Seleção do modo de background (este curso usa o Modo 1)</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lição 6</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2109</code></td>
+<td><code>BG3SC</code></td>
+<td>Endereço base do tilemap da BG3 + tamanho do mapa</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lição 6</a></td>
+</tr>
+<tr class="even">
+<td><code>$210C</code></td>
+<td><code>BG34NBA</code></td>
+<td>Endereço base dos dados de caractere (tile) da BG3/BG4</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lição 6</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2111</code></td>
+<td><code>BG3HOFS</code></td>
+<td>Scroll horizontal da BG3 — registrador de escrita dupla</td>
+<td><a href="09-background-scrolling.html">Lição 9</a></td>
+</tr>
+<tr class="even">
+<td><code>$2112</code></td>
+<td><code>BG3VOFS</code></td>
+<td>Scroll vertical da BG3 — registrador de escrita dupla</td>
+<td><a href="09-background-scrolling.html">Lição 9</a></td>
+</tr>
+<tr class="odd">
+<td><code>$212C</code></td>
+<td><code>TM</code></td>
+<td>Habilita camadas de background/sprite na tela principal</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lição 6</a></td>
+</tr>
+<tr class="even">
+<td><code>$212D</code></td>
+<td><code>TS</code></td>
+<td>Mesmo layout de bits do <code>TM</code>, para a subtela (color-math, não usado neste curso)</td>
+<td>Exercícios da <a href="06-backgrounds-and-tilemaps.html">Lição 6</a></td>
+</tr>
+</tbody>
+</table>
+<p>O bloco <code>$2100</code>-<code>$2133</code> inteiro cobre muitos outros registradores que este curso não usa diretamente (modo 7, windowing, color math) — veja a <a href="03-memory-map-and-registers.html">Lição 3</a> para o mapa geral e a <a href="https://wiki.superfamicom.org/registers">referência de registradores</a> para todos eles.</p>
+<h2 id="controle-e-status-da-cpu-joypad-4200-421f">Controle e status da CPU, joypad (<code>$4200</code>-<code>$421F</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$4200</code></td>
+<td><code>NMITIMEN</code></td>
+<td>Habilita NMI + habilita leitura automática do joypad</td>
+<td><a href="11-controller-input-and-animation.html">Lição 11</a></td>
+</tr>
+<tr class="even">
+<td><code>$420B</code></td>
+<td><code>MDMAEN</code></td>
+<td>Dispara um ou mais canais de DMA de uso geral</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$420C</code></td>
+<td><code>HDMAEN</code></td>
+<td>Habilita um ou mais canais de HDMA</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$4210</code></td>
+<td><code>RDNMI</code></td>
+<td>Flag de NMI — precisa ser lida dentro de todo handler de NMI para reconhecê-la</td>
+<td><a href="11-controller-input-and-animation.html">Lição 11</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4212</code></td>
+<td><code>HVBJOY</code></td>
+<td>Status de V-Blank/H-Blank, sondado pelo loop de frame pré-NMI</td>
+<td><a href="09-background-scrolling.html">Lição 9</a></td>
+</tr>
+<tr class="even">
+<td><code>$4218</code></td>
+<td><code>JOY1L</code></td>
+<td>Botões travados do controle 1, byte baixo (A/X/L/R)</td>
+<td><a href="11-controller-input-and-animation.html">Lição 11</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4219</code></td>
+<td><code>JOY1H</code></td>
+<td>Botões travados do controle 1, byte alto (B/Y/Select/Start/D-pad)</td>
+<td><a href="11-controller-input-and-animation.html">Lição 11</a></td>
+</tr>
+<tr class="even">
+<td><code>$4016</code>-<code>$4017</code></td>
+<td>Portas antigas de joypad</td>
+<td>Sondagem manual compatível com o NES; mencionado mas não usado — a leitura automática substitui isso</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="registradores-de-canal-de-dma-hdma-43x0-43xa-um-bloco-por-canal-x-0-7">Registradores de canal de DMA &amp; HDMA (<code>$43x0</code>-<code>$43xA</code>, um bloco por canal <code>x</code> = 0-7)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$43x0</code></td>
+<td><code>DMAPx</code></td>
+<td>Direção, modo de endereçamento, formato da unidade de transferência, bit de origem fixa</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43x1</code></td>
+<td><code>BBADx</code></td>
+<td>Destino: byte baixo do registrador <code>$21xx</code> da PPU alvo</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$43x2</code>-<code>$43x3</code></td>
+<td><code>A1TxL</code>/<code>A1TxH</code></td>
+<td>Endereço de origem, byte baixo/alto</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43x4</code></td>
+<td><code>A1Bx</code></td>
+<td>Endereço de origem, byte de banco</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$43x5</code>-<code>$43x6</code></td>
+<td><code>DASxL</code>/<code>DASxH</code></td>
+<td>Contagem de bytes do DMA — ou, para HDMA <em>indireto</em>, o endereço indireto de dados atual</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43x7</code></td>
+<td><code>DASBx</code></td>
+<td>Byte de banco do endereço indireto de HDMA (só modo indireto, não usado neste curso)</td>
+<td>Exercícios da <a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$43x8</code>-<code>$43x9</code></td>
+<td><code>A2AxL</code>/<code>A2AxH</code></td>
+<td>Posição atual do HDMA em sua tabela — gerenciado pelo hardware, não escrito diretamente</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43xA</code></td>
+<td><code>NLTRx</code></td>
+<td>Contador de linhas do HDMA: scanlines restantes até a próxima entrada da tabela carregar</td>
+<td><a href="08-dma-and-hdma.html">Lição 8</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="áudio-portas-da-apu-lado-do-65816-2140-2143">Áudio: portas da APU (lado do 65816) — <code>$2140</code>-<code>$2143</code></h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endereço</th>
+<th>Registrador</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2140</code>-<code>$2143</code></td>
+<td><code>APUIO0</code>-<code>APUIO3</code></td>
+<td>Quatro portas de caixa de correio de um byte para o SPC700 — a <em>única</em> conexão entre as duas CPUs</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+</tbody>
+</table>
+<p>O SPC700 vê essas mesmas quatro portas em <code>$00F4</code>-<code>$00F7</code> do seu próprio lado — os mesmos bytes, endereço diferente, porque é uma CPU diferente com um mapa de memória completamente diferente.</p>
+<h2 id="áudio-registradores-do-dsp-um-espaço-separado-de-128-registradores-alcançado-via-00f2">Áudio: registradores do DSP (um espaço separado de 128 registradores, alcançado via <code>$00F2</code>)</h2>
+<p>Nem fazem parte do mapa de memória do 65816 — esses registradores são escritos apontando o upload do SPC para o endereço <code>$00F2</code> com o truque de DSP manual da ROM de boot, um par <code>(registrador, valor)</code> por chamada a <code>write_dsp</code>. Os números de registrador abaixo são para a voz 0; a <a href="14-music-and-sound-effects.html">Lição 14</a> alcança a voz <em>n</em> somando <code>n * $10</code> a cada número de registrador por voz.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Registrador</th>
+<th>Nome</th>
+<th>Propósito</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$4C</code></td>
+<td><code>KON</code></td>
+<td>Key-on — um bit por voz (0-7)</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$5C</code></td>
+<td><code>KOFF</code></td>
+<td>Key-off — um bit por voz; necessário antes de um novo <code>KON</code> para <em>reiniciar</em> uma voz já tocando</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a>, <a href="14-music-and-sound-effects.html">Lição 14</a></td>
+</tr>
+<tr class="odd">
+<td><code>$6C</code></td>
+<td><code>FLG</code></td>
+<td>Flags globais (proteção de escrita do buffer de eco, etc.)</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$5D</code></td>
+<td><code>DIR</code></td>
+<td>Página da ARAM do diretório de amostras</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="odd">
+<td><code>$0C</code>/<code>$1C</code></td>
+<td><code>MVOLL</code>/<code>MVOLR</code></td>
+<td>Volume master, esquerda/direita</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$00</code>/<code>$01</code></td>
+<td><code>VOLL</code>/<code>VOLR</code> (voz 0)</td>
+<td>Volume por voz, esquerda/direita</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="odd">
+<td><code>$02</code>/<code>$03</code></td>
+<td><code>PITCHL</code>/<code>PITCHH</code> (voz 0)</td>
+<td>Taxa de reprodução — <code>$1000</code> toca uma amostra no pitch original gravado</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$04</code></td>
+<td><code>SRCN</code> (voz 0)</td>
+<td>Qual entrada do diretório de amostras essa voz toca</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="odd">
+<td><code>$05</code>/<code>$06</code></td>
+<td><code>ADSR1</code>/<code>ADSR2</code> (voz 0)</td>
+<td>Envelope de volume: attack/decay (ADSR1), nível/taxa de sustain (ADSR2)</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a>, exercícios da <a href="14-music-and-sound-effects.html">Lição 14</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="fontes-leitura-complementar">Fontes &amp; leitura complementar</h2>
+<p>As afirmações deste curso sobre o comportamento do hardware são conferidas contra referências primárias, não folclore meio-lembrado. Toda fonte externa citada ao longo das 16 lições, e onde cada uma aparece:</p>
+<h3 id="super-famicom-development-wiki">Super Famicom Development Wiki</h3>
+<p>A referência de hardware principal na qual este curso mais se apoia.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Página</th>
+<th>Cobre</th>
+<th>Citada em</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/registers">Registradores</a></td>
+<td>Todo registrador de PPU/CPU, bit a bit — as explicações de registradores deste tutorial são todas conferidas cruzando com ela, e é a aba mais útil para manter aberta enquanto você avança pelo curso</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a> (geral), <a href="04-palettes-and-cgram.html">4</a>, <a href="06-backgrounds-and-tilemaps.html">6</a>, <a href="08-dma-and-hdma.html">8</a>, <a href="10-sprites-oam-basics.html">10</a>, <a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://wiki.superfamicom.org/backgrounds">Backgrounds</a></td>
+<td>Modos de BG, formato de tilemap, comportamento de scroll</td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a>, <a href="06-backgrounds-and-tilemaps.html">6</a>, <a href="09-background-scrolling.html">9</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/sprites">Sprites</a></td>
+<td>Layout da OAM, as regras de wrapping da tabela de caracteres para sprites de múltiplos tiles</td>
+<td><a href="10-sprites-oam-basics.html">Lição 10</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://wiki.superfamicom.org/65816-reference">Referência do 65816</a></td>
+<td>Conjunto de instruções completo da CPU</td>
+<td><a href="02-cpu-crash-course.html">Lição 2</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/spc700-reference">Referência do SPC700</a></td>
+<td>Conjunto de instruções da CPU de som, layout de bits do envelope ADSR</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a>, <a href="14-music-and-sound-effects.html">14</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://wiki.superfamicom.org/memory-mapping">Mapeamento de memória</a></td>
+<td>Detalhes do layout LoROM/HiROM</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a></td>
+<td>O truque de escrita manual de DSP no qual o código <code>write_dsp</code> da <a href="13-spc700-and-audio-basics.html">Lição 13</a> se baseia diretamente</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="snesdev-wiki">SNESdev Wiki</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Página</th>
+<th>Cobre</th>
+<th>Citada em</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://snes.nesdev.org/wiki/Booting_the_SPC700">Booting the SPC700</a></td>
+<td>O protocolo de handshake de boot que <code>spc_wait_boot</code>/<code>spc_begin_upload</code> seguem</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://snes.nesdev.org/wiki/SNESdev_Wiki">SNESdev Wiki</a> (geral)</td>
+<td>Referência mais ampla de hardware/depuração — Modo 7, chips de save-data, multiplayer, bem além do escopo deste curso</td>
+<td><a href="16-capstone.html">Lição 16</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="outras-referências">Outras referências</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Fonte</th>
+<th>Cobre</th>
+<th>Citada em</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://nesdoug.com/2020/03/19/snes-projects/">Série de tutoriais SNES do nesdoug</a></td>
+<td>Um segundo estilo de explicação para os mesmos temas, também baseado em ca65</td>
+<td>Sumário do curso, <a href="15-code-organization-and-optimization.html">Lição 15</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://www.mesen.ca/snes/docs/debugging.html">Documentação de depuração do Mesen</a></td>
+<td>Referência oficial para cada ferramenta coberta — Debugger, PPU Viewers, Memory Tools, Event Viewer, Trace Logger</td>
+<td><a href="07-debugging-with-mesen.html">Lição 7</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/undisbeliever/terrific-audio-driver">Terrific Audio Driver</a></td>
+<td>Driver de música/SFX compatível com ca65, baseado em MML</td>
+<td><a href="14-music-and-sound-effects.html">Lição 14</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/NovaSquirrel/snesgss-extended">SNESGSS Extended</a></td>
+<td>Driver de áudio baseado em pacote de macros ca65, editor estilo tracker</td>
+<td><a href="14-music-and-sound-effects.html">Lição 14</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://nesdoug.com/2022/03/02/snesmod/">SNESMOD</a></td>
+<td>Driver de áudio compatível com ca65, arquivos de módulo <code>.it</code></td>
+<td><a href="14-music-and-sound-effects.html">Lição 14</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="o-que-deliberadamente-não-está-aqui">O que deliberadamente não está aqui</h2>
+<p>Esta página é sobre fatos de hardware — registradores e regiões de memória definidos pelo SNES que continuam os mesmos não importa qual ROM você escreva. Ela não inclui as escolhas de variáveis de página direta deste próprio curso (<code>sprite_x</code>, <code>scroll_lo</code>, <code>wall_x</code>, e assim por diante, atribuídas pela primeira vez na <a href="09-background-scrolling.html">Lição 9</a> e na <a href="11-controller-input-and-animation.html">Lição 11</a>) — essas são código de exemplo deste tutorial, não arquitetura do SNES, e um projeto diferente é livre para organizá-las de outro jeito.</p>
+<hr />
+<p><a href="index.html">Home</a> | Previous: <a href="16-capstone.html">Lição 16 — Projeto final</a></p>
+
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

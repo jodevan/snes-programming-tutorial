@@ -296,7 +296,7 @@ changes.
    "stuck in emulation mode" failure looks like before it happens by accident
    later.
 
-## Appendix A: the same ROM in asar (for comparison)
+## Bonus: the same ROM in asar (for comparison)
 
 Since you have asar installed too, here's the equivalent in asar's syntax — note
 it's a single file, no separate linker config, because asar infers the layout

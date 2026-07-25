@@ -128,3 +128,4 @@ expandida com base nela.
 
 [Home](../docs/pt/index.html) |
 Previous: [Lição 15 — Organização de código & otimização](15-code-organization-and-optimization.md)
+Next: [Apêndice — Mapa de Endereços & Registradores do SNES](17-appendix-address-reference.md)

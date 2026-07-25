@@ -67,6 +67,9 @@ debugging tools to figure out why.
 15. [Code organization & optimization](15-code-organization-and-optimization.md) — multi-file projects, macros, the V-Blank time budget, ROM banking.
 16. [Capstone project](16-capstone.md) — a small playable game combining everything: scrolling background, animated/collidable player sprite, a collectible, and sound.
 
+### Appendix
+- [Appendix: SNES Address & Register Map](17-appendix-address-reference.md) — every hardware address the course touches, one page, organized by topic.
+
 ## Reference resources
 
 - [65816 Reference](https://wiki.superfamicom.org/65816-reference) — full CPU instruction set.
@@ -75,9 +78,3 @@ debugging tools to figure out why.
 - [Memory Mapping](https://wiki.superfamicom.org/memory-mapping) — LoROM/HiROM layout details.
 - [nesdoug's SNES tutorial series](https://nesdoug.com/2020/03/19/snes-projects/) — a second explanation style for the same topics, also ca65-based.
 - [SNESdev Wiki](https://snes.nesdev.org/wiki/SNESdev_Wiki) — the boot-handshake and debugging references this tutorial builds on.
-
-## Status
-
-All 16 lessons are written. Questions and corrections from actually building
-this feed back into the lessons — this is a living document, not a fixed
-snapshot.

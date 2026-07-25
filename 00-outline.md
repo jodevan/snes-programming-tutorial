@@ -28,8 +28,8 @@ This tutorial standardizes on **ca65** (from cc65), not asar. Reasoning:
   the thing that trips up most beginners — visible instead of hidden behind magic.
 
 asar isn't a bad choice (single-file ROMs, gentler syntax), and you already have it
-installed if you ever want to compare. Appendix A briefly shows the same Lesson 1
-ROM in asar for reference. Everything else in this tutorial is ca65 only.
+installed if you ever want to compare. A bonus section in Lesson 1 briefly shows
+the same ROM in asar for reference. Everything else in this tutorial is ca65 only.
 
 ## How each lesson works
 
@@ -70,6 +70,9 @@ tutorial gets corrected and expanded based on those questions.
 - [Lesson 15: Code organization & optimization](15-code-organization-and-optimization.md) — multi-file projects, macros, the V-Blank time budget, ROM banking.
 - [Lesson 16: Capstone project](16-capstone.md) — a small playable game combining everything: scrolling background, animated/collidable player sprite, a collectible, and sound.
 
+### Appendix
+- [Appendix: SNES Address & Register Map](17-appendix-address-reference.md) — every hardware address the course touches, one page, organized by topic.
+
 ## Reference resources
 
 - [65816 Reference](https://wiki.superfamicom.org/65816-reference) — full instruction set.
@@ -78,8 +81,3 @@ tutorial gets corrected and expanded based on those questions.
 - [Memory Mapping](https://wiki.superfamicom.org/memory-mapping) — LoROM/HiROM layout details.
 - [nesdoug's SNES tutorial series](https://nesdoug.com/2020/03/19/snes-projects/) — a second explanation style for the same topics, ca65-based.
 - [nesdoug's SNES example code](https://github.com/nesdoug) — companion repos per lesson.
-
-## Status
-
-All 16 lessons are written. See the [homepage](docs/index.html) for the full course
-index.

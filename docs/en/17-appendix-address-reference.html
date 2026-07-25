@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Appendix: SNES Address &amp; Register Map</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        background-color: #ffffff;
+        color: #a0a0a0;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+    div.sourceCode
+      { color: #1f1c1b; background-color: #ffffff; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #1f1c1b; } /* Normal */
+    code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+    code span.an { color: #ca60ca; } /* Annotation */
+    code span.at { color: #0057ae; } /* Attribute */
+    code span.bn { color: #b08000; } /* BaseN */
+    code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+    code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #924c9d; } /* Char */
+    code span.cn { color: #aa5500; } /* Constant */
+    code span.co { color: #898887; } /* Comment */
+    code span.cv { color: #0095ff; } /* CommentVar */
+    code span.do { color: #607880; } /* Documentation */
+    code span.dt { color: #0057ae; } /* DataType */
+    code span.dv { color: #b08000; } /* DecVal */
+    code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+    code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+    code span.fl { color: #b08000; } /* Float */
+    code span.fu { color: #644a9b; } /* Function */
+    code span.im { color: #ff5500; } /* Import */
+    code span.in { color: #b08000; } /* Information */
+    code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+    code span.op { color: #1f1c1b; } /* Operator */
+    code span.ot { color: #006e28; } /* Other */
+    code span.pp { color: #006e28; } /* Preprocessor */
+    code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+    code span.sc { color: #3daee9; } /* SpecialChar */
+    code span.ss { color: #ff5500; } /* SpecialString */
+    code span.st { color: #bf0303; } /* String */
+    code span.va { color: #0057ae; } /* Variable */
+    code span.vs { color: #bf0303; } /* VerbatimString */
+    code span.wa { color: #bf0303; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+<script>
+(function() {
+  var stored = localStorage.getItem('theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+function toggleTheme() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+}
+</script>
+</head>
+<body>
+<div class="page">
+<div class="top-nav">
+  <div class="top-nav-left">
+    <a href="../index.html">&larr; Home</a>
+    <span>SNES Tutorial</span>
+  </div>
+  <div class="top-nav-right">
+    <a class="lang-link" href="../pt/index.html">Português</a>
+  <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"><span class="to-dark">Dark</span><span class="to-light">Light</span></button>
+  </div>
+</div>
+<header id="title-block-header">
+<h1 class="title">Appendix: SNES Address &amp; Register Map</h1>
+</header>
+<h1 id="appendix-snes-address-register-map">Appendix: SNES Address &amp; Register Map</h1>
+<p>A single-page reference for every hardware address this course actually touches, organized the way the lessons introduced it rather than dumped alphabetically. Cross-checked against the same code shown in each lesson, not transcribed from memory — if a value here ever disagrees with a lesson’s own code, the lesson’s code is correct and this page has a bug worth reporting.</p>
+<h2 id="three-address-spaces-not-one">Three address spaces, not one</h2>
+<p>It’s easy to assume “the address space” is one thing. This course actually works across three separate ones, and mixing them up is a real source of confusion:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Space</th>
+<th>Who reads/writes it</th>
+<th>Covered in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>65816 CPU space</strong></td>
+<td>The main CPU — everything through <a href="12-collision-detection.html">Lesson 12</a></td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+<tr class="even">
+<td><strong>SPC700 / ARAM space</strong></td>
+<td>The sound co-processor’s own 64 KB RAM, reachable only through 4 mail-slot bytes</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="odd">
+<td><strong>DSP register space</strong></td>
+<td>The audio chip’s 128 one-byte registers, reachable only through the SPC700 boot ROM’s <code>$00F2</code> trick</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+</tbody>
+</table>
+<p>Every table below is 65816 CPU space unless its heading says otherwise.</p>
+<h2 id="rom-header-vectors-00ffc000ffff">ROM header &amp; vectors — <code>$00:FFC0</code>–<code>$00:FFFF</code></h2>
+<p>The exact byte layout <a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a>’s <code>lesson1.asm</code> builds, field by field:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Field</th>
+<th>Bytes</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$FFC0</code>-<code>$FFD4</code></td>
+<td>ROM title</td>
+<td>21</td>
+<td>Space-padded ASCII, cosmetic only</td>
+</tr>
+<tr class="even">
+<td><code>$FFD5</code></td>
+<td>Map mode</td>
+<td>1</td>
+<td>LoROM/HiROM + fast/slow ROM bit</td>
+</tr>
+<tr class="odd">
+<td><code>$FFD6</code></td>
+<td>Cartridge type</td>
+<td>1</td>
+<td><code>$00</code> = ROM only, this course’s ROMs</td>
+</tr>
+<tr class="even">
+<td><code>$FFD7</code></td>
+<td>ROM size</td>
+<td>1</td>
+<td><code>2^n</code> KB</td>
+</tr>
+<tr class="odd">
+<td><code>$FFD8</code></td>
+<td>RAM size</td>
+<td>1</td>
+<td><code>$00</code> here — no cartridge RAM used</td>
+</tr>
+<tr class="even">
+<td><code>$FFD9</code></td>
+<td>Region / destination code</td>
+<td>1</td>
+<td>Cosmetic in an emulator</td>
+</tr>
+<tr class="odd">
+<td><code>$FFDA</code></td>
+<td>Fixed / licensee byte</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFDB</code></td>
+<td>ROM version</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFDC</code>-<code>$FFDD</code></td>
+<td>Checksum complement</td>
+<td>2</td>
+<td>Placeholder (<code>$0000</code>) throughout this course</td>
+</tr>
+<tr class="even">
+<td><code>$FFDE</code>-<code>$FFDF</code></td>
+<td>Checksum</td>
+<td>2</td>
+<td>Placeholder (<code>$0000</code>) throughout this course</td>
+</tr>
+<tr class="odd">
+<td><code>$FFE0</code>-<code>$FFE1</code></td>
+<td>unused (native)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFE2</code>-<code>$FFE3</code></td>
+<td>unused (native)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFE4</code>-<code>$FFE5</code></td>
+<td>COP vector (native)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFE6</code>-<code>$FFE7</code></td>
+<td>BRK vector (native)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFE8</code>-<code>$FFE9</code></td>
+<td>ABORT vector (native)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFEA</code>-<code>$FFEB</code></td>
+<td>NMI vector (native)</td>
+<td>2</td>
+<td>→ <code>trap</code> until <a href="11-controller-input-and-animation.html">Lesson 11</a> wires up <code>nmi_handler</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFEC</code>-<code>$FFED</code></td>
+<td>unused (reserved)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFEE</code>-<code>$FFEF</code></td>
+<td>IRQ vector (native)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFF0</code>-<code>$FFF1</code></td>
+<td>unused (emulation)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>$FFF2</code>-<code>$FFF3</code></td>
+<td>unused (emulation)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFF4</code>-<code>$FFF5</code></td>
+<td>COP vector (emulation)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFF6</code>-<code>$FFF7</code></td>
+<td>unused (reserved)</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>$FFF8</code>-<code>$FFF9</code></td>
+<td>ABORT vector (emulation)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="even">
+<td><code>$FFFA</code>-<code>$FFFB</code></td>
+<td>NMI vector (emulation)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+<tr class="odd">
+<td><code>$FFFC</code>-<code>$FFFD</code></td>
+<td><strong>RESET vector (emulation)</strong></td>
+<td>2</td>
+<td>→ <code>reset</code> — the only vector every ROM in this course actually depends on at power-on, and the 65816’s well-known real hardware RESET location</td>
+</tr>
+<tr class="even">
+<td><code>$FFFE</code>-<code>$FFFF</code></td>
+<td>IRQ/BRK vector (emulation)</td>
+<td>2</td>
+<td>→ <code>trap</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="wram-general-purpose-ram">WRAM — general-purpose RAM</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$0000</code>-<code>$1FFF</code></td>
+<td>First 8 KB of WRAM, mirrored into every bank’s low page (<code>$00</code>-<code>$3F</code>, <code>$80</code>-<code>$BF</code>) — where direct-page variables and the stack live</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+<tr class="even">
+<td><code>$7E0000</code>-<code>$7FFFFF</code></td>
+<td>The full 128 KB WRAM chip, reachable by long address from any bank</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2180</code> <code>WMDATA</code></td>
+<td>Indirect WRAM data port — read/write one byte at the address below, auto-incrementing</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+<tr class="even">
+<td><code>$2181</code>-<code>$2183</code> <code>WMADDL</code>/<code>WMADDM</code>/<code>WMADDH</code></td>
+<td>17-bit WRAM address for the port above</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="vram-tile-tilemap-data-2115-2119">VRAM — tile &amp; tilemap data (<code>$2115</code>-<code>$2119</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2115</code></td>
+<td><code>VMAIN</code></td>
+<td>Address-increment mode (after low or high byte, step size)</td>
+<td><a href="05-tiles-and-vram.html">Lesson 5</a></td>
+</tr>
+<tr class="even">
+<td><code>$2116</code></td>
+<td><code>VMADDL</code></td>
+<td>VRAM word address, low byte</td>
+<td><a href="05-tiles-and-vram.html">Lesson 5</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2117</code></td>
+<td><code>VMADDH</code></td>
+<td>VRAM word address, high byte</td>
+<td><a href="05-tiles-and-vram.html">Lesson 5</a></td>
+</tr>
+<tr class="even">
+<td><code>$2118</code></td>
+<td><code>VMDATAL</code></td>
+<td>VRAM data, low byte — write triggers the transfer for <code>VMAIN</code>’s “low” mode</td>
+<td><a href="05-tiles-and-vram.html">Lesson 5</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2119</code></td>
+<td><code>VMDATAH</code></td>
+<td>VRAM data, high byte — write triggers the transfer for <code>VMAIN</code>’s default “high” mode</td>
+<td><a href="05-tiles-and-vram.html">Lesson 5</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="cgram-the-color-palette-2121-2122">CGRAM — the color palette (<code>$2121</code>-<code>$2122</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2121</code></td>
+<td><code>CGADD</code></td>
+<td>CGRAM color index (0-255) to point at</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a>, <a href="04-palettes-and-cgram.html">Lesson 4</a></td>
+</tr>
+<tr class="even">
+<td><code>$2122</code></td>
+<td><code>CGDATA</code></td>
+<td>Color data — write-twice register, low byte then high byte</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a>, <a href="04-palettes-and-cgram.html">Lesson 4</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="oam-sprite-attributes-2101-2104">OAM — sprite attributes (<code>$2101</code>-<code>$2104</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2101</code></td>
+<td><code>OBSEL</code></td>
+<td>Sprite size selection + VRAM base address for sprite tiles</td>
+<td><a href="10-sprites-oam-basics.html">Lesson 10</a></td>
+</tr>
+<tr class="even">
+<td><code>$2102</code></td>
+<td><code>OAMADDL</code></td>
+<td>OAM address, low byte</td>
+<td><a href="10-sprites-oam-basics.html">Lesson 10</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2103</code></td>
+<td><code>OAMADDH</code></td>
+<td>OAM address high bit + priority-rotation flag</td>
+<td><a href="10-sprites-oam-basics.html">Lesson 10</a></td>
+</tr>
+<tr class="even">
+<td><code>$2104</code></td>
+<td><code>OAMDATA</code></td>
+<td>OAM data — auto-increments; low table then high table roll together in one write stream</td>
+<td><a href="10-sprites-oam-basics.html">Lesson 10</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ppu-control-registers-actually-used-within-2100-2133">PPU control registers actually used (within <code>$2100</code>-<code>$2133</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2100</code></td>
+<td><code>INIDISP</code></td>
+<td>Forced blank (bit 7) + screen brightness (low nibble)</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lesson 1</a></td>
+</tr>
+<tr class="even">
+<td><code>$2105</code></td>
+<td><code>BGMODE</code></td>
+<td>Background mode selection (this course uses Mode 1)</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lesson 6</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2109</code></td>
+<td><code>BG3SC</code></td>
+<td>BG3 tilemap base address + map size</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lesson 6</a></td>
+</tr>
+<tr class="even">
+<td><code>$210C</code></td>
+<td><code>BG34NBA</code></td>
+<td>BG3/BG4 character (tile) data base address</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lesson 6</a></td>
+</tr>
+<tr class="odd">
+<td><code>$2111</code></td>
+<td><code>BG3HOFS</code></td>
+<td>BG3 horizontal scroll — write-twice register</td>
+<td><a href="09-background-scrolling.html">Lesson 9</a></td>
+</tr>
+<tr class="even">
+<td><code>$2112</code></td>
+<td><code>BG3VOFS</code></td>
+<td>BG3 vertical scroll — write-twice register</td>
+<td><a href="09-background-scrolling.html">Lesson 9</a></td>
+</tr>
+<tr class="odd">
+<td><code>$212C</code></td>
+<td><code>TM</code></td>
+<td>Enable background/sprite layers on the main screen</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lesson 6</a></td>
+</tr>
+<tr class="even">
+<td><code>$212D</code></td>
+<td><code>TS</code></td>
+<td>Same bit layout as <code>TM</code>, for the subscreen (color-math, not used in this course)</td>
+<td><a href="06-backgrounds-and-tilemaps.html">Lesson 6</a> exercises</td>
+</tr>
+</tbody>
+</table>
+<p>The full <code>$2100</code>-<code>$2133</code> block covers many more registers this course doesn’t use directly (mode 7, windowing, color math) — see <a href="03-memory-map-and-registers.html">Lesson 3</a> for the general map and the <a href="https://wiki.superfamicom.org/registers">register reference</a> for all of them.</p>
+<h2 id="cpu-control-status-joypad-4200-421f">CPU control, status &amp; joypad (<code>$4200</code>-<code>$421F</code>)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$4200</code></td>
+<td><code>NMITIMEN</code></td>
+<td>Enable NMI + enable auto-joypad read</td>
+<td><a href="11-controller-input-and-animation.html">Lesson 11</a></td>
+</tr>
+<tr class="even">
+<td><code>$420B</code></td>
+<td><code>MDMAEN</code></td>
+<td>Fire one or more general-purpose DMA channels</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$420C</code></td>
+<td><code>HDMAEN</code></td>
+<td>Enable one or more HDMA channels</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$4210</code></td>
+<td><code>RDNMI</code></td>
+<td>NMI flag — must be read inside every NMI handler to acknowledge it</td>
+<td><a href="11-controller-input-and-animation.html">Lesson 11</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4212</code></td>
+<td><code>HVBJOY</code></td>
+<td>V-Blank/H-Blank status, polled by the pre-NMI frame loop</td>
+<td><a href="09-background-scrolling.html">Lesson 9</a></td>
+</tr>
+<tr class="even">
+<td><code>$4218</code></td>
+<td><code>JOY1L</code></td>
+<td>Latched controller 1 buttons, low byte (A/X/L/R)</td>
+<td><a href="11-controller-input-and-animation.html">Lesson 11</a></td>
+</tr>
+<tr class="odd">
+<td><code>$4219</code></td>
+<td><code>JOY1H</code></td>
+<td>Latched controller 1 buttons, high byte (B/Y/Select/Start/D-pad)</td>
+<td><a href="11-controller-input-and-animation.html">Lesson 11</a></td>
+</tr>
+<tr class="even">
+<td><code>$4016</code>-<code>$4017</code></td>
+<td>old-style joypad ports</td>
+<td>NES-compatible manual polling; mentioned but not used — auto-joypad read replaces this</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="dma-hdma-channel-registers-43x0-43xa-one-block-per-channel-x-0-7">DMA &amp; HDMA channel registers (<code>$43x0</code>-<code>$43xA</code>, one block per channel <code>x</code> = 0-7)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$43x0</code></td>
+<td><code>DMAPx</code></td>
+<td>Direction, addressing mode, transfer-unit shape, fixed-source bit</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43x1</code></td>
+<td><code>BBADx</code></td>
+<td>Destination: low byte of the <code>$21xx</code> PPU register to target</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$43x2</code>-<code>$43x3</code></td>
+<td><code>A1TxL</code>/<code>A1TxH</code></td>
+<td>Source address, low/high byte</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43x4</code></td>
+<td><code>A1Bx</code></td>
+<td>Source address, bank byte</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="odd">
+<td><code>$43x5</code>-<code>$43x6</code></td>
+<td><code>DASxL</code>/<code>DASxH</code></td>
+<td>DMA byte count — or, for <em>indirect</em> HDMA, the current indirect-data address</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43x7</code></td>
+<td><code>DASBx</code></td>
+<td>Indirect HDMA address bank byte (indirect mode only, not used in this course)</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a> exercises</td>
+</tr>
+<tr class="odd">
+<td><code>$43x8</code>-<code>$43x9</code></td>
+<td><code>A2AxL</code>/<code>A2AxH</code></td>
+<td>HDMA’s current position in its table — hardware-managed, not written directly</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+<tr class="even">
+<td><code>$43xA</code></td>
+<td><code>NLTRx</code></td>
+<td>HDMA line counter: scanlines remaining until the next table entry loads</td>
+<td><a href="08-dma-and-hdma.html">Lesson 8</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="audio-apu-ports-65816-side-2140-2143">Audio: APU ports (65816 side) — <code>$2140</code>-<code>$2143</code></h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Address</th>
+<th>Register</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$2140</code>-<code>$2143</code></td>
+<td><code>APUIO0</code>-<code>APUIO3</code></td>
+<td>Four one-byte mail-slot ports to the SPC700 — the <em>only</em> connection between the two CPUs</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+</tbody>
+</table>
+<p>The SPC700 sees the same four ports at <code>$00F4</code>-<code>$00F7</code> on its own side — same bytes, different address, because it’s a different CPU with a different memory map entirely.</p>
+<h2 id="audio-dsp-registers-a-separate-128-register-space-reached-via-00f2">Audio: DSP registers (a separate 128-register space, reached via <code>$00F2</code>)</h2>
+<p>Not part of the 65816’s memory map at all — these are written by targeting SPC upload address <code>$00F2</code> with the boot ROM’s manual-DSP trick, one <code>(register, value)</code> pair per <code>write_dsp</code> call. Register numbers below are for voice 0; <a href="14-music-and-sound-effects.html">Lesson 14</a> reaches voice <em>n</em> by adding <code>n * $10</code> to each per-voice register number.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Register</th>
+<th>Name</th>
+<th>Purpose</th>
+<th>Lesson</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$4C</code></td>
+<td><code>KON</code></td>
+<td>Key-on — one bit per voice (0-7)</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$5C</code></td>
+<td><code>KOFF</code></td>
+<td>Key-off — one bit per voice; needed before a fresh <code>KON</code> to <em>restart</em> an already-playing voice</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a>, <a href="14-music-and-sound-effects.html">Lesson 14</a></td>
+</tr>
+<tr class="odd">
+<td><code>$6C</code></td>
+<td><code>FLG</code></td>
+<td>Global flags (echo-buffer write protect, etc.)</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$5D</code></td>
+<td><code>DIR</code></td>
+<td>Sample directory’s ARAM page</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="odd">
+<td><code>$0C</code>/<code>$1C</code></td>
+<td><code>MVOLL</code>/<code>MVOLR</code></td>
+<td>Master volume, left/right</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$00</code>/<code>$01</code></td>
+<td><code>VOLL</code>/<code>VOLR</code> (voice 0)</td>
+<td>Per-voice volume, left/right</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="odd">
+<td><code>$02</code>/<code>$03</code></td>
+<td><code>PITCHL</code>/<code>PITCHH</code> (voice 0)</td>
+<td>Playback rate — <code>$1000</code> plays a sample at its recorded pitch</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="even">
+<td><code>$04</code></td>
+<td><code>SRCN</code> (voice 0)</td>
+<td>Which sample-directory entry this voice plays</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="odd">
+<td><code>$05</code>/<code>$06</code></td>
+<td><code>ADSR1</code>/<code>ADSR2</code> (voice 0)</td>
+<td>Volume envelope: attack/decay (ADSR1), sustain level/rate (ADSR2)</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a>, <a href="14-music-and-sound-effects.html">Lesson 14</a> exercises</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources-further-reading">Sources &amp; further reading</h2>
+<p>This course’s claims about hardware behavior are checked against primary references, not half-remembered folklore. Every external source cited across the 16 lessons, and where each one comes up:</p>
+<h3 id="super-famicom-development-wiki">Super Famicom Development Wiki</h3>
+<p>The main hardware reference this course leans on hardest.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Page</th>
+<th>Covers</th>
+<th>Cited in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/registers">Registers</a></td>
+<td>Every PPU/CPU hardware register, bit by bit — this tutorial’s register explanations are all cross-checked against it, and it’s the single most useful tab to keep open while working through the course</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a> (general), <a href="04-palettes-and-cgram.html">4</a>, <a href="06-backgrounds-and-tilemaps.html">6</a>, <a href="08-dma-and-hdma.html">8</a>, <a href="10-sprites-oam-basics.html">10</a>, <a href="11-controller-input-and-animation.html">11</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://wiki.superfamicom.org/backgrounds">Backgrounds</a></td>
+<td>BG modes, tilemap format, scrolling behavior</td>
+<td><a href="05-tiles-and-vram.html">Lesson 5</a>, <a href="06-backgrounds-and-tilemaps.html">6</a>, <a href="09-background-scrolling.html">9</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/sprites">Sprites</a></td>
+<td>OAM layout, the character-table wrapping rules for multi-tile sprites</td>
+<td><a href="10-sprites-oam-basics.html">Lesson 10</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://wiki.superfamicom.org/65816-reference">65816 Reference</a></td>
+<td>Full CPU instruction set</td>
+<td><a href="02-cpu-crash-course.html">Lesson 2</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/spc700-reference">SPC700 Reference</a></td>
+<td>Sound CPU instruction set, ADSR envelope bit layout</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a>, <a href="14-music-and-sound-effects.html">14</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://wiki.superfamicom.org/memory-mapping">Memory Mapping</a></td>
+<td>LoROM/HiROM layout details</td>
+<td><a href="03-memory-map-and-registers.html">Lesson 3</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://wiki.superfamicom.org/how-to-write-to-dsp-registers-without-any-spc-700-code">“Writing to DSP Registers Without any SPC-700 Code”</a></td>
+<td>The manual-DSP-write trick <a href="13-spc700-and-audio-basics.html">Lesson 13</a>’s <code>write_dsp</code> code is directly based on</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="snesdev-wiki">SNESdev Wiki</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Page</th>
+<th>Covers</th>
+<th>Cited in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://snes.nesdev.org/wiki/Booting_the_SPC700">Booting the SPC700</a></td>
+<td>The boot handshake protocol <code>spc_wait_boot</code>/<code>spc_begin_upload</code> follow</td>
+<td><a href="13-spc700-and-audio-basics.html">Lesson 13</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://snes.nesdev.org/wiki/SNESdev_Wiki">SNESdev Wiki</a> (general)</td>
+<td>Broader hardware/debugging reference — Mode 7, save-data chips, multiplayer, well beyond this course’s scope</td>
+<td><a href="16-capstone.html">Lesson 16</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="other-references">Other references</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Source</th>
+<th>Covers</th>
+<th>Cited in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://nesdoug.com/2020/03/19/snes-projects/">nesdoug’s SNES tutorial series</a></td>
+<td>A second explanation style for the same topics, also ca65-based</td>
+<td>Course outline, <a href="15-code-organization-and-optimization.html">Lesson 15</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://www.mesen.ca/snes/docs/debugging.html">Mesen debugging docs</a></td>
+<td>Official reference for every tool covered — Debugger, PPU Viewers, Memory Tools, Event Viewer, Trace Logger</td>
+<td><a href="07-debugging-with-mesen.html">Lesson 7</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/undisbeliever/terrific-audio-driver">Terrific Audio Driver</a></td>
+<td>ca65-compatible music/SFX driver, MML-based</td>
+<td><a href="14-music-and-sound-effects.html">Lesson 14</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/NovaSquirrel/snesgss-extended">SNESGSS Extended</a></td>
+<td>ca65-macro-pack-based audio driver, tracker-style editor</td>
+<td><a href="14-music-and-sound-effects.html">Lesson 14</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://nesdoug.com/2022/03/02/snesmod/">SNESMOD</a></td>
+<td>ca65-compatible audio driver, <code>.it</code> module files</td>
+<td><a href="14-music-and-sound-effects.html">Lesson 14</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="whats-deliberately-not-here">What’s deliberately not here</h2>
+<p>This page is hardware facts — SNES-defined registers and memory regions that stay the same no matter what ROM you write. It doesn’t include this course’s own direct-page variable choices (<code>sprite_x</code>, <code>scroll_lo</code>, <code>wall_x</code>, and so on, first assigned in <a href="09-background-scrolling.html">Lesson 9</a> and <a href="11-controller-input-and-animation.html">Lesson 11</a>) — those are this tutorial’s own example code, not SNES architecture, and a different project is free to lay them out differently.</p>
+<hr />
+<p><a href="../index.html">Home</a> | Previous: <a href="16-capstone.html">Lesson 16 — Capstone project</a></p>
+
+<div class="bottom-nav-spacer"></div></div>
+</body>
+</html>

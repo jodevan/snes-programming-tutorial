@@ -95,9 +95,11 @@ function toggleTheme() {
 <body>
 <div class="page">
 <div class="top-nav">
-  <span>SNES Tutorial</span>
-  <div class="top-nav-right">
+  <div class="top-nav-left">
     <a href="index.html">&larr; Início</a>
+    <span>SNES Tutorial</span>
+  </div>
+  <div class="top-nav-right">
     <a class="lang-link" href="../index.html">English</a>
   <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"><span class="to-dark">Dark</span><span class="to-light">Light</span></button>
   </div>
@@ -341,7 +343,7 @@ sta $2122</code></pre>
 </div></details>
 </li>
 </ol>
-<h2 id="apêndice-a-a-mesma-rom-em-asar-para-comparação">Apêndice A: a mesma ROM em asar (para comparação)</h2>
+<h2 id="bônus-a-mesma-rom-em-asar-para-comparação">Bônus: a mesma ROM em asar (para comparação)</h2>
 <p>Já que você também tem o asar instalado, aqui está o equivalente na sintaxe do asar — note que é um único arquivo, sem configuração de linker separada, porque o asar deduz o layout a partir de <code>lorom</code> e do posicionamento baseado em diretivas:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="co">; lesson1_asar.asm</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>lorom</span>

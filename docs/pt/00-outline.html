@@ -30,9 +30,11 @@ function toggleTheme() {
 <body>
 <div class="page">
 <div class="top-nav">
-  <span>SNES Tutorial</span>
-  <div class="top-nav-right">
+  <div class="top-nav-left">
     <a href="index.html">&larr; Início</a>
+    <span>SNES Tutorial</span>
+  </div>
+  <div class="top-nav-right">
     <a class="lang-link" href="../index.html">English</a>
   <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"><span class="to-dark">Dark</span><span class="to-light">Light</span></button>
   </div>
@@ -51,7 +53,7 @@ function toggleTheme() {
 <li>Os dois recursos nos quais este tutorial mais se apoia — a <a href="https://nesdoug.com/2020/03/19/snes-projects/">série de SNES do nesdoug</a> e a <a href="https://wiki.superfamicom.org">Super Famicom Development Wiki</a> — usam o ca65 em seus exemplos canônicos, então você conseguirá ler material externo sem uma etapa mental de tradução.</li>
 <li>O ca65 obriga você a escrever uma configuração explícita de linker (<code>.cfg</code>) e um layout de segmentos. Isso é um pouco mais de digitação no primeiro dia, mas torna visível o mapeamento de memória do SNES — o que mais confunde iniciantes — em vez de escondê-lo atrás de mágica.</li>
 </ul>
-<p>O asar não é uma escolha ruim (ROMs em arquivo único, sintaxe mais suave), e você já o tem instalado caso queira comparar algum dia. O Apêndice A mostra brevemente a mesma ROM da Lição 1 em asar como referência. Todo o resto deste tutorial usa apenas ca65.</p>
+<p>O asar não é uma escolha ruim (ROMs em arquivo único, sintaxe mais suave), e você já o tem instalado caso queira comparar algum dia. Uma seção bônus na Lição 1 mostra brevemente a mesma ROM em asar como referência. Todo o resto deste tutorial usa apenas ca65.</p>
 <h2 id="como-funciona-cada-lição">Como funciona cada lição</h2>
 <p>Cada lição tem: uma breve explicação do conceito, um arquivo <code>.asm</code> totalmente comentado (ou um diff em relação ao arquivo da lição anterior), os comandos exatos de <code>ca65</code>/<code>ld65</code> para compilá-lo, e o que você deve ver ao carregar a ROM no Mesen. As lições se apoiam umas nas outras — no final, você terá uma base de código funcional, não dezesseis demos desconectadas.</p>
 <p>Se algo em uma lição confundir você ou quebrar na sua máquina, pergunte — este tutorial é corrigido e expandido com base nessas perguntas.</p>
@@ -87,6 +89,10 @@ function toggleTheme() {
 <li><a href="15-code-organization-and-optimization.html">Lição 15: Organização de código &amp; otimização</a> — projetos com múltiplos arquivos, macros, o orçamento de tempo do V-Blank, bancos de ROM.</li>
 <li><a href="16-capstone.html">Lição 16: Projeto final</a> — um pequeno jogo jogável combinando tudo: background com rolagem, sprite de jogador animado/colidível, um colecionável, e som.</li>
 </ul>
+<h3 id="apêndice">Apêndice</h3>
+<ul>
+<li><a href="17-appendix-address-reference.html">Apêndice: Mapa de Endereços &amp; Registradores do SNES</a> — todo endereço de hardware que o curso usa, em uma página, organizado por assunto.</li>
+</ul>
 <h2 id="recursos-de-referência">Recursos de referência</h2>
 <ul>
 <li><a href="https://wiki.superfamicom.org/65816-reference">Referência do 65816</a> — conjunto completo de instruções.</li>
@@ -96,8 +102,6 @@ function toggleTheme() {
 <li><a href="https://nesdoug.com/2020/03/19/snes-projects/">Série de tutoriais de SNES do nesdoug</a> — um segundo estilo de explicação para os mesmos temas, também baseado em ca65.</li>
 <li><a href="https://github.com/nesdoug">Código de exemplo de SNES do nesdoug</a> — repositórios complementares por lição.</li>
 </ul>
-<h2 id="status">Status</h2>
-<p>As 16 lições estão escritas. Veja a <a href="index.html">página inicial</a> para o índice completo do curso.</p>
 <div class="bottom-nav-spacer"></div></div>
 </body>
 </html>

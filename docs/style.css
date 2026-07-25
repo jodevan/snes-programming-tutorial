@@ -60,6 +60,12 @@ body {
 
 .top-nav a:hover { text-decoration: underline; }
 
+.top-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .top-nav-right {
   display: flex;
   align-items: center;
@@ -503,7 +509,7 @@ code span.st {
   border-radius: 999px;
   padding: 0.2rem 0.7rem;
   background: transparent;
-  color: var(--muted);
+  color: var(--accent-dark);
 }
 
 /* .top-nav-right spaces its children via flex gap, but .site-nav .links

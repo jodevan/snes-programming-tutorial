@@ -304,7 +304,7 @@ verdade, mas o código de configuração acima muda muito pouco.
    noção de como é uma falha de "preso em modo de emulação" antes que isso
    aconteça sem querer mais adiante.
 
-## Apêndice A: a mesma ROM em asar (para comparação)
+## Bônus: a mesma ROM em asar (para comparação)
 
 Já que você também tem o asar instalado, aqui está o equivalente na sintaxe do
 asar — note que é um único arquivo, sem configuração de linker separada, porque o
