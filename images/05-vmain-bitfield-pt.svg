@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 430" width="100%" style="max-width:700px" font-size="14">
+<rect x="0" y="0" width="700" height="430" rx="10" fill="#fdfcf8" stroke="#ccc"/>
+<text x="350.0" y="30" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="16" font-weight="bold" fill="#222">lda #$80 &#8594; VMAIN: o que cada bit significa</text>
+<rect x="102.0" y="56" width="59" height="30" fill="#dbe7fa" stroke="#888"/>
+<text x="131.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">1</text>
+<text x="131.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 7</text>
+<rect x="164.0" y="56" width="59" height="30" fill="#eee" stroke="#888"/>
+<text x="193.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="193.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 6</text>
+<rect x="226.0" y="56" width="59" height="30" fill="#eee" stroke="#888"/>
+<text x="255.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="255.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 5</text>
+<rect x="288.0" y="56" width="59" height="30" fill="#eee" stroke="#888"/>
+<text x="317.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="317.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 4</text>
+<rect x="350.0" y="56" width="59" height="30" fill="#fdeecb" stroke="#888"/>
+<text x="379.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="379.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 3</text>
+<rect x="412.0" y="56" width="59" height="30" fill="#fdeecb" stroke="#888"/>
+<text x="441.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="441.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 2</text>
+<rect x="474.0" y="56" width="59" height="30" fill="#e2f3d8" stroke="#888"/>
+<text x="503.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="503.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 1</text>
+<rect x="536.0" y="56" width="59" height="30" fill="#e2f3d8" stroke="#888"/>
+<text x="565.5" y="76" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">0</text>
+<text x="565.5" y="50" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#888">bit 0</text>
+<text x="131.5" y="106" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#333">i</text>
+<text x="255.5" y="106" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#333">---</text>
+<text x="410.5" y="106" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#333">mm</text>
+<text x="534.5" y="106" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#333">ii</text>
+<text x="350.0" y="128" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="12" fill="#666">modelo: i---mmii &#8594; valor: 1000 0000 = $80</text>
+<rect x="20.0" y="146" width="210.66666666666666" height="84" rx="6" fill="#dbe7fa" stroke="#999"/>
+<text x="30.0" y="168" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">i = 1</text>
+<text x="30.0" y="186" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">incrementa o endere&#231;o da</text>
+<text x="30.0" y="200" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">VRAM depois de uma escrita em</text>
+<text x="30.0" y="214" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">$2119 (VMDATAH), n&#227;o em</text>
+<text x="30.0" y="228" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">$2118.</text>
+<rect x="244.66666666666666" y="146" width="210.66666666666666" height="84" rx="6" fill="#fdeecb" stroke="#999"/>
+<text x="254.66666666666666" y="168" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">mm = 00</text>
+<text x="254.66666666666666" y="186" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">nenhum remapeamento de</text>
+<text x="254.66666666666666" y="200" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">endere&#231;o.</text>
+<rect x="469.3333333333333" y="146" width="210.66666666666666" height="84" rx="6" fill="#e2f3d8" stroke="#999"/>
+<text x="479.3333333333333" y="168" font-family='Menlo, Consolas, monospace' font-size="14" font-weight="bold" fill="#222">ii = 00</text>
+<text x="479.3333333333333" y="186" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">o passo &#233; +1 word por</text>
+<text x="479.3333333333333" y="200" font-family='Helvetica, Arial, sans-serif' font-size="11.5" fill="#333">acesso.</text>
+<text x="20.0" y="250" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">Escrevemos VMDATAL e depois VMDATAH</text>
+<text x="20.0" y="264" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">para cada word, ent&#227;o o</text>
+<text x="20.0" y="278" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">endere&#231;o s&#243; pode</text>
+<text x="20.0" y="292" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">avan&#231;ar depois da *segunda*</text>
+<text x="20.0" y="306" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">escrita do par -- sen&#227;o o byte</text>
+<text x="20.0" y="320" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">alto cairia na pr&#243;xima word em</text>
+<text x="20.0" y="334" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">vez de completar esta.</text>
+<text x="244.66666666666666" y="250" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">Modos de remapeamento existem para</text>
+<text x="244.66666666666666" y="264" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">layouts especiais no estilo bitmap;</text>
+<text x="244.66666666666666" y="278" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">um carregamento sequencial simples de</text>
+<text x="244.66666666666666" y="292" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">tiles n&#227;o precisa deles.</text>
+<text x="469.3333333333333" y="250" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">Combina com o avan&#231;o do loop:</text>
+<text x="469.3333333333333" y="264" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">uma word (uma linha de tile) por par</text>
+<text x="469.3333333333333" y="278" font-family='Helvetica, Arial, sans-serif' font-size="11" fill="#555">VMDATAL/VMDATAH.</text>
+</svg>

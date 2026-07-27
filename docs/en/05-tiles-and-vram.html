@@ -151,6 +151,10 @@ row 2: bitplane0, bitplane1
 ...
 row 7: bitplane0, bitplane1</code></pre>
 <p>Within a byte, bit 7 is the <em>leftmost</em> pixel of that row. A pixel’s final color index is built by stacking the corresponding bit from each bitplane: for 2bpp, <code>index = (bitplane1_bit &lt;&lt; 1) | bitplane0_bit</code>. So index 1 needs bitplane0=1, bitplane1=0; index 2 needs bitplane0=0, bitplane1=1; index 3 needs both bits set.</p>
+<figure class="diagram">
+<img src="../images/05-byte-layout.svg" alt="Diagram showing a 2bpp tile's 16 bytes laid out as 8 rows, each row made of a bitplane0 byte and a bitplane1 byte forming one 16-bit word; a second panel shows that within a byte, bit 7 maps to pixel column 0 (leftmost) and bit 0 maps to column 7 (rightmost)." />
+<figcaption>Figure: the 16 bytes in memory (top), and how one byte’s bits map onto the 8 pixel columns of a row (bottom).</figcaption>
+</figure>
 <h3 id="a-worked-example-a-two-color-striped-tile">A worked example: a two-color striped tile</h3>
 <p>Let’s build a tile that’s solid palette-index-1 (red, from Lesson 4’s table) on its top half and solid palette-index-2 (green) on its bottom half — simple enough to hand-encode, and it visibly proves bitplane combination is working once you see it rendered.</p>
 <p>Index 1 needs bitplane0 = all 1s, bitplane1 = all 0s, for those rows. Index 2 needs the opposite. So:</p>
@@ -166,6 +170,10 @@ row 7: bitplane0, bitplane1</code></pre>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="fu">tile_stripe_end:</span></span></code></pre></div>
+<figure class="diagram">
+<img src="../images/05-worked-example-stripe.svg" alt="Diagram showing bit stacking for tile_stripe: row 0 has bitplane0=$FF (all 1s) and bitplane1=$00 (all 0s), combining to index 1 (red) across all 8 columns; row 4 has bitplane0=$00 and bitplane1=$FF, combining to index 2 (green). Below, the full rendered 8x8 tile shows a red top half and green bottom half." />
+<figcaption>Figure: working the bit-stacking formula for one row of each half, then the resulting rendered tile.</figcaption>
+</figure>
 <h2 id="vmain-vmadd-and-vmdata">VMAIN, VMADD, and VMDATA</h2>
 <p>VRAM is addressed as 32K <em>words</em> (64 KB total), and the write path is the same “address register, then data register” pattern from <a href="03-memory-map-and-registers.html#vram-cgram-and-oam-three-porthole-devices">Lesson 3</a>:</p>
 <pre><code>$2115  VMAIN   i---mmii   i = increment after high ($2119) or low ($2118) byte write
@@ -176,6 +184,11 @@ $2119  VMDATAH high byte of the word to write</code></pre>
 <p>Since we’re writing 16-bit words (and our tile data is already laid out as byte-pairs matching VRAM’s word layout), set <code>VMAIN</code> so the address advances <em>after the high byte</em> — that way a <code>VMDATAL</code>/<code>VMDATAH</code> pair advances the address exactly once, keeping the two writes atomic from the address register’s point of view:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    lda #<span class="bn">$80        </span><span class="co">; i=1 (increment after $2119), ii=00 (+1), mm=00 (no remap)</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    sta<span class="bn"> $2115</span></span></code></pre></div>
+<p>Concretely: <code>$80</code> in binary is <code>1000 0000</code>. Lined up against the <code>i---mmii</code> template, that’s <code>i=1</code>, the three middle bits unused, <code>mm=00</code>, and <code>ii=00</code>. <code>i=1</code> is the bit that matters here — it says “advance the address after a write to $2119 (VMDATAH),” not $2118. Since the loop below always writes <code>VMDATAL</code> then <code>VMDATAH</code> for a given word, the address must only advance <em>after</em> that second write; if it advanced after the low byte instead, the address would already be pointing at the <em>next</em> word by the time the high byte lands, splitting one word’s two halves across two different VRAM locations. <code>mm=00</code> means no address remapping (only relevant for special bitmap-style graphics modes this tutorial doesn’t use), and <code>ii=00</code> means each completed word write advances the address by exactly 1 word — matching one tile row per loop iteration.</p>
+<figure class="diagram">
+<img src="../images/05-vmain-bitfield.svg" alt="Diagram breaking down VMAIN's byte value $80 bit by bit against the i---mmii template: bit 7 = i = 1 (increment after VMDATAH), bits 6-4 unused, bits 3-2 = mm = 00 (no address remapping), bits 1-0 = ii = 00 (step +1 word per access)." />
+<figcaption>Figure: <code>$80</code>’s bits mapped onto VMAIN’s fields, and what each one does.</figcaption>
+</figure>
 <h2 id="extending-your-rom">Extending your ROM</h2>
 <p>Add the tile data (shown above) somewhere in your <code>CODE</code> segment, then add a loading loop to <code>reset:</code>, after the palette loop from Lesson 4:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    <span class="co">; --- Load tile_stripe into VRAM at word address 0. ---</span></span>
@@ -216,6 +229,10 @@ Rows 2,3,6,7: <code>2,2,1,1,2,2,1,1</code> → bitplane0 = <code>00110011</code>
     .byte $33, $CC   ; row 6
     .byte $33, $CC   ; row 7
 tile_checker_end:</code></pre>
+<figure class="diagram">
+<img src="../images/05-exercise1-checkerboard.svg" alt="Diagram showing bit stacking for tile_checker's two row patterns (bitplane0=$CC/bitplane1=$33 giving indices 1,1,2,2,1,1,2,2, and bitplane0=$33/bitplane1=$CC giving indices 2,2,1,1,2,2,1,1), and the resulting rendered 8x8 tile as a 2x2-block red/green checkerboard." />
+<figcaption>Figure: bit stacking for both row patterns, and the rendered checkerboard tile.</figcaption>
+</figure>
 </div></details>
 </li>
 <li>What would change in <code>tile_stripe</code> if you wanted a solid single-color tile using index 3 instead of a two-color stripe?

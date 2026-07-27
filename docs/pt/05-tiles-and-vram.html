@@ -151,6 +151,10 @@ row 2: bitplane0, bitplane1
 ...
 row 7: bitplane0, bitplane1</code></pre>
 <p>Dentro de um byte, o bit 7 é o pixel <em>mais à esquerda</em> daquela linha. O índice de cor final de um pixel é construído empilhando o bit correspondente de cada bitplane: para 2bpp, <code>índice = (bit_do_bitplane1 &lt;&lt; 1) | bit_do_bitplane0</code>. Então o índice 1 precisa de bitplane0=1, bitplane1=0; o índice 2 precisa de bitplane0=0, bitplane1=1; o índice 3 precisa dos dois bits ligados.</p>
+<figure class="diagram">
+<img src="../images/05-byte-layout-pt.svg" alt="Diagrama mostrando os 16 bytes de um tile 2bpp organizados em 8 linhas, cada linha formada por um byte de bitplane0 e um byte de bitplane1 formando uma word de 16 bits; um segundo painel mostra que, dentro de um byte, o bit 7 corresponde à coluna de pixel 0 (mais à esquerda) e o bit 0 à coluna 7 (mais à direita)." />
+<figcaption>Figura: os 16 bytes na memória (acima), e como os bits de um byte mapeiam para as 8 colunas de pixel de uma linha (abaixo).</figcaption>
+</figure>
 <h3 id="um-exemplo-resolvido-um-tile-listrado-de-duas-cores">Um exemplo resolvido: um tile listrado de duas cores</h3>
 <p>Vamos construir um tile que é sólido no índice-de-paleta-1 (vermelho, da tabela da Lição 4) na metade de cima e sólido no índice-de-paleta-2 (verde) na metade de baixo — simples o suficiente para codificar manualmente, e prova visualmente que a combinação de bitplanes está funcionando assim que você vê renderizado.</p>
 <p>O índice 1 precisa de bitplane0 = tudo 1, bitplane1 = tudo 0, para essas linhas. O índice 2 precisa do oposto. Então:</p>
@@ -166,6 +170,10 @@ row 7: bitplane0, bitplane1</code></pre>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    .<span class="dt">byte</span><span class="bn"> $00, </span><span class="dv">$</span>FF</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="fu">tile_stripe_end:</span></span></code></pre></div>
+<figure class="diagram">
+<img src="../images/05-worked-example-stripe-pt.svg" alt="Diagrama mostrando o empilhamento de bits do tile_stripe: a linha 0 tem bitplane0=$FF (todos 1) e bitplane1=$00 (todos 0), combinando para índice 1 (vermelho) nas 8 colunas; a linha 4 tem bitplane0=$00 e bitplane1=$FF, combinando para índice 2 (verde). Abaixo, o tile 8x8 renderizado completo mostra a metade de cima vermelha e a de baixo verde." />
+<figcaption>Figura: aplicando a fórmula de empilhamento de bits para uma linha de cada metade, e o tile renderizado resultante.</figcaption>
+</figure>
 <h2 id="vmain-vmadd-e-vmdata">VMAIN, VMADD e VMDATA</h2>
 <p>A VRAM é endereçada como 32K <em>words</em> (64 KB ao todo), e o caminho de escrita é o mesmo padrão “registrador de endereço, depois registrador de dados” da <a href="03-memory-map-and-registers.html#vram-cgram-and-oam-three-porthole-devices">Lição 3</a>:</p>
 <pre><code>$2115  VMAIN   i---mmii   i = increment after high ($2119) or low ($2118) byte write
@@ -176,6 +184,11 @@ $2119  VMDATAH high byte of the word to write</code></pre>
 <p>Já que estamos escrevendo words de 16 bits (e nossos dados de tile já estão organizados como pares de bytes que batem com o layout de word da VRAM), configure <code>VMAIN</code> para que o endereço avance <em>depois do byte alto</em> — assim um par <code>VMDATAL</code>/<code>VMDATAH</code> avança o endereço exatamente uma vez, mantendo as duas escritas atômicas do ponto de vista do registrador de endereço:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>    lda #<span class="bn">$80        </span><span class="co">; i=1 (increment after $2119), ii=00 (+1), mm=00 (no remap)</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    sta<span class="bn"> $2115</span></span></code></pre></div>
+<p>Concretamente: <code>$80</code> em binário é <code>1000 0000</code>. Alinhado ao template <code>i---mmii</code>, isso é <code>i=1</code>, os três bits do meio sem uso, <code>mm=00</code>, e <code>ii=00</code>. <code>i=1</code> é o bit que importa aqui — ele diz “avance o endereço depois de uma escrita em $2119 (VMDATAH)”, não em $2118. Como o loop abaixo sempre escreve <code>VMDATAL</code> e depois <code>VMDATAH</code> para uma mesma word, o endereço só pode avançar <em>depois</em> dessa segunda escrita; se avançasse depois do byte baixo, o endereço já estaria apontando para a <em>próxima</em> word quando o byte alto chegasse, dividindo as duas metades de uma word entre dois locais diferentes da VRAM. <code>mm=00</code> significa nenhum remapeamento de endereço (relevante só em modos gráficos especiais no estilo bitmap, que este tutorial não usa), e <code>ii=00</code> significa que cada word completa escrita avança o endereço em exatamente 1 word — combinando com uma linha de tile por iteração do loop.</p>
+<figure class="diagram">
+<img src="../images/05-vmain-bitfield-pt.svg" alt="Diagrama detalhando bit a bit o valor $80 de VMAIN contra o template i---mmii: bit 7 = i = 1 (incrementa depois de VMDATAH), bits 6-4 sem uso, bits 3-2 = mm = 00 (sem remapeamento de endereço), bits 1-0 = ii = 00 (passo de +1 word por acesso)." />
+<figcaption>Figura: os bits de <code>$80</code> mapeados nos campos de VMAIN, e o que cada um faz.</figcaption>
+</figure>
 <h2 id="estendendo-sua-rom">Estendendo sua ROM</h2>
 <p>Adicione os dados de tile (mostrados acima) em algum lugar do seu segmento <code>CODE</code>, depois adicione um loop de carregamento em <code>reset:</code>, depois do loop de paleta da Lição 4:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>    <span class="co">; --- Load tile_stripe into VRAM at word address 0. ---</span></span>
@@ -216,6 +229,10 @@ Linhas 2,3,6,7: <code>2,2,1,1,2,2,1,1</code> → bitplane0 = <code>00110011</cod
     .byte $33, $CC   ; linha 6
     .byte $33, $CC   ; linha 7
 tile_checker_end:</code></pre>
+<figure class="diagram">
+<img src="../images/05-exercise1-checkerboard-pt.svg" alt="Diagrama mostrando o empilhamento de bits dos dois padrões de linha do tile_checker (bitplane0=$CC/bitplane1=$33 dando índices 1,1,2,2,1,1,2,2, e bitplane0=$33/bitplane1=$CC dando índices 2,2,1,1,2,2,1,1), e o tile 8x8 renderizado resultante como um xadrez vermelho/verde em blocos 2x2." />
+<figcaption>Figura: empilhamento de bits para os dois padrões de linha, e o tile em xadrez renderizado.</figcaption>
+</figure>
 </div></details>
 </li>
 <li>O que mudaria em <code>tile_stripe</code> se você quisesse um tile sólido de uma única cor usando o índice 3, em vez de uma listra de duas cores?

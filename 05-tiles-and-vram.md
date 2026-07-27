@@ -48,6 +48,10 @@ index is built by stacking the corresponding bit from each bitplane: for 2bpp,
 bitplane1=0; index 2 needs bitplane0=0, bitplane1=1; index 3 needs both bits
 set.
 
+![Diagram showing a 2bpp tile's 16 bytes laid out as 8 rows, each row made of a bitplane0 byte and a bitplane1 byte forming one 16-bit word; a second panel shows that within a byte, bit 7 maps to pixel column 0 (leftmost) and bit 0 maps to column 7 (rightmost).](images/05-byte-layout.svg)
+
+*Figure: the 16 bytes in memory (top), and how one byte's bits map onto the 8 pixel columns of a row (bottom).*
+
 ### A worked example: a two-color striped tile
 
 Let's build a tile that's solid palette-index-1 (red, from Lesson 4's table) on
@@ -73,6 +77,10 @@ tile_stripe:
 tile_stripe_end:
 ```
 
+![Diagram showing bit stacking for tile_stripe: row 0 has bitplane0=$FF (all 1s) and bitplane1=$00 (all 0s), combining to index 1 (red) across all 8 columns; row 4 has bitplane0=$00 and bitplane1=$FF, combining to index 2 (green). Below, the full rendered 8x8 tile shows a red top half and green bottom half.](images/05-worked-example-stripe.svg)
+
+*Figure: working the bit-stacking formula for one row of each half, then the resulting rendered tile.*
+
 ## VMAIN, VMADD, and VMDATA
 
 VRAM is addressed as 32K *words* (64 KB total), and the write path is the same
@@ -97,6 +105,23 @@ view:
     lda #$80        ; i=1 (increment after $2119), ii=00 (+1), mm=00 (no remap)
     sta $2115
 ```
+
+Concretely: `$80` in binary is `1000 0000`. Lined up against the `i---mmii`
+template, that's `i=1`, the three middle bits unused, `mm=00`, and `ii=00`.
+`i=1` is the bit that matters here — it says "advance the address after a
+write to $2119 (VMDATAH)," not $2118. Since the loop below always writes
+`VMDATAL` then `VMDATAH` for a given word, the address must only advance
+*after* that second write; if it advanced after the low byte instead, the
+address would already be pointing at the *next* word by the time the high
+byte lands, splitting one word's two halves across two different VRAM
+locations. `mm=00` means no address remapping (only relevant for special
+bitmap-style graphics modes this tutorial doesn't use), and `ii=00` means
+each completed word write advances the address by exactly 1 word — matching
+one tile row per loop iteration.
+
+![Diagram breaking down VMAIN's byte value $80 bit by bit against the i---mmii template: bit 7 = i = 1 (increment after VMDATAH), bits 6-4 unused, bits 3-2 = mm = 00 (no address remapping), bits 1-0 = ii = 00 (step +1 word per access).](images/05-vmain-bitfield.svg)
+
+*Figure: `$80`'s bits mapped onto VMAIN's fields, and what each one does.*
 
 ## Extending your ROM
 

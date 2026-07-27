@@ -1,0 +1,198 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 820" width="100%" style="max-width:700px" font-size="14">
+<defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#999"/></marker></defs>
+<rect x="0" y="0" width="700" height="820" rx="10" fill="#fdfcf8" stroke="#ccc"/>
+<text x="350.0" y="30" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="16" font-weight="bold" fill="#222">tile_stripe: empilhamento de bits para uma linha de cada metade</text>
+<text x="60" y="56" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#555">Linha 0 (linhas 0-3): bitplane0=<tspan font-family='Menlo, Consolas, monospace'>$FF</tspan>, bitplane1=<tspan font-family='Menlo, Consolas, monospace'>$00</tspan></text>
+<text x="144.0" y="90" text-anchor="end" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">bits de bitplane0</text>
+<rect x="158.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="180.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="206.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="228.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="254.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="276.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="302.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="324.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="350.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="372.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="398.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="420.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="446.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="468.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="494.0" y="70" width="45" height="26" fill="#f6d6d3" stroke="#999"/>
+<text x="516.5" y="88" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<text x="144.0" y="124" text-anchor="end" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">bits de bitplane1</text>
+<rect x="158.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="180.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="206.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="228.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="254.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="276.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="302.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="324.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="350.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="372.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="398.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="420.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="446.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="468.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="494.0" y="104" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="516.5" y="122" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<line x1="180.5" y1="134" x2="180.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="228.5" y1="134" x2="228.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="276.5" y1="134" x2="276.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="324.5" y1="134" x2="324.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="372.5" y1="134" x2="372.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="420.5" y1="134" x2="420.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="468.5" y1="134" x2="468.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="516.5" y1="134" x2="516.5" y2="134" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<rect x="158.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="180.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="206.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="228.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="254.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="276.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="302.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="324.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="350.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="372.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="398.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="420.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="446.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="468.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<rect x="494.0" y="138" width="45" height="26" fill="#d6362c" stroke="#999"/>
+<text x="516.5" y="156" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">1</text>
+<text x="350.0" y="182" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">= &#237;ndice 1 (vermelho) em todos os 8 pixels desta linha</text>
+<text x="60" y="216" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#555">Linha 4 (linhas 4-7): bitplane0=<tspan font-family='Menlo, Consolas, monospace'>$00</tspan>, bitplane1=<tspan font-family='Menlo, Consolas, monospace'>$FF</tspan></text>
+<text x="144.0" y="250" text-anchor="end" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">bits de bitplane0</text>
+<rect x="158.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="180.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="206.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="228.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="254.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="276.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="302.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="324.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="350.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="372.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="398.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="420.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="446.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="468.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<rect x="494.0" y="230" width="45" height="26" fill="#eee" stroke="#999"/>
+<text x="516.5" y="248" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">0</text>
+<text x="144.0" y="284" text-anchor="end" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">bits de bitplane1</text>
+<rect x="158.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="180.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="206.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="228.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="254.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="276.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="302.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="324.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="350.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="372.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="398.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="420.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="446.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="468.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<rect x="494.0" y="264" width="45" height="26" fill="#d7edd7" stroke="#999"/>
+<text x="516.5" y="282" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" fill="#222">1</text>
+<line x1="180.5" y1="294" x2="180.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="228.5" y1="294" x2="228.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="276.5" y1="294" x2="276.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="324.5" y1="294" x2="324.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="372.5" y1="294" x2="372.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="420.5" y1="294" x2="420.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="468.5" y1="294" x2="468.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<line x1="516.5" y1="294" x2="516.5" y2="294" stroke="#999" stroke-width="1" marker-end="url(#arrow2)"/>
+<rect x="158.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="180.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="206.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="228.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="254.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="276.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="302.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="324.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="350.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="372.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="398.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="420.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="446.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="468.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<rect x="494.0" y="298" width="45" height="26" fill="#3f9e3f" stroke="#999"/>
+<text x="516.5" y="316" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="13" font-weight="bold" fill="#fff">2</text>
+<text x="350.0" y="342" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">= &#237;ndice 2 (verde) em todos os 8 pixels desta linha</text>
+<text x="350.0" y="364" text-anchor="middle" font-family='Menlo, Consolas, monospace' font-size="12" fill="#666">&#237;ndice = (bit_do_bitplane1 &lt;&lt; 1) | bit_do_bitplane0, aplicado coluna por coluna</text>
+<line x1="20" y1="386" x2="680" y2="386" stroke="#ddd"/>
+<text x="350.0" y="414" text-anchor="middle" font-family='Helvetica, Arial, sans-serif' font-size="15" font-weight="bold" fill="#222">O tile renderizado (todas as 8 linhas)</text>
+<rect x="214.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="248.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="282.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="316.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="350.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="384.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="418.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="452.0" y="434" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="214.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="248.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="282.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="316.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="350.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="384.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="418.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="452.0" y="468" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="214.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="248.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="282.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="316.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="350.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="384.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="418.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="452.0" y="502" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="214.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="248.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="282.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="316.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="350.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="384.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="418.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="452.0" y="536" width="34" height="34" fill="#d6362c" stroke="#00000022"/>
+<rect x="214.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="248.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="282.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="316.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="350.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="384.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="418.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="452.0" y="570" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="214.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="248.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="282.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="316.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="350.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="384.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="418.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="452.0" y="604" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="214.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="248.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="282.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="316.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="350.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="384.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="418.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="452.0" y="638" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="214.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="248.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="282.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="316.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="350.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="384.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="418.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="452.0" y="672" width="34" height="34" fill="#3f9e3f" stroke="#00000022"/>
+<rect x="214.0" y="434" width="272" height="272" fill="none" stroke="#333" stroke-width="1.5"/>
+<line x1="206.0" y1="570" x2="214.0" y2="570" stroke="#333"/>
+<rect x="214.0" y="736" width="18" height="18" fill="#d6362c"/>
+<text x="240.0" y="750" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">&#237;ndice de paleta 1 = vermelho (<tspan font-family='Menlo, Consolas, monospace'>$001F</tspan>, Li&#231;&#227;o 4)</text>
+<rect x="214.0" y="762" width="18" height="18" fill="#3f9e3f"/>
+<text x="240.0" y="776" font-family='Helvetica, Arial, sans-serif' font-size="13" fill="#333">&#237;ndice de paleta 2 = verde (<tspan font-family='Menlo, Consolas, monospace'>$03E0</tspan>, Li&#231;&#227;o 4)</text>
+</svg>
