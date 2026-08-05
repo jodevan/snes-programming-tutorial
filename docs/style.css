@@ -130,6 +130,7 @@ code {
 }
 
 pre {
+  position: relative;
   background: var(--code-bg);
   color: var(--code-ink);
   padding: 1rem 1.1rem;
@@ -145,6 +146,54 @@ pre code {
   padding: 0;
   color: inherit;
   font-size: 1em;
+}
+
+.copy-code-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--code-ink);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.copy-code-btn:hover,
+.copy-code-btn:focus-visible {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.copy-code-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.copy-code-btn .copy-icon-check {
+  display: none;
+}
+
+.copy-code-btn.copied {
+  opacity: 1;
+  color: #4caf7d;
+}
+
+.copy-code-btn.copied .copy-icon-copy {
+  display: none;
+}
+
+.copy-code-btn.copied .copy-icon-check {
+  display: block;
 }
 
 table {
