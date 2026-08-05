@@ -81,7 +81,19 @@ viewer, but the screen shows garbage or nothing — worth remembering when
 
 ## Extending your ROM
 
-Add this after the VRAM tile-loading loop from Lesson 5:
+**Careful where you paste this.** Every lesson so far ended with `reset:`
+turning the screen on — `lda #$0F` / `sta $2100` (`INIDISP`) has been the
+last thing your `reset:` routine does since Lesson 1, so simply appending
+new code to the end of your file, like you did in Lessons 2-5, would tack
+it on *after* that line. This lesson is different: insert the block below
+**before** your existing `INIDISP` write, which needs to stay the very
+last thing `reset:` does. Getting this order wrong won't crash anything —
+it just means the tilemap and BG-register writes below land on VRAM/PPU
+state the screen is already actively reading from, so they get dropped or
+corrupted, and you'll see leftover VRAM garbage instead of stripes.
+
+Add this after the VRAM tile-loading loop from Lesson 5 (and before
+`INIDISP`):
 
 ```asm
     ; --- Fill a 32x32 tilemap at VRAM byte $1000 (word $0800) with

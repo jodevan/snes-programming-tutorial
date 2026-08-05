@@ -113,6 +113,22 @@ This workflow — narrow down *which* stage is wrong using the viewers, then
 pinpoint *why* using breakpoints — is the general pattern you'll use for the
 rest of this tutorial, and for any SNES project after it.
 
+## When the tools all say "correct" and the screen still isn't
+
+Every tool above assumes the emulator itself is telling you the truth. Usually
+it is — but not always. If you've confirmed the palette, tile, and tilemap are
+all byte-for-byte correct, and the Debugger's watch window shows `BGMODE`,
+`TM`, and `BGxSC` holding the exact values you wrote, and the screen *still*
+renders garbage, don't rule out the emulator. Registers like these are
+write-only on real hardware — there's no bus read that returns them — so a
+debugger's "current value" display for them is reconstructed from the
+emulator's internal state rather than actually read back, and that
+reconstruction can itself have bugs, especially in less battle-tested
+emulator builds. Before spending hours re-auditing code that's actually
+correct, load the same ROM in a second, independent emulator (bsnes and
+OpenEmu are both solid choices) — if it renders correctly there, the bug was
+in your first emulator, not your code.
+
 ## Exercises
 
 1. Set a breakpoint that triggers only when `X` equals a specific value inside

@@ -85,7 +85,20 @@ tela mostra lixo ou nada — vale lembrar disso quando a [Lição
 
 ## Estendendo sua ROM
 
-Adicione isto depois do loop de carregamento de tile na VRAM da Lição 5:
+**Cuidado onde você cola isto.** Toda lição até agora terminou com o
+`reset:` ligando a tela — `lda #$0F` / `sta $2100` (`INIDISP`) é a última
+coisa que sua rotina `reset:` faz desde a Lição 1, então simplesmente
+adicionar código novo no final do seu arquivo, como você fez nas Lições
+2-5, colocaria esse trecho *depois* dessa linha. Esta lição é diferente:
+insira o bloco abaixo **antes** da sua escrita em `INIDISP` já existente,
+que precisa continuar sendo a última coisa que o `reset:` faz. Errar essa
+ordem não trava nada — só faz com que as escritas de tilemap e dos
+registradores de BG abaixo caiam em VRAM/estado da PPU que a tela já está
+lendo ativamente, então elas são descartadas ou corrompidas, e você vê
+lixo da VRAM na tela em vez de listras.
+
+Adicione isto depois do loop de carregamento de tile na VRAM da Lição 5
+(e antes do `INIDISP`):
 
 ```asm
     ; --- Fill a 32x32 tilemap at VRAM byte $1000 (word $0800) with

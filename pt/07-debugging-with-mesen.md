@@ -124,6 +124,22 @@ viewers, depois identificar exatamente *por quê* usando breakpoints — é o pa
 geral que você vai usar pelo resto deste tutorial, e para qualquer projeto de
 SNES depois dele.
 
+## Quando as ferramentas dizem "está tudo certo" e a tela continua errada
+
+Toda ferramenta acima assume que o próprio emulador está dizendo a verdade.
+Normalmente está — mas nem sempre. Se você já confirmou que a paleta, o tile e
+o tilemap estão corretos byte a byte, e a watch window do Debugger mostra
+`BGMODE`, `TM` e `BGxSC` com exatamente os valores que você escreveu, e a tela
+*ainda assim* mostra lixo, não descarte o emulador. Registradores como esses
+são write-only no hardware real — não existe leitura de barramento que os
+devolva — então a exibição de "valor atual" de um debugger para eles é
+reconstruída a partir do estado interno do emulador, não realmente lida de
+volta, e essa reconstrução pode ter bugs, especialmente em builds de emulador
+menos testados em batalha. Antes de gastar horas reauditando um código que na
+verdade está correto, carregue a mesma ROM em um segundo emulador
+independente (bsnes e OpenEmu são boas opções) — se ela rodar corretamente
+lá, o bug estava no seu primeiro emulador, não no seu código.
+
 ## Exercícios
 
 1. Configure um breakpoint que dispare só quando `X` for igual a um valor
