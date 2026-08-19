@@ -144,6 +144,71 @@ function toggleTheme() {
 </tbody>
 </table>
 <p>Toda tabela abaixo é do espaço da CPU 65816, a menos que o título diga o contrário.</p>
+<h2 id="mapa-de-memória-tamanhos-limites">Mapa de memória: tamanhos &amp; limites</h2>
+<p>Seis áreas de memória de tamanho fixo que este curso usa, cada uma um recurso físico separado — saber o tamanho de cada uma explica por que a VRAM cabe confortavelmente os tiles e tilemaps deste curso, por que a OAM tem um teto de 128 sprites, e por que uma paleta não pode ter mais que 256 cores.</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Área</th>
+<th>Tamanho total</th>
+<th>Faixa de endereços</th>
+<th>Contém</th>
+<th>Lição</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>WRAM</td>
+<td>128 KB</td>
+<td><code>$7E0000</code>-<code>$7FFFFF</code> (chip inteiro); primeiros 8 KB espelhados em <code>$0000</code>-<code>$1FFF</code> na página baixa de todo banco</td>
+<td>Variáveis, a pilha, rascunho de uso geral</td>
+<td><a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+<tr class="even">
+<td>VRAM</td>
+<td>64 KB</td>
+<td>endereço de palavra <code>$0000</code>-<code>$7FFF</code>, alcançado via <code>VMADDL</code>/<code>VMADDH</code></td>
+<td>Dados de bitmap de tile (caractere) e tilemaps — os tiles e o tilemap do BG3 deste curso vivem aqui, nos endereços que você escolher</td>
+<td><a href="05-tiles-and-vram.html">Lição 5</a>, <a href="06-backgrounds-and-tilemaps.html">Lição 6</a></td>
+</tr>
+<tr class="odd">
+<td>CGRAM</td>
+<td>512 bytes</td>
+<td>índice <code>$00</code>-<code>$FF</code> via <code>CGADD</code> (cada índice = 2 bytes)</td>
+<td>256 cores, organizadas como 16 paletas de 16 cores, cada cor de 15 bits</td>
+<td><a href="04-palettes-and-cgram.html">Lição 4</a></td>
+</tr>
+<tr class="even">
+<td>OAM</td>
+<td>544 bytes</td>
+<td>tabela baixa: byte <code>$000</code>-<code>$1FF</code> (512 bytes); tabela alta: byte <code>$200</code>-<code>$21F</code> (32 bytes), via <code>OAMADDL</code>/<code>OAMADDH</code></td>
+<td>Até 128 sprites — X/Y/tile/atributos na tabela baixa (4 bytes cada), tamanho + bit alto de X na tabela alta (2 bits cada)</td>
+<td><a href="10-sprites-oam-basics.html">Lição 10</a></td>
+</tr>
+<tr class="odd">
+<td>ARAM (RAM do SPC700)</td>
+<td>64 KB</td>
+<td><code>$0000</code>-<code>$FFFF</code> no próprio barramento do SPC700 — não alcançável diretamente pelo 65816</td>
+<td>Código do driver de som, dados de amostra, buffer de eco, carregados byte a byte através das 4 portas de caixa de correio da APU</td>
+<td><a href="13-spc700-and-audio-basics.html">Lição 13</a></td>
+</tr>
+<tr class="even">
+<td>ROM (mapeamento LoROM)</td>
+<td>até 4 MB endereçáveis (as ROMs deste curso usam bem menos)</td>
+<td>bancos <code>$00</code>-<code>$7D</code> e <code>$80</code>-<code>$FF</code>, cada um expondo 32 KB em <code>$8000</code>-<code>$FFFF</code></td>
+<td>Código do programa, o cabeçalho &amp; vetores, e qualquer outro dado de ROM</td>
+<td><a href="01-toolchain-setup-and-first-rom.html">Lição 1</a>, <a href="03-memory-map-and-registers.html">Lição 3</a></td>
+</tr>
+</tbody>
+</table>
+<p>VRAM, CGRAM e OAM não fazem parte do espaço de endereços do próprio 65816 — são chips separados do lado da PPU, alcançáveis só através dos registradores de porta documentados abaixo (<code>$2115</code>-<code>$2119</code> para a VRAM, <code>$2121</code>-<code>$2122</code> para a CGRAM, <code>$2101</code>-<code>$2104</code> para a OAM).</p>
 <h2 id="cabeçalho-da-rom-vetores-00ffc000ffff">Cabeçalho da ROM &amp; vetores — <code>$00:FFC0</code>–<code>$00:FFFF</code></h2>
 <p>O layout exato de bytes que o <code>lesson1.asm</code> da <a href="01-toolchain-setup-and-first-rom.html">Lição 1</a> constrói, campo por campo:</p>
 <table>

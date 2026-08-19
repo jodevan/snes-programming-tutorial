@@ -19,6 +19,27 @@ across three separate ones, and mixing them up is a real source of confusion:
 
 Every table below is 65816 CPU space unless its heading says otherwise.
 
+## Memory map: sizes & boundaries
+
+Six fixed-size memory pools this course touches, each a separate physical
+resource — knowing the size of each one explains why VRAM comfortably fits a
+course's worth of tiles and tilemaps, why OAM caps out at 128 sprites, and why
+a palette can't hold more than 256 colors.
+
+| Region | Total size | Address range | Holds | Lesson |
+|---|---|---|---|---|
+| WRAM | 128 KB | `$7E0000`-`$7FFFFF` (full chip); first 8 KB mirrored at `$0000`-`$1FFF` in every bank's low page | Variables, the stack, general-purpose scratch | [Lesson 3](03-memory-map-and-registers.md) |
+| VRAM | 64 KB | word address `$0000`-`$7FFF`, reached via `VMADDL`/`VMADDH` | Tile (character) bitmap data and tilemaps — this course's tiles and BG3 tilemap both live here, at addresses you choose | [Lesson 5](05-tiles-and-vram.md), [Lesson 6](06-backgrounds-and-tilemaps.md) |
+| CGRAM | 512 bytes | index `$00`-`$FF` via `CGADD` (each index = 2 bytes) | 256 colors, organized as 16 palettes of 16 colors, 15-bit color each | [Lesson 4](04-palettes-and-cgram.md) |
+| OAM | 544 bytes | low table: byte `$000`-`$1FF` (512 bytes); high table: byte `$200`-`$21F` (32 bytes), via `OAMADDL`/`OAMADDH` | Up to 128 sprites — X/Y/tile/attributes in the low table (4 bytes each), size + X-high-bit in the high table (2 bits each) | [Lesson 10](10-sprites-oam-basics.md) |
+| ARAM (SPC700 RAM) | 64 KB | `$0000`-`$FFFF` on the SPC700's own bus — not reachable directly from the 65816 | Sound driver code, sample data, echo buffer, loaded byte-by-byte through the 4 APU mail-slot ports | [Lesson 13](13-spc700-and-audio-basics.md) |
+| ROM (LoROM mapping) | up to 4 MB addressable (this course's own ROMs use far less) | banks `$00`-`$7D` and `$80`-`$FF`, each exposing 32 KB at `$8000`-`$FFFF` | Program code, the header & vectors, and any other ROM data | [Lesson 1](01-toolchain-setup-and-first-rom.md), [Lesson 3](03-memory-map-and-registers.md) |
+
+VRAM, CGRAM, and OAM aren't part of the 65816's own address space — they're
+separate chips on the PPU side, reachable only through the port registers
+documented below (`$2115`-`$2119` for VRAM, `$2121`-`$2122` for CGRAM,
+`$2101`-`$2104` for OAM).
+
 ## ROM header & vectors — `$00:FFC0`–`$00:FFFF`
 
 The exact byte layout [Lesson 1](01-toolchain-setup-and-first-rom.md)'s `lesson1.asm`

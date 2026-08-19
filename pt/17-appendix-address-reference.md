@@ -22,6 +22,27 @@ de confusão:
 Toda tabela abaixo é do espaço da CPU 65816, a menos que o título diga o
 contrário.
 
+## Mapa de memória: tamanhos & limites
+
+Seis áreas de memória de tamanho fixo que este curso usa, cada uma um recurso
+físico separado — saber o tamanho de cada uma explica por que a VRAM cabe
+confortavelmente os tiles e tilemaps deste curso, por que a OAM tem um teto de
+128 sprites, e por que uma paleta não pode ter mais que 256 cores.
+
+| Área | Tamanho total | Faixa de endereços | Contém | Lição |
+|---|---|---|---|---|
+| WRAM | 128 KB | `$7E0000`-`$7FFFFF` (chip inteiro); primeiros 8 KB espelhados em `$0000`-`$1FFF` na página baixa de todo banco | Variáveis, a pilha, rascunho de uso geral | [Lição 3](03-memory-map-and-registers.md) |
+| VRAM | 64 KB | endereço de palavra `$0000`-`$7FFF`, alcançado via `VMADDL`/`VMADDH` | Dados de bitmap de tile (caractere) e tilemaps — os tiles e o tilemap do BG3 deste curso vivem aqui, nos endereços que você escolher | [Lição 5](05-tiles-and-vram.md), [Lição 6](06-backgrounds-and-tilemaps.md) |
+| CGRAM | 512 bytes | índice `$00`-`$FF` via `CGADD` (cada índice = 2 bytes) | 256 cores, organizadas como 16 paletas de 16 cores, cada cor de 15 bits | [Lição 4](04-palettes-and-cgram.md) |
+| OAM | 544 bytes | tabela baixa: byte `$000`-`$1FF` (512 bytes); tabela alta: byte `$200`-`$21F` (32 bytes), via `OAMADDL`/`OAMADDH` | Até 128 sprites — X/Y/tile/atributos na tabela baixa (4 bytes cada), tamanho + bit alto de X na tabela alta (2 bits cada) | [Lição 10](10-sprites-oam-basics.md) |
+| ARAM (RAM do SPC700) | 64 KB | `$0000`-`$FFFF` no próprio barramento do SPC700 — não alcançável diretamente pelo 65816 | Código do driver de som, dados de amostra, buffer de eco, carregados byte a byte através das 4 portas de caixa de correio da APU | [Lição 13](13-spc700-and-audio-basics.md) |
+| ROM (mapeamento LoROM) | até 4 MB endereçáveis (as ROMs deste curso usam bem menos) | bancos `$00`-`$7D` e `$80`-`$FF`, cada um expondo 32 KB em `$8000`-`$FFFF` | Código do programa, o cabeçalho & vetores, e qualquer outro dado de ROM | [Lição 1](01-toolchain-setup-and-first-rom.md), [Lição 3](03-memory-map-and-registers.md) |
+
+VRAM, CGRAM e OAM não fazem parte do espaço de endereços do próprio 65816 —
+são chips separados do lado da PPU, alcançáveis só através dos registradores
+de porta documentados abaixo (`$2115`-`$2119` para a VRAM, `$2121`-`$2122`
+para a CGRAM, `$2101`-`$2104` para a OAM).
+
 ## Cabeçalho da ROM & vetores — `$00:FFC0`–`$00:FFFF`
 
 O layout exato de bytes que o `lesson1.asm` da [Lição 1](01-toolchain-setup-and-first-rom.md)
